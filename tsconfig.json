@@ -1,0 +1,31 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "outDir"    : "lib",
+        "baseUrl"   : ".",
+        "module"    : "es2020",
+        "target"    : "es2017",
+        // "strict"    : true,
+        "downlevelIteration": true,
+        "moduleResolution"              : "node",
+        "stripInternal"                 : true,
+        "emitDecoratorMetadata"         : true,
+        "esModuleInterop"               : true,
+        "experimentalDecorators"        : true,
+        "useDefineForClassFields"       : true,
+        "allowSyntheticDefaultImports"  : true,
+        "skipLibCheck"                  : true,
+        "sourceMap"                     : true,
+        "declaration"                   : false,
+        "lib": [      
+            "dom",
+            "es2020"
+        ],
+        "paths": {
+            "@/*": ["src/*"] 
+        }
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
