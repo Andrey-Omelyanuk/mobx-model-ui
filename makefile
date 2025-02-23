@@ -33,13 +33,13 @@ debug:
 		yarn install && \
 		node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/*.spec.ts'
 lint:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint"
+	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint"
 lint-fix:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint-fix"
+	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint-fix"
 test:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
+	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
 test-e2e:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
+	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
 
 # //registry.npmjs.org/:_authToken=your_auth_token
 # NPM_PACKAGE_REGISTRY=https://registry.npmjs.org/
