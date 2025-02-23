@@ -1,4 +1,4 @@
-import { Cache, Adapter, Repository, Model ,field, model, Query, Filter } from "."
+import { Cache, Adapter, Repository, Model ,field, model, Query, Filter } from '.'
 
 export let obj_a = {id: 0, a: 5, b: 'a', c: true } 
 export let obj_b = {id: 1,       b: 'c', c: false} 
@@ -21,7 +21,7 @@ export class TestCache<M extends Model> extends Cache<M> {
         (TestCache.prototype.get    as jest.Mock).mockClear(); 
         (TestCache.prototype.inject as jest.Mock).mockClear(); 
         (TestCache.prototype.eject  as jest.Mock).mockClear(); 
-        (TestCache.prototype.update as jest.Mock).mockClear(); 
+        (TestCache.prototype.update as jest.Mock).mockClear() 
     }
 }
 TestCache.prototype.get     = jest.fn(TestCache.prototype.get)
@@ -51,7 +51,7 @@ export class TestAdapter<M extends Model> extends Adapter<M> {
         (TestAdapter.prototype.find          as jest.Mock).mockClear(); 
         (TestAdapter.prototype.load          as jest.Mock).mockClear(); 
         (TestAdapter.prototype.getTotalCount as jest.Mock).mockClear(); 
-        (TestAdapter.prototype.getDistinct   as jest.Mock).mockClear(); 
+        (TestAdapter.prototype.getDistinct   as jest.Mock).mockClear()
     }
 }
 TestAdapter.prototype.create        = jest.fn(TestAdapter.prototype.create)
@@ -87,7 +87,7 @@ export class  TestRepository<M extends Model> extends Repository<M> {
         (TestRepository.prototype.find          as jest.Mock).mockClear(); 
         (TestRepository.prototype.load          as jest.Mock).mockClear(); 
         (TestRepository.prototype.getTotalCount as jest.Mock).mockClear(); 
-        (TestRepository.prototype.getDistinct   as jest.Mock).mockClear(); 
+        (TestRepository.prototype.getDistinct   as jest.Mock).mockClear()
     }
 }
 TestRepository.prototype.create        = jest.fn(TestRepository.prototype.create)

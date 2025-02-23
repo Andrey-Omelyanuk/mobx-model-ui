@@ -1,4 +1,4 @@
-import { Filter } from "./Filter"
+import { Filter } from './Filter'
 
 
 export abstract class ComboFilter extends Filter {
@@ -18,7 +18,7 @@ export abstract class ComboFilter extends Filter {
         return true
     }
 
-    get URLSearchParams(): URLSearchParams{
+    get URLSearchParams(): URLSearchParams {
         let search_params = new URLSearchParams()
         for(let filter of this.filters) {
             filter.URLSearchParams.forEach((value, key) => search_params.set(key, value))

@@ -8,7 +8,7 @@ import { ORDER_BY } from '../types'
 import { config } from '../config'
 
 
-export const DISPOSER_AUTOUPDATE = "__autoupdate"
+export const DISPOSER_AUTOUPDATE = '__autoupdate'
 
 export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>

@@ -107,7 +107,7 @@ describe('Field: Many', () => {
                                             expect(a1.bs).toEqual([b])
                                             expect(a2.bs).toEqual([])
             runInAction(() => {
-                b.a_id = a2.id;
+                b.a_id = a2.id
             })
                                             expect(b.a_id).toBe(a2.id)
                                             expect(a1.bs).toEqual([])

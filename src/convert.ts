@@ -1,4 +1,4 @@
-import { ASC, DESC, ORDER_BY } from "./types"
+import { ASC, DESC, ORDER_BY } from './types'
 
 export enum TYPE {
     ID              = 'id',
@@ -50,8 +50,8 @@ export const toString = (valueType: TYPE, value: any): string => {
         case TYPE.NUMBER:   return ''+value
         case TYPE.ID    :   return ''+value
         case TYPE.STRING:   return value
-        case TYPE.DATE:     return value instanceof Date ? (value as Date).toISOString().split('T')[0] : ""
-        case TYPE.DATETIME: return value instanceof Date ? (value as Date).toISOString() : ""
+        case TYPE.DATE:     return value instanceof Date ? (value as Date).toISOString().split('T')[0] : ''
+        case TYPE.DATETIME: return value instanceof Date ? (value as Date).toISOString() : ''
         case TYPE.BOOLEAN:  return !!value ? 'true' : 'false' 
         case TYPE.ARRAY_STRING  : return arrayToString(TYPE.STRING  , value)
         case TYPE.ARRAY_NUMBER  : return arrayToString(TYPE.NUMBER  , value)

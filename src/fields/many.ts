@@ -54,7 +54,7 @@ export function many(remote_model: any, remote_foreign_id_name?: string) {
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj)
                         if (i > -1)
-                            runInAction(() => { obj[field_name].splice(i, 1); })
+                            runInAction(() => { obj[field_name].splice(i, 1) })
                     } 
                     break
             }

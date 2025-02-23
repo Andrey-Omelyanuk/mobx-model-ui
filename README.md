@@ -1,9 +1,8 @@
-MobX-ORM
+MobX-Model-UI (ex. [@Andrey-Omelyanuk/MobX-ORM:2.1.7](https://github.com/Andrey-Omelyanuk/mobx-orm))
 ===
-Reactive ORM based on [mobx](https://github.com/mobxjs/mobx)
+Data and UI models based on [MobX](https://github.com/mobxjs/mobx)
 Inspired by [ember-data](https://github.com/emberjs/data) and [js-data](https://github.com/js-data/js-data).
 
-Warning: it is not mobx-orm from npm package
 
 Check ./e2e tests for understanding how to use the lib.
 
@@ -21,9 +20,4 @@ node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/sr
 node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand -t 'raw_obj with one relations'
 chrome://inspect/#devices
 
-```
-
-Hot to dev in container:
-```sh
-docker-compose run --rm main
 ```

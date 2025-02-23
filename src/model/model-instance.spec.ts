@@ -6,20 +6,20 @@ describe('Model Instance', () => {
     describe('constructor', () => {
         it('empty', () => {
             @local() @model class A extends Model { @field a }     
-                                                ; expect(A.repository.cache.store.size).toBe(0)
+                                                 expect(A.repository.cache.store.size).toBe(0)
             let a = new A()                     ; expect(A.repository.cache.store.size).toBe(0)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: undefined, a :undefined })
         })
         it('only id', () => {
             @local() @model class A extends Model { @field a }     
-                                                ; expect(A.repository.cache.store.size).toBe(0)
+                                                 expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
                                                 ; expect(a).toMatchObject({__init_data: {a: undefined}, id: 1, a: undefined})
         })
         it('id + value', () => {
             @local() @model class A extends Model { @field a }     
-                                                ; expect(A.repository.cache.store.size).toBe(0)
+                                                 expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1, a: 2})        ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
                                                 ; expect(a).toMatchObject({__init_data: {a: 2}, id: 1, a: 2})
@@ -176,7 +176,7 @@ describe('Model Instance', () => {
                 {id: 1, a_id: 1, x: 'B1'},
                 {id: 2, a_id: 1, x: 'B2'},
                 {id: 3, a_id: 1, x: 'B3'},
-            ]});
+            ]})
             expect(a).toMatchObject({ id: 1, bs: [
                 {id: 1, a_id: 1, x: 'B1'},
                 {id: 2, a_id: 1, x: 'B2'},
@@ -217,7 +217,7 @@ describe('Model Instance', () => {
         })
         it('edit', () => {
             @local()
-            @model class A extends Model {}     ; expect(A.repository.cache.store.size).toBe(0)
+            @model class A extends Model {}      expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
                                                   expect(a.__disposers.size).toBe(2) // before and after changes observers
@@ -227,7 +227,7 @@ describe('Model Instance', () => {
         })
         it('edit to undefined', () => {
             @local()
-            @model class A extends Model {}     ; expect(A.repository.cache.store.size).toBe(0)
+            @model class A extends Model {}      expect(A.repository.cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.repository.cache.store.size).toBe(1)
                                                   expect(A.repository.cache.get(a.id)).toBe(a)
                                                   expect(a.__disposers.size).toBe(2) // before and after changes observers

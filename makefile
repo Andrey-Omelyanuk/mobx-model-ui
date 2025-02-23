@@ -24,25 +24,21 @@ help:
 
 build:
 	docker build --target base -t $(PROJECT_NAME) .
-
 dev:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn dev"
-
 # chrome://inspect/#devices
 debug:
 	docker run --rm -it -p 9229:9229 -v .:/app $(PROJECT_NAME) \
 		yarn install && \
 		node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/*.spec.ts'
-
 lint:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint"
-
+lint-fix:
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint-fix"
 test:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
-
 test-e2e:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
-
 publish:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "npm view mobx-model-ui"
 
