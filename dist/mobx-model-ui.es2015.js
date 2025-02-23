@@ -10,7 +10,7 @@ import _ from 'lodash';
 import { observable, action, makeObservable, runInAction, autorun, reaction, computed, observe, intercept, extendObservable } from 'mobx';
 
 // TODO: remove dependency of lodash 
-// Global config of Mobx-ORM
+// Global config of Mobx-Model-UI
 const config = {
     DEFAULT_PAGE_SIZE: 50,
     AUTO_UPDATE_DELAY: 100, // ms
@@ -320,8 +320,8 @@ const toString = (valueType, value) => {
         case TYPE.NUMBER: return '' + value;
         case TYPE.ID: return '' + value;
         case TYPE.STRING: return value;
-        case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : "";
-        case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : "";
+        case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : '';
+        case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : '';
         case TYPE.BOOLEAN: return !!value ? 'true' : 'false';
         case TYPE.ARRAY_STRING: return arrayToString(TYPE.STRING, value);
         case TYPE.ARRAY_NUMBER: return arrayToString(TYPE.NUMBER, value);
@@ -704,7 +704,7 @@ function autoResetId(input) {
     input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
 }
 
-const DISPOSER_AUTOUPDATE = "__autoupdate";
+const DISPOSER_AUTOUPDATE = '__autoupdate';
 /* Query live cycle:
 
     Event           isLoading   needToUpdate    isReady     items
@@ -1063,7 +1063,7 @@ class QueryCacheSync extends Query {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
-            if (change.type == "delete") {
+            if (change.type == 'delete') {
                 let id = change.name;
                 let obj = change.oldValue;
                 this.disposerObjects[id]();
@@ -1470,7 +1470,7 @@ function model(constructor) {
     };
     f.__proto__ = original;
     f.prototype = original.prototype; // copy prototype so intanceof operator still works
-    Object.defineProperty(f, "name", { value: original.name });
+    Object.defineProperty(f, 'name', { value: original.name });
     return f; // return new constructor (will override original)
 }
 
@@ -2100,4 +2100,4 @@ class ObjectForm extends Form {
 }
 
 export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
-//# sourceMappingURL=mobx-orm.es2015.js.map
+//# sourceMappingURL=mobx-model-ui.es2015.js.map

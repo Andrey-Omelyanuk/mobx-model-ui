@@ -1,5 +1,5 @@
-///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, local, field, foreign, many } from '../dist/mobx-orm'
+///<reference path="../dist/mobx-model-ui.d.ts" />
+import { Model, model, local, field, foreign, many } from '../dist/mobx-model-ui'
 
 
 describe('e2e: Chat.', () => {

@@ -1,4 +1,5 @@
 PROJECT_NAME = mobx-model-ui
+EMAIL=omelyanukandrey@gmail.com
 NPM_PACKAGE_REGISTRY=https://registry.npmjs.org/
 ifneq (,$(wildcard .env))
 	include .env
@@ -39,15 +40,27 @@ test:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
 test-e2e:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
-publish:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "npm view mobx-model-ui"
 
-# # Authenticate (if not already done)
-# yarn config set --global npmAuthToken YOUR_TOKEN
-# # Publish
-# yarn publish --access public
-# docker run --rm -it -v .:/app mobx-data sh -c "yarn publish"
-# docker run --rm mobx-data sh -c "yarn config set registry ${NPM_PACKAGE_REGISTRY:=https://registry.npmjs.org/}"
+# //registry.npmjs.org/:_authToken=your_auth_token
+# NPM_PACKAGE_REGISTRY=https://registry.npmjs.org/
+# npm config set registry https://gitea.example.com/api/packages/testuser/npm/
+# npm config set -- '//gitea.example.com/api/packages/testuser/npm/:_authToken' "personal_access_token"
+# yarn config set --global npmAuthToken ${TOKEN} &&
+# Use a .yarnrc file:
+# npm config set registry ${NPM_PACKAGE_REGISTRY} && \
+# npm config set -- 'registry.npmjs.org/:_authToken=${TOKEN}' && \
+# npm login && 
+
+VERSION=0.0.1
+publish:
+
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "\
+      	echo _auth=${TOKEN} >> .npmrc && \
+        echo email=${EMAIL} >> .npmrc && \
+        echo always-auth=true >> .npmrc && \
+		yarn config fix && \
+		yarn publish --access public --new-version ${VERSION} --non-interactive"
+
 # ------------------------------------------------------------------------------
 
 release-build:
@@ -61,4 +74,4 @@ release-test-e2e:
 release-publish:
 	docker run --rm $(PROJECT_NAME)-release sh -c "yarn config set registry ${NPM_PACKAGE_REGISTRY}"
 	docker run --rm $(PROJECT_NAME)-release sh -c "yarn config set -- '//repo.edtechworld.pl/api/packages/mobx-data/npm/:_authToken' '${TOKEN}'"
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn publish"
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn publish --new-version ${VERSION} --non-interactive"

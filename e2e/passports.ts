@@ -1,4 +1,4 @@
-import { Model, model, local, field, foreign, one, many } from '../dist/mobx-orm'
+import { Model, model, local, field, foreign, one, many } from '../dist/mobx-model-ui'
 
 
 describe('Other tests: Passports.', () => {

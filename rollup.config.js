@@ -21,7 +21,7 @@ export default [
             {   file        : pkg['main'],
                 format      : "umd",
                 // format      : "cjs",
-                name        : 'mobx-orm',
+                name        : 'mobx-model-ui',
                 globals: {
                     'mobx': 'mobx'
                 },

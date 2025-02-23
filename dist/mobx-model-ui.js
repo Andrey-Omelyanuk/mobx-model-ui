@@ -9,7 +9,7 @@
 (function (global, factory) {
     typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('lodash'), require('mobx')) :
     typeof define === 'function' && define.amd ? define(['exports', 'lodash', 'mobx'], factory) :
-    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-orm"] = {}, global._, global.mobx));
+    (global = typeof globalThis !== 'undefined' ? globalThis : global || self, factory(global["mobx-model-ui"] = {}, global._, global.mobx));
 })(this, (function (exports, _, mobx) { 'use strict';
 
     function _interopDefaultLegacy (e) { return e && typeof e === 'object' && 'default' in e ? e : { 'default': e }; }
@@ -17,7 +17,7 @@
     var ___default = /*#__PURE__*/_interopDefaultLegacy(_);
 
     // TODO: remove dependency of lodash 
-    // Global config of Mobx-ORM
+    // Global config of Mobx-Model-UI
     const config = {
         DEFAULT_PAGE_SIZE: 50,
         AUTO_UPDATE_DELAY: 100, // ms
@@ -327,8 +327,8 @@
             case TYPE.NUMBER: return '' + value;
             case TYPE.ID: return '' + value;
             case TYPE.STRING: return value;
-            case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : "";
-            case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : "";
+            case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : '';
+            case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : '';
             case TYPE.BOOLEAN: return !!value ? 'true' : 'false';
             case TYPE.ARRAY_STRING: return arrayToString(TYPE.STRING, value);
             case TYPE.ARRAY_NUMBER: return arrayToString(TYPE.NUMBER, value);
@@ -711,7 +711,7 @@
         input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
     }
 
-    const DISPOSER_AUTOUPDATE = "__autoupdate";
+    const DISPOSER_AUTOUPDATE = '__autoupdate';
     /* Query live cycle:
 
         Event           isLoading   needToUpdate    isReady     items
@@ -1070,7 +1070,7 @@
                 if (change.type == 'add') {
                     this.__watch_obj(change.newValue);
                 }
-                if (change.type == "delete") {
+                if (change.type == 'delete') {
                     let id = change.name;
                     let obj = change.oldValue;
                     this.disposerObjects[id]();
@@ -1477,7 +1477,7 @@
         };
         f.__proto__ = original;
         f.prototype = original.prototype; // copy prototype so intanceof operator still works
-        Object.defineProperty(f, "name", { value: original.name });
+        Object.defineProperty(f, 'name', { value: original.name });
         return f; // return new constructor (will override original)
     }
 
@@ -2175,4 +2175,4 @@
     Object.defineProperty(exports, '__esModule', { value: true });
 
 }));
-//# sourceMappingURL=mobx-orm.js.map
+//# sourceMappingURL=mobx-model-ui.js.map

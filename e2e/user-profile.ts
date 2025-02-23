@@ -1,5 +1,5 @@
-///<reference path="../dist/mobx-orm.d.ts" />
-import { Model, model, field, foreign, one, local } from '../dist/mobx-orm'
+///<reference path="../dist/mobx-model-ui.d.ts" />
+import { Model, model, field, foreign, one, local } from '../dist/mobx-model-ui'
 
 
 describe('User Profile.', () => {
