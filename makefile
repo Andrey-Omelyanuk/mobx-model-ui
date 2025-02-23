@@ -57,15 +57,15 @@ test-e2e:
 
 VERSION=0.0.1
 # publish:
-# 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "\
-# 		npm version \
+# 	docker run --rm -it --env-file .env -v .:/app $(PROJECT_NAME) sh -c "\
+# 		npm login && \
+# 		npm publish --access public \
 # 		"
 publish:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "\
-		npm config set email=${EMAIL} && \
-		npm config set //registry.npmjs.org/:_auth=${TOKEN} && \
-		npm publish --access public --new-version ${PROJECT_NAME} --non-interactive \
-	"
+	docker run --rm -it --env-file .env -v .:/app $(PROJECT_NAME) sh -c "\
+		npm config set //registry.npmjs.org/:_auth=$$NODE_AUTH_TOKEN && \
+		npm publish --access public \
+		"
 
 # ------------------------------------------------------------------------------
 

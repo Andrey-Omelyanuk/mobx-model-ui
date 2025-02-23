@@ -1,15 +1,22 @@
 {
   "name"        : "mobx-model-ui",
-  "version"     : "0.0.1",
+  "version"     : "0.0.2",
   "description" : "Data models and UI interactions based on MobX",
+  "keywords": [
+    "mobx", "model", "ui"
+  ],
   "license"     : "MIT",
   "author"      : "Andrey Omelyanuk",
   "repository"  : {
     "type"  : "git",
     "url"   : "https://github.com/Andrey-Omelyanuk/mobx-model-ui"
   },
+  "homepage": "https://github.com/Andrey-Omelyanuk/mobx-model-ui#readme",
+  "bugs": {
+    "url": "https://github.com/Andrey-Omelyanuk/mobx-model-ui/issues"
+  },
   "publishConfig": {
-    "registry"  : "https://npm.pkg.github.com"
+    "registry"  : "https://registry.npmjs.org/" 
   },
   "main"        : "dist/mobx-model-ui.js",
   "jsnext:main" : "dist/mobx-model-ui.es2015.js",
