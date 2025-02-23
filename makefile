@@ -1,36 +1,68 @@
-SHELL := /bin/bash
-mkfile_path := $(abspath $(lastword $(MAKEFILE_LIST)))
-current_dir := $(patsubst %/,%,$(dir $(mkfile_path)))
+PROJECT_NAME = mobx-model-ui
+NPM_PACKAGE_REGISTRY=https://registry.npmjs.org/
+ifneq (,$(wildcard .env))
+	include .env
+	export $(shell sed 's/=.*//' .env)
+endif
 
 help:
 	@echo "build            : Build the docker image." 
 	@echo "dev              : " 
-	@echo "stop             : " 
 	@echo "debug            : " 
-	@echo "test             : Run the tests." 
-	@echo "test-e2e         : Run the e2e tests."  
-	@echo "release          : Build the lib release." 
+	@echo "lint             : Run linter" 
+	@echo "test             : Run unit tests" 
+	@echo "test-e2e         : Run e2e tests"  
+	@echo "publish          : Manually publish"  
+	@echo "---------------------------------------------"  
+	@echo "release-build    : Build image    for release" 
+	@echo "release-lint     : Run linter     for release" 
+	@echo "release-test     : Run unit tests for release" 
+	@echo "release-test-e2e : Run e2e  tests for release" 
+	@echo "release-publish  : Publish        the release" 
+
+# ------------------------------------------------------------------------------
 
 build:
-	docker build -t mobx-orm .
+	docker build --target base -t $(PROJECT_NAME) .
 
 dev:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn dev"
-
-stop:
-	docker compose down
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn dev"
 
 # chrome://inspect/#devices
 debug:
-	docker run --rm -it -p 9229:9229 -v ${current_dir}:/app mobx-orm \
+	docker run --rm -it -p 9229:9229 -v .:/app $(PROJECT_NAME) \
 		yarn install && \
 		node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/*.spec.ts'
 
+lint:
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint"
+
 test:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn test"
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
 
 test-e2e:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn build && yarn e2e"
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
 
-release:
-	docker run --rm -it -v ${current_dir}:/app mobx-orm sh -c "yarn install && yarn build"
+publish:
+	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "npm view mobx-model-ui"
+
+# # Authenticate (if not already done)
+# yarn config set --global npmAuthToken YOUR_TOKEN
+# # Publish
+# yarn publish --access public
+# docker run --rm -it -v .:/app mobx-data sh -c "yarn publish"
+# docker run --rm mobx-data sh -c "yarn config set registry ${NPM_PACKAGE_REGISTRY:=https://registry.npmjs.org/}"
+# ------------------------------------------------------------------------------
+
+release-build:
+	docker build --target release -t $(PROJECT_NAME)-release .
+release-lint:
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn lint"
+release-test:
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn test"
+release-test-e2e:
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn e2e"
+release-publish:
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn config set registry ${NPM_PACKAGE_REGISTRY}"
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn config set -- '//repo.edtechworld.pl/api/packages/mobx-data/npm/:_authToken' '${TOKEN}'"
+	docker run --rm $(PROJECT_NAME)-release sh -c "yarn publish"

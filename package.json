@@ -1,28 +1,28 @@
 {
-  "name": "mobx-model-ui",
+  "name"        : "mobx-model-ui",
+  "version"     : "2.1.7",
   "description" : "Data models and UI interactions based on MobX",
-  "version": "2.1.7",
-  "license": "MIT",
-  "author": "Andrey Omelyanuk",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Andrey-Omelyanuk/mobx-model-ui"
+  "license"     : "MIT",
+  "author"      : "Andrey Omelyanuk",
+  "repository"  : {
+    "type"  : "git",
+    "url"   : "https://github.com/Andrey-Omelyanuk/mobx-model-ui"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
+    "registry"  : "https://npm.pkg.github.com"
   },
-  "main": "dist/mobx-orm.js",
-  "jsnext:main": "dist/mobx-orm.es2015.js",
-  "typings": "dist/mobx-orm.d.ts",
+  "main"        : "dist/mobx-orm.js",
+  "jsnext:main" : "dist/mobx-orm.es2015.js",
+  "typings"     : "dist/mobx-orm.d.ts",
   "dependencies": {
-    "lodash"  : "^4.17.21", 
-    "mobx"    : "~6.7.0"
+    "lodash"    : "^4.17.21", 
+    "mobx"      : "~6.7.0"
   },
   "scripts": {
-    "build": "rollup -c",
-    "dev": "jest --testMatch='**/src/**/*.spec.ts' --watchAll",
-    "test": "jest --testMatch='**/src/**/*.spec.ts' --coverage",
-    "e2e": "jest --testMatch='**/e2e/**/*.ts'"
+    "build" : "rollup -c",
+    "dev"   : "jest --testMatch='**/src/**/*.spec.ts' --watchAll",
+    "test"  : "jest --testMatch='**/src/**/*.spec.ts' --coverage",
+    "e2e"   : "jest --testMatch='**/e2e/**/*.ts'"
   },
   "devDependencies": {
     "typescript"              : "^5.6.3", 

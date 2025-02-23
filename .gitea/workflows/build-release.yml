@@ -1,0 +1,31 @@
+name: Build Release 
+on:
+  push:
+    branches:
+      - release
+
+jobs:
+  build-release: 
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: make release-build
+
+      - name: Linter 
+        run: make release-lint
+
+      - name: Unit tests
+        run: make release-test
+
+      - name: e2e tests
+        run: make release-test-e2e
+
+      - name: Publish release
+        run: make release-publish
+
+      # add tag to commit
+      # - name: Add tag
+      #   run: git tag -a v1.0.0 -m "Release v1.0.0"
+      #   run: git push origin v1.0.0

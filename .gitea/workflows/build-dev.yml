@@ -1,0 +1,23 @@
+name: Build Dev
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-dev:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: make release-build
+
+      - name: Linter 
+        run: make release-lint
+
+      - name: Unit tests
+        run: make release-test
+
+      - name: e2e tests
+        run: make release-test-e2e
