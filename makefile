@@ -51,15 +51,21 @@ test-e2e:
 # npm config set -- 'registry.npmjs.org/:_authToken=${TOKEN}' && \
 # npm login && 
 
-VERSION=0.0.1
-publish:
+# //registry.npmjs.org/:_auth=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
+# email=omelyanukandrey@gmail.com
+# always-auth=true
 
+VERSION=0.0.1
+# publish:
+# 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "\
+# 		npm version \
+# 		"
+publish:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "\
-      	echo _auth=${TOKEN} >> .npmrc && \
-        echo email=${EMAIL} >> .npmrc && \
-        echo always-auth=true >> .npmrc && \
-		yarn config fix && \
-		yarn publish --access public --new-version ${VERSION} --non-interactive"
+		npm config set email=${EMAIL} && \
+		npm config set //registry.npmjs.org/:_auth=${TOKEN} && \
+		npm publish --access public --new-version ${PROJECT_NAME} --non-interactive \
+	"
 
 # ------------------------------------------------------------------------------
 
