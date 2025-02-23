@@ -21,3 +21,10 @@ jobs:
 
       - name: e2e tests
         run: make release-test-e2e
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+      - run: npm ci
+      - run: npm publish --provenance --access public
