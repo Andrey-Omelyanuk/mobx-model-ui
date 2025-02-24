@@ -9,7 +9,7 @@
   "author"      : "Andrey Omelyanuk",
   "repository"  : {
     "type"  : "git",
-    "url"   : "https://github.com/Andrey-Omelyanuk/mobx-model-ui"
+    "url"   : "git@github.com:Andrey-Omelyanuk/mobx-model-ui.git"
   },
   "homepage": "https://github.com/Andrey-Omelyanuk/mobx-model-ui#readme",
   "bugs": {
