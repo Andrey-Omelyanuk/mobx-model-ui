@@ -1,30 +1,23 @@
 PROJECT_NAME = mobx-model-ui
-EMAIL=omelyanukandrey@gmail.com
-NPM_PACKAGE_REGISTRY=https://registry.npmjs.org/
 ifneq (,$(wildcard .env))
 	include .env
 	export $(shell sed 's/=.*//' .env)
 endif
 
 help:
-	@echo "build            : Build the docker image." 
-	@echo "dev              : " 
-	@echo "debug            : " 
+	@echo "build            : Build the docker image" 
+	@echo "dev              : Run tests in dev mode" 
+	@echo "debug            : Run tests in debug mode, it allow to debug the code by browser, open chrome://inspect/#devices in your browser" 
+	@echo "lint-fix         : Run linter and fix the issues"
 	@echo "lint             : Run linter" 
 	@echo "test             : Run unit tests" 
 	@echo "test-e2e         : Run e2e tests"  
-	@echo "publish          : Manually publish"  
-	@echo "---------------------------------------------"  
-	@echo "release-build    : Build image    for release" 
-	@echo "release-lint     : Run linter     for release" 
-	@echo "release-test     : Run unit tests for release" 
-	@echo "release-test-e2e : Run e2e  tests for release" 
-	@echo "release-publish  : Publish        the release" 
+	@echo "publish          : Publish the package to npm"  
 
 # ------------------------------------------------------------------------------
 
 build:
-	docker build --target base -t $(PROJECT_NAME) .
+	docker build -t $(PROJECT_NAME) .
 dev:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn dev"
 # chrome://inspect/#devices
@@ -40,44 +33,8 @@ test:
 	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
 test-e2e:
 	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
-
-# //registry.npmjs.org/:_authToken=your_auth_token
-# NPM_PACKAGE_REGISTRY=https://registry.npmjs.org/
-# npm config set registry https://gitea.example.com/api/packages/testuser/npm/
-# npm config set -- '//gitea.example.com/api/packages/testuser/npm/:_authToken' "personal_access_token"
-# yarn config set --global npmAuthToken ${TOKEN} &&
-# Use a .yarnrc file:
-# npm config set registry ${NPM_PACKAGE_REGISTRY} && \
-# npm config set -- 'registry.npmjs.org/:_authToken=${TOKEN}' && \
-# npm login && 
-
-# //registry.npmjs.org/:_auth=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
-# email=omelyanukandrey@gmail.com
-# always-auth=true
-
-VERSION=0.0.1
-# publish:
-# 	docker run --rm -it --env-file .env -v .:/app $(PROJECT_NAME) sh -c "\
-# 		npm login && \
-# 		npm publish --access public \
-# 		"
 publish:
 	docker run --rm -it --env-file .env -v .:/app $(PROJECT_NAME) sh -c "\
-		npm config set //registry.npmjs.org/:_auth=$$NODE_AUTH_TOKEN && \
+		npm config set //registry.npmjs.org/:_authToken=$$NODE_AUTH_TOKEN && \
 		npm publish --access public \
 		"
-
-# ------------------------------------------------------------------------------
-
-release-build:
-	docker build --target release -t $(PROJECT_NAME)-release .
-release-lint:
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn lint"
-release-test:
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn test"
-release-test-e2e:
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn e2e"
-release-publish:
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn config set registry ${NPM_PACKAGE_REGISTRY}"
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn config set -- '//repo.edtechworld.pl/api/packages/mobx-data/npm/:_authToken' '${TOKEN}'"
-	docker run --rm $(PROJECT_NAME)-release sh -c "yarn publish --new-version ${VERSION} --non-interactive"
