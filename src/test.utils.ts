@@ -1,4 +1,4 @@
-import { Cache, Adapter, Repository, Model ,field, model, Query, Filter } from '.'
+import { Cache, Adapter, Repository, Model ,field, model, Query, Filter, RequestConfig } from '.'
 
 export let obj_a = {id: 0, a: 5, b: 'a', c: true } 
 export let obj_b = {id: 1,       b: 'c', c: false} 
@@ -68,15 +68,17 @@ TestAdapter.prototype.getDistinct   = jest.fn(TestAdapter.prototype.getDistinct)
 export class  TestRepository<M extends Model> extends Repository<M> {
     constructor(model: any, adapter: any, cache?: any) { super(model, adapter, cache) }
 
-    async create(obj: M, controller?: AbortController) : Promise<M> { return super.create(obj, controller) }
-    async get(obj_id: number, controller?: AbortController): Promise<M> { return super.get(obj_id, controller) }
-    async update(obj: M, controller?: AbortController) : Promise<M> { return super.update(obj, controller) }
-    async delete(obj: M, controller?: AbortController) : Promise<M> { return super.delete(obj, controller) }
-    async action(obj: M, name: string, kwargs: Object, controller?: AbortController) : Promise<any> { return super.action(obj, name, kwargs, controller) }
-    async find(query: Query<M>, controller?: AbortController): Promise<M> { return super.find(query, controller) }
-    async load(query: Query<M>, controller?: AbortController):Promise<M[]> { return super.load(query, controller) }
-    async getTotalCount  (filter: Filter, controller?: AbortController): Promise<number> { return super.getTotalCount(filter, controller) }
-    async getDistinct    (filter: Filter, field: string, controller?: AbortController): Promise<any[]> { return super.getDistinct(filter, field, controller) }
+    async create(obj: M, config: RequestConfig): Promise<M> { return super.create(obj, config) }
+    async update(obj: M, config: RequestConfig): Promise<M> { return super.update(obj, config) }
+    async delete(obj: M, config: RequestConfig): Promise<M> { return super.delete(obj, config) }
+    async action(obj: M, name: string, kwargs: Object, config: RequestConfig): Promise<any> { return super.action(obj, name, kwargs, config) }
+    async get(obj_id: number, config: RequestConfig): Promise<M> { return super.get(obj_id, config) }
+
+    async find(query: Query<M>, config: RequestConfig): Promise<M> { return super.find(query, config) }
+    async load(query: Query<M>, config: RequestConfig): Promise<M[]> { return super.load(query, config) }
+
+    async getTotalCount  (filter: Filter, config: RequestConfig): Promise<number> { return super.getTotalCount(filter, config) }
+    async getDistinct    (filter: Filter, field: string, config: RequestConfig): Promise<any[]> { return super.getDistinct(filter, field, config) }
 
     static mockClear() {
         (TestRepository.prototype.create        as jest.Mock).mockClear(); 

@@ -4,7 +4,7 @@ import { ID } from './types'
 import { Cache } from './cache'
 import { Query } from './queries/query'
 import { Filter } from './filters'
-import { Adapter } from './adapters/adapter'
+import { Adapter, RequestConfig } from './adapters/adapter'
 
 
 export class  Repository<M extends Model> {
@@ -18,33 +18,33 @@ export class  Repository<M extends Model> {
         this.cache      = cache ? cache : new Cache<M>(model)
     }
 
-    async action(obj: M, name: string, kwargs: Object, controller?: AbortController) : Promise<any> {
-        return await this.adapter.action(obj.id, name, kwargs, controller)
+    async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+        return await this.adapter.action(obj.id, name, kwargs, config)
     }
 
-    async create(obj: M, controller?: AbortController) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.raw_data, controller)
+    async create(obj: M, config?: RequestConfig) : Promise<M> {
+        let raw_obj = await this.adapter.create(obj.raw_data, config)
         obj.updateFromRaw(raw_obj)  // update id and other fields
         obj.refreshInitData()       // backend can return default values and they should be in __init_data
         return obj
     }
 
-    async update(obj: M, controller?: AbortController) : Promise<M> {
-        let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, controller)
+    async update(obj: M, config?: RequestConfig) : Promise<M> {
+        let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, config)
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
         return obj
     }
 
-    async delete(obj: M, controller?: AbortController) : Promise<M> {
-        await this.adapter.delete(obj.id, controller)
+    async delete(obj: M, config?: RequestConfig) : Promise<M> {
+        await this.adapter.delete(obj.id, config)
         obj.destroy()
         this.cache.eject(obj)
         return obj
     }
 
-    async get(obj_id: ID, controller?: AbortController): Promise<M> {
-        let raw_obj = await this.adapter.get(obj_id, controller)
+    async get(obj_id: ID, config?: RequestConfig): Promise<M> {
+        let raw_obj = await this.adapter.get(obj_id, config)
         if (this.cache) {
             const obj = this.cache.update(raw_obj)
             obj.refreshInitData()
@@ -54,8 +54,8 @@ export class  Repository<M extends Model> {
     }
 
     /* Returns ONE object */
-    async find(query: Query<M>, controller?: AbortController): Promise<M> {
-        let raw_obj = await this.adapter.find(query, controller)
+    async find(query: Query<M>, config?: RequestConfig): Promise<M> {
+        let raw_obj = await this.adapter.find(query, config)
         if (this.cache) {
             const obj = this.cache.update(raw_obj)
             obj.refreshInitData()
@@ -65,8 +65,8 @@ export class  Repository<M extends Model> {
     }
 
     /* Returns MANY objects */
-    async load(query: Query<M>, controller?: AbortController):Promise<M[]> {
-        let raw_objs = await this.adapter.load(query, controller)
+    async load(query: Query<M>, config?: RequestConfig):Promise<M[]> {
+        let raw_objs = await this.adapter.load(query, config)
         let objs: M[] = []
         // it should invoke in one big action
         runInAction(() => {
@@ -86,11 +86,11 @@ export class  Repository<M extends Model> {
         return objs
     }
 
-    async getTotalCount  (filter: Filter, controller?: AbortController): Promise<number> {
-        return await this.adapter.getTotalCount(filter, controller)
+    async getTotalCount  (filter: Filter, config?: RequestConfig): Promise<number> {
+        return await this.adapter.getTotalCount(filter, config)
     }
-    async getDistinct    (filter: Filter, field: string, controller?: AbortController): Promise<any[]> {
-        return await this.adapter.getDistinct(filter, field, controller)
+    async getDistinct    (filter: Filter, field: string, config?: RequestConfig): Promise<any[]> {
+        return await this.adapter.getDistinct(filter, field, config)
     }
 }
 

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.0.2
+   * mobx-model-ui.js v0.0.3
    * Released under the MIT license.
    */
 
@@ -175,29 +175,29 @@
             this.adapter = adapter;
             this.cache = cache ? cache : new Cache(model);
         }
-        async action(obj, name, kwargs, controller) {
-            return await this.adapter.action(obj.id, name, kwargs, controller);
+        async action(obj, name, kwargs, config) {
+            return await this.adapter.action(obj.id, name, kwargs, config);
         }
-        async create(obj, controller) {
-            let raw_obj = await this.adapter.create(obj.raw_data, controller);
+        async create(obj, config) {
+            let raw_obj = await this.adapter.create(obj.raw_data, config);
             obj.updateFromRaw(raw_obj); // update id and other fields
             obj.refreshInitData(); // backend can return default values and they should be in __init_data
             return obj;
         }
-        async update(obj, controller) {
-            let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, controller);
+        async update(obj, config) {
+            let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, config);
             obj.updateFromRaw(raw_obj);
             obj.refreshInitData();
             return obj;
         }
-        async delete(obj, controller) {
-            await this.adapter.delete(obj.id, controller);
+        async delete(obj, config) {
+            await this.adapter.delete(obj.id, config);
             obj.destroy();
             this.cache.eject(obj);
             return obj;
         }
-        async get(obj_id, controller) {
-            let raw_obj = await this.adapter.get(obj_id, controller);
+        async get(obj_id, config) {
+            let raw_obj = await this.adapter.get(obj_id, config);
             if (this.cache) {
                 const obj = this.cache.update(raw_obj);
                 obj.refreshInitData();
@@ -206,8 +206,8 @@
             return new this.model(raw_obj);
         }
         /* Returns ONE object */
-        async find(query, controller) {
-            let raw_obj = await this.adapter.find(query, controller);
+        async find(query, config) {
+            let raw_obj = await this.adapter.find(query, config);
             if (this.cache) {
                 const obj = this.cache.update(raw_obj);
                 obj.refreshInitData();
@@ -216,8 +216,8 @@
             return new this.model(raw_obj);
         }
         /* Returns MANY objects */
-        async load(query, controller) {
-            let raw_objs = await this.adapter.load(query, controller);
+        async load(query, config) {
+            let raw_objs = await this.adapter.load(query, config);
             let objs = [];
             // it should invoke in one big action
             mobx.runInAction(() => {
@@ -236,11 +236,11 @@
             });
             return objs;
         }
-        async getTotalCount(filter, controller) {
-            return await this.adapter.getTotalCount(filter, controller);
+        async getTotalCount(filter, config) {
+            return await this.adapter.getTotalCount(filter, config);
         }
-        async getDistinct(filter, field, controller) {
-            return await this.adapter.getDistinct(filter, field, controller);
+        async getDistinct(filter, field, config) {
+            return await this.adapter.getDistinct(filter, field, config);
         }
     }
     // Model.repository is readonly, use decorator to customize repository 
@@ -972,7 +972,7 @@
             }
         }
         async __load() {
-            const objs = await this.repository.load(this, this.controller);
+            const objs = await this.repository.load(this, { controller: this.controller });
             mobx.runInAction(() => this.__items = objs);
         }
     }
@@ -1040,8 +1040,8 @@
         }
         async __load() {
             const [objs, total] = await Promise.all([
-                this.repository.load(this, this.controller),
-                this.repository.getTotalCount(this.filter, this.controller)
+                this.repository.load(this, { controller: this.controller }),
+                this.repository.getTotalCount(this.filter, { controller: this.controller })
             ]);
             mobx.runInAction(() => {
                 this.__items = objs;
@@ -1092,7 +1092,7 @@
                 this.controller.abort();
             this.controller = new AbortController();
             try {
-                await this.repository.load(this, this.controller);
+                await this.repository.load(this, { controller: this.controller });
                 // Query don't need to overide the __items,
                 // query's items should be get only from the cache
             }
@@ -1174,7 +1174,7 @@
             });
         }
         async __load() {
-            const objs = await this.repository.load(this, this.controller);
+            const objs = await this.repository.load(this, { controller: this.controller });
             mobx.runInAction(() => {
                 this.__items.push(...objs);
                 // total is not make sense for infinity queries
@@ -1203,7 +1203,7 @@
      */
     class QueryRaw extends Query {
         async __load() {
-            const objs = await this.repository.adapter.load(this, this.controller);
+            const objs = await this.repository.adapter.load(this, { controller: this.controller });
             mobx.runInAction(() => {
                 this.__items = objs;
             });
@@ -1237,7 +1237,7 @@
             this.field = field;
         }
         async __load() {
-            const objs = await this.repository.getDistinct(this.filter, this.field, this.controller);
+            const objs = await this.repository.getDistinct(this.filter, this.field, { controller: this.controller });
             mobx.runInAction(() => {
                 this.__items = objs;
             });
@@ -1923,6 +1923,9 @@
         };
     }
 
+    /**
+     * ConstantAdapter is a class that provides a way to use constant data as a data source.
+     */
     class ConstantAdapter extends Adapter {
         constructor(constant) {
             super();
@@ -1964,23 +1967,23 @@
         }
         getURLSearchParams() {
             return new URLSearchParams();
-            // throw new Error('ConstantAdapter.getURLSearchParams should not be used.')
         }
     }
     // model decorator
     function constant(constant) {
         return (cls) => {
+            // cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant)
             let repository = new Repository(cls, new ConstantAdapter(constant));
             cls.__proto__.repository = repository;
         };
     }
 
     class MockAdapter {
-        async action(obj_id, name, kwargs) { }
         async create(raw_data) { return raw_data; }
-        async get(obj_id) { return obj_id; }
         async update(obj_id, only_changed_raw_data) { return only_changed_raw_data; }
         async delete(obj_id) { }
+        async action(obj_id, name, kwargs) { }
+        async get(obj_id) { return obj_id; }
         async find(query) { return {}; }
         async load(query) { return []; }
         async getTotalCount(filter) { return 0; }

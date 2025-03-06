@@ -33,8 +33,8 @@ export class QueryPage<M extends Model> extends Query<M> {
 
     async __load() {
         const [objs, total] = await Promise.all([
-            this.repository.load(this, this.controller),
-            this.repository.getTotalCount(this.filter, this.controller)
+            this.repository.load(this, { controller: this.controller }),
+            this.repository.getTotalCount(this.filter, { controller: this.controller })
         ])
         runInAction(() => {
             this.__items = objs
