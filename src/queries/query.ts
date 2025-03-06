@@ -223,7 +223,7 @@ export class Query <M extends Model> {
     }
 
     protected async __load() {
-        const objs = await this.repository.load(this, this.controller)
+        const objs = await this.repository.load(this, { controller: this.controller })
         runInAction(() => this.__items = objs)
     }
 }

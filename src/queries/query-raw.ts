@@ -9,7 +9,7 @@ import { Model } from '../model'
 
 export class QueryRaw<M extends Model> extends Query<M> {
     async __load() {
-        const objs = await this.repository.adapter.load(this, this.controller)
+        const objs = await this.repository.adapter.load(this, { controller: this.controller })
         runInAction(() => {
             this.__items = objs
         })

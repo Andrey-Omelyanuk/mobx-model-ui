@@ -10,12 +10,14 @@ class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {
     async update() { return super.update() } 
     async delete() { return super.delete() } 
     // next methods just to avoid abstract class
-    async get    (obj_id: any, controller?: AbortController): Promise<any> { return 'get' }
-    async action (obj_id: any, name: string, kwargs: Object, controller?: AbortController) : Promise<any> { return 'action' }
-    async find(query: Query<M>, controller?: AbortController): Promise<any> { return 'find' }
-    async load(query: Query<M>, controller?: AbortController): Promise<any[]> { return [] }
-    async getTotalCount  (filter: Filter, controller?: AbortController): Promise<number> { return 0 }
-    async getDistinct    (filter: Filter, field: string, controller?: AbortController): Promise<any[]> { return [] }
+    async get    (obj_id: any): Promise<any> { return 'get' }
+    async action (obj_id: any, name: string, kwargs: Object) : Promise<any> { return 'action' }
+
+    async find(query: Query<M>): Promise<any> { return 'find' }
+    async load(query: Query<M>): Promise<any[]> { return [] }
+
+    async getTotalCount (filter: Filter): Promise<number> { return 0 }
+    async getDistinct   (filter: Filter, field: string): Promise<any[]> { return [] }
     getURLSearchParams(query: Query<M>): URLSearchParams { return new URLSearchParams() }
 }
 

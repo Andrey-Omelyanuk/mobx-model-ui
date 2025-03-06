@@ -3,6 +3,9 @@ import { Repository }  from '../repository'
 import { Adapter } from './adapter'
 
 
+/**
+ * ConstantAdapter is a class that provides a way to use constant data as a data source. 
+ */
 export class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[] 
 
@@ -50,13 +53,13 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
 
     getURLSearchParams(): URLSearchParams {
         return new URLSearchParams()
-        // throw new Error('ConstantAdapter.getURLSearchParams should not be used.')
     }
 }
 
 // model decorator
 export function constant (constant: any[]) {
     return (cls: any) => {
+        // cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant)
         let repository = new Repository(cls, new ConstantAdapter(constant)) 
         cls.__proto__.repository = repository
     }

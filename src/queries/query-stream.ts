@@ -19,7 +19,7 @@ export class QueryStream <M extends Model> extends Query<M> {
     }
 
     async __load() {
-        const objs = await this.repository.load(this, this.controller)
+        const objs = await this.repository.load(this, { controller: this.controller })
         runInAction(() => {
             this.__items.push(...objs)
             // total is not make sense for infinity queries

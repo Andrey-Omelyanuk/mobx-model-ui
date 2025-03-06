@@ -107,16 +107,24 @@ declare class AND_Filter extends ComboFilter {
 }
 declare function AND(...filters: Filter[]): Filter;
 
+/**
+ * Adapter is a class that provides a way to interact with the server or other data source.
+ * M is a model class that the adapter is responsible for.
+ */
+type RequestConfig = {
+    controller?: AbortController;
+    onUploadProgress?: (progressEvent: ProgressEvent) => void;
+};
 declare abstract class Adapter<M extends Model> {
-    abstract create(raw_data: any, controller?: AbortController): Promise<any>;
-    abstract get(obj_id: ID, controller?: AbortController): Promise<any>;
-    abstract update(obj_id: ID, only_changed_raw_data: any, controller?: AbortController): Promise<any>;
-    abstract delete(obj_id: ID, controller?: AbortController): Promise<void>;
-    abstract action(obj_id: ID, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
-    abstract find(query: Query<M>, controller?: AbortController): Promise<any>;
-    abstract load(query: Query<M>, controller?: AbortController): Promise<any[]>;
-    abstract getTotalCount(filter: Filter, controller?: AbortController): Promise<number>;
-    abstract getDistinct(filter: Filter, field: string, controller?: AbortController): Promise<any[]>;
+    abstract create(raw_data: any, config?: RequestConfig): Promise<any>;
+    abstract update(obj_id: ID, only_changed_raw_data: any, config?: RequestConfig): Promise<any>;
+    abstract delete(obj_id: ID, config?: RequestConfig): Promise<void>;
+    abstract action(obj_id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    abstract get(obj_id: ID, config?: RequestConfig): Promise<any>;
+    abstract find(query: Query<M>, config?: RequestConfig): Promise<any>;
+    abstract load(query: Query<M>, config?: RequestConfig): Promise<any[]>;
+    abstract getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
+    abstract getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
     abstract getURLSearchParams(query: Query<M>): URLSearchParams;
 }
 
@@ -125,15 +133,15 @@ declare class Repository<M extends Model> {
     readonly cache?: Cache<M>;
     readonly adapter: Adapter<M>;
     constructor(model: any, adapter: any, cache?: any);
-    action(obj: M, name: string, kwargs: Object, controller?: AbortController): Promise<any>;
-    create(obj: M, controller?: AbortController): Promise<M>;
-    update(obj: M, controller?: AbortController): Promise<M>;
-    delete(obj: M, controller?: AbortController): Promise<M>;
-    get(obj_id: ID, controller?: AbortController): Promise<M>;
-    find(query: Query<M>, controller?: AbortController): Promise<M>;
-    load(query: Query<M>, controller?: AbortController): Promise<M[]>;
-    getTotalCount(filter: Filter, controller?: AbortController): Promise<number>;
-    getDistinct(filter: Filter, field: string, controller?: AbortController): Promise<any[]>;
+    action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    create(obj: M, config?: RequestConfig): Promise<M>;
+    update(obj: M, config?: RequestConfig): Promise<M>;
+    delete(obj: M, config?: RequestConfig): Promise<M>;
+    get(obj_id: ID, config?: RequestConfig): Promise<M>;
+    find(query: Query<M>, config?: RequestConfig): Promise<M>;
+    load(query: Query<M>, config?: RequestConfig): Promise<M[]>;
+    getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
+    getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
 }
 declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
@@ -356,6 +364,9 @@ declare class LocalAdapter<M extends Model> implements Adapter<M> {
 }
 declare function local(): (cls: any) => void;
 
+/**
+ * ConstantAdapter is a class that provides a way to use constant data as a data source.
+ */
 declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[];
     constructor(constant: any);
@@ -373,11 +384,11 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
 declare function constant(constant: any[]): (cls: any) => void;
 
 declare class MockAdapter<M extends Model> implements Adapter<M> {
-    action(obj_id: number, name: string, kwargs: Object): Promise<any>;
     create(raw_data: any): Promise<any>;
-    get(obj_id: any): Promise<any>;
     update(obj_id: number, only_changed_raw_data: any): Promise<any>;
     delete(obj_id: number): Promise<void>;
+    action(obj_id: number, name: string, kwargs: Object): Promise<any>;
+    get(obj_id: any): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter: Filter): Promise<number>;
@@ -414,4 +425,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

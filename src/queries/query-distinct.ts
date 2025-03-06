@@ -11,7 +11,7 @@ export class QueryDistinct extends Query<any> {
     }
 
     async __load() {
-        const objs = await this.repository.getDistinct(this.filter, this.field, this.controller)
+        const objs = await this.repository.getDistinct(this.filter, this.field, { controller: this.controller })
         runInAction(() => {
             this.__items = objs
         })

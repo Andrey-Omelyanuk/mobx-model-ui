@@ -41,7 +41,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         if (this.controller) this.controller.abort()
         this.controller = new AbortController()
         try {
-            await this.repository.load(this, this.controller)
+            await this.repository.load(this, { controller: this.controller })
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         } catch (e) {
