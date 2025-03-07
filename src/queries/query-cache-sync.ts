@@ -15,7 +15,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
                 if (change.type == 'add') {
                     this.__watch_obj(change.newValue)
                 }
-                if (change.type == "delete") {
+                if (change.type == 'delete') {
                     let id = change.name
                     let obj = change.oldValue
 
@@ -49,7 +49,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         } 
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
-        await Promise.resolve();
+        await Promise.resolve()
         // await new Promise(resolve => setTimeout(resolve))
     }
 

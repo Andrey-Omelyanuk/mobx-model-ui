@@ -1,5 +1,5 @@
 // import { id } from "../fields"
-import { Model, model, models } from "."
+import { Model, model, models } from '.'
 
 
 describe('Model Decorator', () => {

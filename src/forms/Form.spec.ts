@@ -1,6 +1,6 @@
 import { runInAction } from 'mobx'
 import { Input, STRING, config } from '..'
-import { Form } from "./Form"
+import { Form } from './Form'
 
 describe('Form', () => {
 

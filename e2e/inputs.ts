@@ -1,4 +1,4 @@
-import { field, ILIKE, Input, Model, id, NUMBER, model, ORDER_BY, STRING, ARRAY, DESC } from "../dist/mobx-model-ui"
+import { field, ILIKE, Input, Model, id, NUMBER, model, ORDER_BY, STRING, ARRAY, DESC } from '../dist/mobx-model-ui'
 
 
 describe('Other tests: Inputs.', () => {

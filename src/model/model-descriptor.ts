@@ -58,7 +58,7 @@ export class ModelDescriptor<T extends Model> {
             if (id === undefined) return undefined
             ids.push(id)
         }
-        return ids.join("=")
+        return ids.join('=')
     }
     
     /**
@@ -72,7 +72,7 @@ export class ModelDescriptor<T extends Model> {
             if (value === undefined) return undefined
             ids.push(value)
         }
-        return ids.join("=")
+        return ids.join('=')
     }
 
     /**

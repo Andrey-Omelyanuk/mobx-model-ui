@@ -47,6 +47,6 @@ export default function model(constructor) {
     f.modelName = modelName
     f.__proto__ = constructor 
     f.prototype = constructor.prototype   // copy prototype so intanceof operator still works
-    Object.defineProperty(f, "name", { value: constructor.name });
+    Object.defineProperty(f, 'name', { value: constructor.name })
     return f                      // return new constructor (will override original)
 }

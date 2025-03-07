@@ -61,7 +61,7 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 
     async update (ids: ID[], only_changed_raw_data: any): Promise<any> {
         if (this.delay) await timeout(this.delay) 
-        const obj_id = ids.join("-")
+        const obj_id = ids.join('-')
         let raw_obj = local_store[this.store_name][obj_id] 
         for(let field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field]
@@ -71,7 +71,7 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 
     async delete (ids: ID[]): Promise<void> {
         if (this.delay) await timeout(this.delay) 
-        const obj_id = ids.join("-")
+        const obj_id = ids.join('-')
         delete local_store[this.store_name][obj_id]
     }
 

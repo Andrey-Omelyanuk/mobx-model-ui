@@ -1,4 +1,4 @@
-import { config, Input, STRING } from "../../"
+import { config, Input, STRING } from '../../'
 
 // jest.useFakeTimers()
 // Note: Input use syncURLHandler when we pass syncURL to constructor 
@@ -27,8 +27,8 @@ describe('syncURLHandler', () => {
         testInput.set(null)         ; expect(global.window.location.search).toBe('?test=null')
     })
     it('set undefined', async () => {
-        const testInput = new Input(STRING(), { syncURL: nameValue });
-                                    ; expect(global.window.location.search).toBe('')
+        const testInput = new Input(STRING(), { syncURL: nameValue })
+                                     expect(global.window.location.search).toBe('')
         testInput.set('test')       ; expect(global.window.location.search).toBe('?test=test')
         testInput.set(undefined)    ; expect(global.window.location.search).toBe('')
     })
@@ -36,7 +36,7 @@ describe('syncURLHandler', () => {
     it('react on url changes', async () => {
         // TODO: I cannot test it because 
         // window.addEventListener('popstate', callback) do not triggered
-        const testInput = new Input(STRING(), { syncURL: nameValue });
+        const testInput = new Input(STRING(), { syncURL: nameValue })
         const searchParams = new URLSearchParams()
                                                     ; expect(testInput.value).toBe('')
                                                     ; expect(global.window.location.search).toBe('')

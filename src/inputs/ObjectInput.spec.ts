@@ -54,8 +54,8 @@ describe('ObjectInput', () => {
         //   Use autoreset function. It will be invoked after options.isReady and set isNeedToUpdate = false.
         const options = TestModel.getQuery({})              ; expect(options.isReady).toBe(false);
         (options as any).__items = [{id: 10}, ]             ; expect(options.items).toEqual([{id: 10}])
-        Object.defineProperty(window, "location", {
-            value: { search: "?test=10" }
+        Object.defineProperty(window, 'location', {
+            value: { search: '?test=10' }
         })
 
         const input1 = new ObjectInput(NUMBER(), {

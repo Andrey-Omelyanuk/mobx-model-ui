@@ -24,7 +24,7 @@ export class TestCache<M extends Model> extends Cache<M> {
     static mockClear() {
         (TestCache.prototype.get    as jest.Mock).mockClear(); 
         (TestCache.prototype.inject as jest.Mock).mockClear(); 
-        (TestCache.prototype.eject  as jest.Mock).mockClear(); 
+        (TestCache.prototype.eject  as jest.Mock).mockClear() 
     }
 }
 TestCache.prototype.get     = jest.fn(TestCache.prototype.get)
@@ -58,7 +58,7 @@ export class TestAdapter<M extends Model> extends Adapter<M> {
         (TestAdapter.prototype.find          as jest.Mock).mockClear(); 
         (TestAdapter.prototype.load          as jest.Mock).mockClear(); 
         (TestAdapter.prototype.getTotalCount as jest.Mock).mockClear(); 
-        (TestAdapter.prototype.getDistinct   as jest.Mock).mockClear(); 
+        (TestAdapter.prototype.getDistinct   as jest.Mock).mockClear() 
     }
 }
 TestAdapter.prototype.create        = jest.fn(TestAdapter.prototype.create)
@@ -98,7 +98,7 @@ export class  TestRepository<M extends Model> extends Repository<M> {
         (TestRepository.prototype.find          as jest.Mock).mockClear(); 
         (TestRepository.prototype.load          as jest.Mock).mockClear(); 
         (TestRepository.prototype.getTotalCount as jest.Mock).mockClear(); 
-        (TestRepository.prototype.getDistinct   as jest.Mock).mockClear(); 
+        (TestRepository.prototype.getDistinct   as jest.Mock).mockClear() 
     }
 }
 TestRepository.prototype.create        = jest.fn(TestRepository.prototype.create)

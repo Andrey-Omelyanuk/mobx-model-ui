@@ -1,8 +1,8 @@
-import { runInAction } from "mobx"
-import { Model, model, models } from "../model"
-import { id } from "./id"
-import { field } from "./field"
-import { NUMBER, STRING } from "../types"
+import { runInAction } from 'mobx'
+import { Model, model, models } from '../model'
+import { id } from './id'
+import { field } from './field'
+import { NUMBER, STRING } from '../types'
 
 describe('Id field', () => {
     @model class TestModel extends Model {

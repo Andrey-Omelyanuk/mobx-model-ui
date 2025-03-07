@@ -1,4 +1,4 @@
-import { Input, STRING } from "../.."
+import { Input, STRING } from '../..'
 
 
 // Note: Input use syncLocalStorageHandler when we pass syncLocalStorage to constructor 
@@ -25,7 +25,7 @@ describe('syncLocalStorageHandler', () => {
         testInput.set(null)         ; expect(localStorage.getItem(nameValue)).toBe('null')
     })
     it('set undefined', async () => {
-        const testInput = new Input(STRING(), { syncLocalStorage: nameValue });
+        const testInput = new Input(STRING(), { syncLocalStorage: nameValue })
         testInput.set('test')       ; expect(nameValue in localStorage).toBe(true)
         testInput.set(undefined)    ; expect(nameValue in localStorage).toBe(false)
     })

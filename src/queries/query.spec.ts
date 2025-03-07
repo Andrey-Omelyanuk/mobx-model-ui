@@ -210,7 +210,7 @@ describe('Query', () => {
     describe('e2e', () => {
         it('NeedToUpdate', async () => {
             Object.defineProperty(window, 'location', {
-                value: { search: "?a-test=2" }
+                value: { search: '?a-test=2' }
             })
             const aData= [
                 { id: 1, },
@@ -227,7 +227,7 @@ describe('Query', () => {
             ]
             @constant(bData) @model class B extends Model {}
 
-            const aQuery = A.getQuery({ autoupdate: true });
+            const aQuery = A.getQuery({ autoupdate: true })
             const aInput = new ObjectInput(NUMBER(), {
                 syncURL     : 'a-test',
                 required    :true,

@@ -70,7 +70,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj)
                             if (i > -1)
-                                runInAction(() => { obj[field_name].splice(i, 1); })
+                                runInAction(() => { obj[field_name].splice(i, 1) })
                         } 
                         break
                 }

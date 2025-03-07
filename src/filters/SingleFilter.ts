@@ -30,7 +30,7 @@ export class SingleFilter extends Filter {
         return this.input.isReady
     }
 
-    get URLSearchParams(): URLSearchParams{
+    get URLSearchParams(): URLSearchParams {
         let search_params = new URLSearchParams()
         let value = this.input.toString()
         !this.input.isDisabled && value !== undefined && search_params.set(this.getURIField(this.field), value)
