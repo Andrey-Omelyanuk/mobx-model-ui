@@ -1,12 +1,16 @@
-import { Model, model, field, QueryCacheSync, LocalAdapter, local } from '..'
+import { Model, model, field, QueryCacheSync, LocalAdapter, local, id } from '..'
+import { BOOLEAN } from '../types/boolean'
+import { STRING } from '../types/string'
+import { NUMBER } from '../types/number'
 
 
 describe('QueryXCacheSync', () => {
     @local()
     @model class A extends Model {
-        @field   a !: number
-        @field   b !: string
-        @field   c !: boolean
+        @id(NUMBER())     id !: number
+        @field(NUMBER())   a !: number
+        @field(STRING())   b !: string
+        @field(BOOLEAN())   c !: boolean
     }
 
 

@@ -15,7 +15,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
                 if (change.type == 'add') {
                     this.__watch_obj(change.newValue)
                 }
-                if (change.type == 'delete') {
+                if (change.type == "delete") {
                     let id = change.name
                     let obj = change.oldValue
 
@@ -41,7 +41,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         if (this.controller) this.controller.abort()
         this.controller = new AbortController()
         try {
-            await this.repository.load(this, { controller: this.controller })
+            await this.repository.load(this, { controller:  this.controller })
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         } catch (e) {
@@ -49,14 +49,14 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         } 
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
-        await Promise.resolve()
+        await Promise.resolve();
         // await new Promise(resolve => setTimeout(resolve))
     }
 
     @computed
     get items() { 
         let __items = this.__items.map(x=>x) // copy __items (not deep)
-        if (this.orderBy.value && this.orderBy.value.size) {
+        if (this.orderBy.value && this.orderBy.value.length) {
             let compare = (a, b) => {
                 for(const [key, value] of this.orderBy.value) {
                     if (value === ASC) {

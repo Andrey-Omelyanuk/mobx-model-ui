@@ -1,27 +1,38 @@
-import { Model, model, field } from '../'
+import { Model, model, field, id, models } from '../'
+import { NUMBER } from '../types/number'
 
 
 describe('Field: field', () => {
 
+    afterEach(() => {
+        models.clear()
+    })
+
     it('declare field', async () => {
+        const type = NUMBER()
         @model class A extends Model {
-            @field a: number
+            @id(NUMBER()) id: number
+            @field(type) a: number
         }
-        expect(A.__fields['a'].decorator instanceof Function).toBeTruthy()
+        expect(A.getModelDescriptor().fields['a'].type).toBe(type)
     })
 
     it('declare multi fields', async () => {
+        const typeA = NUMBER()
+        const typeB = NUMBER()
         @model class A extends Model {
-            @field a: number
-            @field b: number
+            @id(NUMBER()) id: number
+            @field(typeA) a: number
+            @field(typeB) b: number
         }
-        expect(A.__fields['a'].decorator instanceof Function).toBeTruthy()
-        expect(A.__fields['b'].decorator instanceof Function).toBeTruthy()
+        expect(A.getModelDescriptor().fields['a'].type).toBe(typeA)
+        expect(A.getModelDescriptor().fields['b'].type).toBe(typeB)
     })
 
     it('create object', async () => {
         @model class A extends Model { 
-            @field a: number 
+            @id(NUMBER()) id: number
+            @field(NUMBER()) a: number 
         }
 
         let a = new A()
@@ -30,7 +41,8 @@ describe('Field: field', () => {
 
     it('create object with default id in class property', async () => {
         @model class A extends Model {
-            @field a: number = 1
+            @id(NUMBER()) id: number
+            @field(NUMBER()) a: number = 1
         }
 
         let a = new A()
@@ -39,7 +51,8 @@ describe('Field: field', () => {
 
     it('create object with value ', async () => {
         @model class A extends Model { 
-            @field a: number 
+            @id(NUMBER()) id: number
+            @field(NUMBER()) a: number 
         }
 
         let a = new A({a: 1})
@@ -48,7 +61,8 @@ describe('Field: field', () => {
 
     it('create object and set value ', async () => {
         @model class A extends Model { 
-            @field a: number 
+            @id(NUMBER()) id: number
+            @field(NUMBER()) a: number 
         }
         let a = new A()
 

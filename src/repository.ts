@@ -1,94 +1,146 @@
 import { runInAction } from 'mobx'
-import { Model } from './model'
+import { Model, ModelDescriptor } from './model'
 import { ID } from './types'
 import { Cache } from './cache'
 import { Query } from './queries/query'
 import { Filter } from './filters'
 import { Adapter, RequestConfig } from './adapters/adapter'
 
-
+/**
+ * 
+ */
 export class  Repository<M extends Model> {
-    readonly model      : any 
-    readonly cache     ?: Cache<M>
-    readonly adapter    : Adapter<M> 
+    // readonly modelDescriptor: ModelDescriptor<M>
+    // readonly cache: Cache<M>
+    // readonly adapter: Adapter<M> 
 
-    constructor(model: any, adapter: any, cache?: any) {
-        this.model      = model 
-        this.adapter    = adapter 
-        this.cache      = cache ? cache : new Cache<M>(model)
-    }
+    constructor(
+        readonly modelDescriptor: ModelDescriptor<M>,
+        public   adapter?: Adapter<M>,
+        readonly cache: Cache<M> = new Cache<M>(),
+    ) {}
+
+    /**
+     * 
+     * @param obj 
+     * @param name 
+     * @param kwargs 
+     * @param controller 
+     * @returns 
+     */
 
     async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
-        return await this.adapter.action(obj.id, name, kwargs, config)
+        const ids = this.modelDescriptor.getIds(obj)
+        return await this.adapter.action(ids, name, kwargs, config)
     }
 
+    /**
+     * 
+     * @param obj 
+     * @param controller 
+     * @returns 
+     */
     async create(obj: M, config?: RequestConfig) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.raw_data, config)
-        obj.updateFromRaw(raw_obj)  // update id and other fields
-        obj.refreshInitData()       // backend can return default values and they should be in __init_data
-        return obj
-    }
-
-    async update(obj: M, config?: RequestConfig) : Promise<M> {
-        let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, config)
+        let raw_obj = await this.adapter.create(obj.rawData, config)
+        const rawObjID = this.modelDescriptor.getID(raw_obj)
+        const cachedObj = this.cache.get(rawObjID)
+        if (cachedObj) obj = cachedObj
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
         return obj
     }
 
-    async delete(obj: M, config?: RequestConfig) : Promise<M> {
-        await this.adapter.delete(obj.id, config)
+    /**
+     * 
+     * @param obj 
+     * @param controller 
+     */
+    async update(obj: M, config?: RequestConfig) : Promise<void> {
+        const ids = this.modelDescriptor.getIds(obj)
+        let raw_obj = await this.adapter.update(ids, obj.only_changed_raw_data, config)
+        obj.updateFromRaw(raw_obj)
+        obj.refreshInitData()
+    }
+
+    /**
+     * 
+     * @param obj 
+     * @param controller 
+     */
+    async delete(obj: M, config?: RequestConfig) : Promise<void> {
+        const ids = this.modelDescriptor.getIds(obj)
+        await this.adapter.delete(ids, config)
         obj.destroy()
-        this.cache.eject(obj)
-        return obj
     }
 
-    async get(obj_id: ID, config?: RequestConfig): Promise<M> {
-        let raw_obj = await this.adapter.get(obj_id, config)
-        if (this.cache) {
-            const obj = this.cache.update(raw_obj)
-            obj.refreshInitData()
-            return obj
+    updateCachedObject(rawObj: Object) : M | undefined {
+        const rawObjID = this.modelDescriptor.getID(rawObj)
+        const cachedObj = this.cache.get(rawObjID)
+        if (cachedObj) {
+            cachedObj.updateFromRaw(rawObj)
+            cachedObj.refreshInitData()
+            return cachedObj
         } 
-        return new this.model(raw_obj) 
     }
 
-    /* Returns ONE object */
+    /**
+     * 
+     * @param ids 
+     * @param controller 
+     * @returns 
+     */
+    async get(ids: ID[], config?: RequestConfig): Promise<M> {
+        let raw_obj = await this.adapter.get(ids, config)
+        const cachedObj = this.updateCachedObject(raw_obj)
+        return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj) 
+    }
+
+    /**
+     * Returns ONE object 
+     * @param query 
+     * @param controller 
+     * @returns 
+     */
     async find(query: Query<M>, config?: RequestConfig): Promise<M> {
         let raw_obj = await this.adapter.find(query, config)
-        if (this.cache) {
-            const obj = this.cache.update(raw_obj)
-            obj.refreshInitData()
-            return obj
-        } 
-        return new this.model(raw_obj) 
+        const cachedObj = this.updateCachedObject(raw_obj)
+        return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj) 
     }
 
-    /* Returns MANY objects */
+    /**
+     * Returns MANY objects 
+     * @param query 
+     * @param controller 
+     * @returns 
+     */
     async load(query: Query<M>, config?: RequestConfig):Promise<M[]> {
         let raw_objs = await this.adapter.load(query, config)
         let objs: M[] = []
-        // it should invoke in one big action
         runInAction(() => {
-            if (this.cache) {
-                for (let raw_obj of raw_objs) {
-                    const obj = this.cache.update(raw_obj)
-                    obj.refreshInitData()
-                    objs.push(obj)
-                }
-            } 
-            else {
-                for (let raw_obj of raw_objs) {
-                    objs.push(new this.model(raw_obj))
-                }
+            for (const raw_obj of raw_objs) {
+                const cachedObj = this.updateCachedObject(raw_obj)
+                objs.push(cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj))
             }
         })
         return objs
     }
 
+    /**
+     * 
+     * @param filter 
+     * @param controller 
+     * @returns 
+     */
     async getTotalCount  (filter: Filter, config?: RequestConfig): Promise<number> {
         return await this.adapter.getTotalCount(filter, config)
     }
+    /**
+     * 
+     * @param filter 
+     * @param field 
+     * @param controller 
+     * @returns 
+     */
     async getDistinct    (filter: Filter, field: string, config?: RequestConfig): Promise<any[]> {
         return await this.adapter.getDistinct(filter, field, config)
     }

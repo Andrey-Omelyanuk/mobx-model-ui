@@ -1,14 +1,24 @@
 import { extendObservable } from 'mobx'
+import { TypeDescriptor } from '../types/type'
+import { models } from '../model'
 
 
-export function field_field(obj, field_name) {
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: obj[field_name] })
-}
+/**
+ * Decorator for fields 
+ */
+export function field<T>(typeDescriptor?: TypeDescriptor<T>, observable: boolean = true) {
+    return (cls: any, fieldName: string) => {
+        const modelName = cls.constructor.name
+        if (!models.has(modelName))
+            throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`)
 
-export function field(cls, field_name: string) {
-    let model = cls.constructor
-    if (model.__fields === undefined) model.__fields = {}
-
-    model.__fields[field_name] = { decorator: field_field }  // register field 
+        let modelDescription = models.get(modelName)
+        modelDescription.fields[fieldName] = {
+            decorator: (obj: T) => {
+                if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })
+            },
+            type: typeDescriptor,
+            settings: {}
+        } 
+    }
 }

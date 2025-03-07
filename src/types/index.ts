@@ -10,8 +10,3 @@ export * from './order-by'
 
 // only this type support any id field
 export type ID = string | number
-
-// DEPRECATED
-export const ASC = true 
-export const DESC = false 
-export type ORDER_BY = Map<string, boolean>

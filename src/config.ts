@@ -1,7 +1,7 @@
 // TODO: remove dependency of lodash 
 import _ from 'lodash'
 
-// Global config of Mobx-Model-UI
+// Global config of Mobx-ORM
 export const config = {
     DEFAULT_PAGE_SIZE   : 50,
     AUTO_UPDATE_DELAY   : 100,  // ms
