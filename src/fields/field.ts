@@ -17,6 +17,7 @@ export function field<T>(typeDescriptor?: TypeDescriptor<T>, observable: boolean
             decorator: (obj: T) => {
                 if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })
             },
+            disposers: [],
             type: typeDescriptor,
             settings: {}
         } 

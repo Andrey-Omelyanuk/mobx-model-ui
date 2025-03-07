@@ -1315,6 +1315,20 @@
      * It's a singleton.
      */
     const models = new Map();
+    function clearModels() {
+        for (let [modelName, modelDescriptor] of models) {
+            for (let fieldName in modelDescriptor.ids) {
+                modelDescriptor.ids[fieldName].disposers.forEach(disposer => disposer());
+            }
+            for (let fieldName in modelDescriptor.fields) {
+                modelDescriptor.fields[fieldName].disposers.forEach(disposer => disposer());
+            }
+            for (let fieldName in modelDescriptor.relations) {
+                modelDescriptor.relations[fieldName].disposers.forEach(disposer => disposer());
+            }
+        }
+        models.clear();
+    }
 
     class Model {
         /**
@@ -1615,6 +1629,12 @@
                 writable: true,
                 value: void 0
             });
+            Object.defineProperty(this, "disposers", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: []
+            });
             Object.defineProperty(this, "type", {
                 enumerable: true,
                 configurable: true,
@@ -1746,6 +1766,7 @@
                     if (observable)
                         mobx.extendObservable(obj, { [fieldName]: obj[fieldName] });
                 },
+                disposers: [],
                 type: typeDescriptor,
                 settings: {}
             };
@@ -1793,6 +1814,7 @@
                     // update foreign field
                     mobx.action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true }));
                 },
+                disposers: [],
                 settings: { foreign_model, foreign_ids }
             };
         };
@@ -1808,15 +1830,26 @@
             if (!modelDescription)
                 throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
             remote_foreign_ids = remote_foreign_ids !== null && remote_foreign_ids !== void 0 ? remote_foreign_ids : [`${modelName.toLowerCase()}_id`];
-            modelDescription.relations[field_name] = {
-                decorator: (obj) => {
-                    mobx.extendObservable(obj, { [field_name]: [] });
-                },
-                settings: { remote_model, remote_foreign_ids }
-            };
             const remoteModelDescriptor = remote_model.getModelDescriptor();
             const disposer_name = `MO: One - update - ${modelName}.${field_name}`;
-            mobx.observe(remoteModelDescriptor.defaultRepository.cache.store, (change) => {
+            modelDescription.relations[field_name] = {
+                decorator: (obj) => {
+                    let foreignObj = undefined;
+                    for (let [_, cacheObj] of remoteModelDescriptor.defaultRepository.cache.store) {
+                        const values = remote_foreign_ids.map(id => cacheObj[id]);
+                        const ID = modelDescription.getIDByValues(values);
+                        if (obj.ID === ID && ID !== undefined) {
+                            foreignObj = cacheObj;
+                            break;
+                        }
+                    }
+                    mobx.extendObservable(obj, { [field_name]: foreignObj });
+                },
+                disposers: [],
+                settings: { remote_model, remote_foreign_ids }
+            };
+            modelDescription.relations[field_name].disposers.push(mobx.observe(remoteModelDescriptor.defaultRepository.cache.store, (change) => {
+                debugger;
                 let remote_obj;
                 switch (change.type) {
                     case 'add':
@@ -1848,7 +1881,7 @@
                             mobx.runInAction(() => { obj[field_name] = undefined; });
                         break;
                 }
-            });
+            }));
         };
     }
 
@@ -1870,12 +1903,13 @@
                 decorator: (obj) => {
                     mobx.extendObservable(obj, { [field_name]: [] });
                 },
+                disposers: [],
                 settings: { remote_model, remote_foreign_ids }
             };
             const remoteModelDescriptor = remote_model.getModelDescriptor();
             const disposer_name = `MO: Many - update - ${modelName}.${field_name}`;
             // watch for remote object in the cache 
-            mobx.observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change) => {
+            modelDescription.relations[field_name].disposers.push(mobx.observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change) => {
                 let remote_obj;
                 switch (remote_change.type) {
                     case 'add':
@@ -1913,7 +1947,7 @@
                         }
                         break;
                 }
-            });
+            }));
         };
     }
 
@@ -1953,6 +1987,7 @@
                             modelDescription.defaultRepository.cache.inject(obj);
                     }));
                 },
+                disposers: [],
                 type,
                 settings: {}
             };
@@ -2473,6 +2508,7 @@
     exports.StringDescriptor = StringDescriptor;
     exports.TypeDescriptor = TypeDescriptor;
     exports.autoResetId = autoResetId;
+    exports.clearModels = clearModels;
     exports.config = config;
     exports.constant = constant;
     exports.field = field;

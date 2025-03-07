@@ -1308,6 +1308,20 @@ class QueryDistinct extends Query {
  * It's a singleton.
  */
 const models = new Map();
+function clearModels() {
+    for (let [modelName, modelDescriptor] of models) {
+        for (let fieldName in modelDescriptor.ids) {
+            modelDescriptor.ids[fieldName].disposers.forEach(disposer => disposer());
+        }
+        for (let fieldName in modelDescriptor.fields) {
+            modelDescriptor.fields[fieldName].disposers.forEach(disposer => disposer());
+        }
+        for (let fieldName in modelDescriptor.relations) {
+            modelDescriptor.relations[fieldName].disposers.forEach(disposer => disposer());
+        }
+    }
+    models.clear();
+}
 
 class Model {
     /**
@@ -1608,6 +1622,12 @@ class ModelFieldDescriptor {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "disposers", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: []
+        });
         Object.defineProperty(this, "type", {
             enumerable: true,
             configurable: true,
@@ -1739,6 +1759,7 @@ function field(typeDescriptor, observable = true) {
                 if (observable)
                     extendObservable(obj, { [fieldName]: obj[fieldName] });
             },
+            disposers: [],
             type: typeDescriptor,
             settings: {}
         };
@@ -1786,6 +1807,7 @@ function foreign(foreign_model, foreign_ids) {
                 // update foreign field
                 action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true }));
             },
+            disposers: [],
             settings: { foreign_model, foreign_ids }
         };
     };
@@ -1801,15 +1823,26 @@ function one(remote_model, remote_foreign_ids) {
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         remote_foreign_ids = remote_foreign_ids !== null && remote_foreign_ids !== void 0 ? remote_foreign_ids : [`${modelName.toLowerCase()}_id`];
-        modelDescription.relations[field_name] = {
-            decorator: (obj) => {
-                extendObservable(obj, { [field_name]: [] });
-            },
-            settings: { remote_model, remote_foreign_ids }
-        };
         const remoteModelDescriptor = remote_model.getModelDescriptor();
         const disposer_name = `MO: One - update - ${modelName}.${field_name}`;
-        observe(remoteModelDescriptor.defaultRepository.cache.store, (change) => {
+        modelDescription.relations[field_name] = {
+            decorator: (obj) => {
+                let foreignObj = undefined;
+                for (let [_, cacheObj] of remoteModelDescriptor.defaultRepository.cache.store) {
+                    const values = remote_foreign_ids.map(id => cacheObj[id]);
+                    const ID = modelDescription.getIDByValues(values);
+                    if (obj.ID === ID && ID !== undefined) {
+                        foreignObj = cacheObj;
+                        break;
+                    }
+                }
+                extendObservable(obj, { [field_name]: foreignObj });
+            },
+            disposers: [],
+            settings: { remote_model, remote_foreign_ids }
+        };
+        modelDescription.relations[field_name].disposers.push(observe(remoteModelDescriptor.defaultRepository.cache.store, (change) => {
+            debugger;
             let remote_obj;
             switch (change.type) {
                 case 'add':
@@ -1841,7 +1874,7 @@ function one(remote_model, remote_foreign_ids) {
                         runInAction(() => { obj[field_name] = undefined; });
                     break;
             }
-        });
+        }));
     };
 }
 
@@ -1863,12 +1896,13 @@ function many(remote_model, remote_foreign_ids) {
             decorator: (obj) => {
                 extendObservable(obj, { [field_name]: [] });
             },
+            disposers: [],
             settings: { remote_model, remote_foreign_ids }
         };
         const remoteModelDescriptor = remote_model.getModelDescriptor();
         const disposer_name = `MO: Many - update - ${modelName}.${field_name}`;
         // watch for remote object in the cache 
-        observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change) => {
+        modelDescription.relations[field_name].disposers.push(observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change) => {
             let remote_obj;
             switch (remote_change.type) {
                 case 'add':
@@ -1906,7 +1940,7 @@ function many(remote_model, remote_foreign_ids) {
                     }
                     break;
             }
-        });
+        }));
     };
 }
 
@@ -1946,6 +1980,7 @@ function id(typeDescriptor, observable = true) {
                         modelDescription.defaultRepository.cache.inject(obj);
                 }));
             },
+            disposers: [],
             type,
             settings: {}
         };
@@ -2412,5 +2447,5 @@ class ObjectForm extends Form {
     }
 }
 
-export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, config, constant, field, foreign, id, local, local_store, many, model, models, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map

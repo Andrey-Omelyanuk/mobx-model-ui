@@ -45,6 +45,7 @@ export function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, obser
                     })
                 )
             },
+            disposers: [],
             type,
             settings: {}
         } 

@@ -45,6 +45,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_ids?: strin
                     {fireImmediately: true}
                 ))
             },
+            disposers: [],
             settings: { foreign_model, foreign_ids }
         } 
     }

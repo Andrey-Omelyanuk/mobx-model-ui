@@ -7,6 +7,7 @@ import Model from './model'
  */
 export class ModelFieldDescriptor<T, F> {
     decorator   : (obj: T) => void
+    disposers   : (()=>void)[] = []
     type       ?: TypeDescriptor<F>
     settings   ?: any
 }

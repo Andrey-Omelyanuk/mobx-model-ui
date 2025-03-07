@@ -20,6 +20,7 @@ describe('Field: foreign', () => {
             }
             expect(B.getModelDescriptor().relations['a']).toEqual({
                 decorator: expect.any(Function),
+                disposers: [],
                 settings: {
                     foreign_model: A,
                     foreign_ids: ['a_id']
@@ -38,6 +39,7 @@ describe('Field: foreign', () => {
             }
             expect(B.getModelDescriptor().relations['a']).toEqual({
                 decorator: expect.any(Function),
+                disposers: [],
                 settings: {
                     foreign_model: A,
                     foreign_ids: ['a_id']
@@ -59,6 +61,7 @@ describe('Field: foreign', () => {
             foreign(B)(A, 'b') 
             expect(A.getModelDescriptor().relations['b']).toEqual({
                 decorator: expect.any(Function),
+                disposers: [],
                 settings: {
                     foreign_model: B,
                     foreign_ids: ['b_id']
@@ -66,6 +69,7 @@ describe('Field: foreign', () => {
             })
             expect(B.getModelDescriptor().relations['a']).toEqual({
                 decorator: expect.any(Function),
+                disposers: [],
                 settings: {
                     foreign_model: A,
                     foreign_ids: ['a_id']

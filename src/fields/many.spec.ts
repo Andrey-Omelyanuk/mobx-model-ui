@@ -22,6 +22,8 @@ describe('Field: Many', () => {
             many(B, ['a_id'])(A, 'bs')
             expect(A.getModelDescriptor().relations['bs']).toEqual({
                 decorator: expect.any(Function),
+                // array with one function inside
+                disposers: [expect.any(Function)],
                 settings: {
                     remote_model: B,
                     remote_foreign_ids: ['a_id']
@@ -41,6 +43,8 @@ describe('Field: Many', () => {
             many(B)(A, 'bs')
             expect(A.getModelDescriptor().relations['bs']).toEqual({
                 decorator: expect.any(Function),
+                // array with one function inside
+                disposers: [expect.any(Function)],
                 settings: {
                     remote_model: B,
                     remote_foreign_ids: ['a_id']
@@ -64,6 +68,8 @@ describe('Field: Many', () => {
 
             expect(A.getModelDescriptor().relations['bs']).toEqual({
                 decorator: expect.any(Function),
+                // array with one function inside
+                disposers: [expect.any(Function)],
                 settings: {
                     remote_model: B,
                     remote_foreign_ids: ['a_id']
@@ -71,6 +77,8 @@ describe('Field: Many', () => {
             })
             expect(B.getModelDescriptor().relations['as']).toEqual({
                 decorator: expect.any(Function),
+                // array with one function inside
+                disposers: [expect.any(Function)],
                 settings: {
                     remote_model: A,
                     remote_foreign_ids: ['b_id']
