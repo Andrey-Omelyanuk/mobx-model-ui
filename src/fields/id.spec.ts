@@ -2,38 +2,51 @@ import { runInAction } from "mobx"
 import { Model, model, models } from "../model"
 import { id } from "./id"
 import { field } from "./field"
-
+import { NUMBER, STRING } from "../types"
 
 describe('Id field', () => {
+    @model class TestModel extends Model {
+        @id(NUMBER())       id      : number
+        @field(STRING())    name    : string
+    }
+
+    beforeEach(() => {
+        TestModel.getModelDescriptor().defaultRepository.cache.clear() 
+    })
 
     afterEach(async () => {
-        models.clear()
         jest.clearAllMocks()
     })
 
-    it('Set id when id not exist yet and unset it than.', async () => {
-        // @model({id: id()})
-        // class A extends Model { id: number }
-
-        // let a = new A()
-        // runInAction(() => { a.id = 1 })
-        // expect(a.modelDescription.repository.cache.store.has(a.id)).toBe(true)
-        // expect(a.modelDescription.repository.cache.store.get(a.id)).toBe(a)
-        // runInAction(() => { a.id = undefined })
-        // expect(a.modelDescription.repository.cache.store.has(a.id)).toBe(false)
+    it('should register model with id field', () => {
+        const modelDesc = models.get('TestModel')
+        expect(modelDesc).toBeDefined()
+        expect(modelDesc.ids['id']).toBeDefined()
     })
 
-    // it('Error: try to change id', async () => {
-    //     @model({id: id(), a: field() })
-    //     class A extends Model {
-    //         id: number
-    //          a: number
-    //     }
-    //     let a = new A({id: 1, a: 1})
-    //     expect(a.id).toBe(1)
-    //     runInAction(() => { 
-    //         expect(() => { a.id = 2 })
-    //             .toThrow(new Error(`You cannot change id field: 1 to 2`))
-    //     })
-    // })
+    it('should create model instance with id', () => {
+        const obj = new TestModel()
+        obj.id = 1
+        expect(obj.id).toBe(1)
+        
+        const cachedObj = models.get('TestModel').defaultRepository.cache.get('1')
+        expect(cachedObj).toBe(obj)
+    })
+
+    it('should throw when trying to change id', () => {
+        const obj = new TestModel({ id: 1 })
+        
+        expect(() => {
+            runInAction(() => obj.id = 2 )
+        }).toThrow()
+    })
+
+    it('should eject model from cache when id is set to undefined', () => {
+        const obj = new TestModel({ id: 1 })
+        const modelDesc = models.get('TestModel')
+        const spy = jest.spyOn(modelDesc.defaultRepository.cache, 'eject')
+        
+        runInAction(() => obj.id = undefined)
+        expect(spy).toHaveBeenCalledWith(obj)
+    })
 })
