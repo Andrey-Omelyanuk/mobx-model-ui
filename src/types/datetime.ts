@@ -1,4 +1,4 @@
-import { DateDescriptor, DateDescriptorProps } from "./date"
+import { DateDescriptor, DateDescriptorProps } from './date'
 
 
 

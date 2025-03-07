@@ -1,5 +1,4 @@
-import { RequestConfig } from "dist/mobx-model-ui"
-import { Cache, Adapter, Repository, Model , Query, Filter, ID } from "."
+import { Cache, Adapter, Repository, Model , Query, Filter, ID, RequestConfig } from '.'
 
 /**
  * Data set for testing.

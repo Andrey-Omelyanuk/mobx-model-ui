@@ -25,5 +25,5 @@ export function waitIsFalse(obj: any, field: string) : Promise<Boolean> {
 }
 
 export function timeout(ms: number) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => setTimeout(resolve, ms))
 }

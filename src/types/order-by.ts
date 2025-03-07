@@ -1,10 +1,10 @@
-import { TypeDescriptor } from "./type"
+import { TypeDescriptor } from './type'
 
 
 export const ASC = true 
 export const DESC = false 
 
-export class OrderByDescriptor extends TypeDescriptor<[string, boolean]>{
+export class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
     toString(value: [string, boolean]): string {
         if (!value || !value[0]) return undefined
         return value[1] ? value[0] : '-' + value[0]

@@ -1,4 +1,4 @@
-import { TypeDescriptor, TypeDescriptorProps } from "./type"
+import { TypeDescriptor, TypeDescriptorProps } from './type'
 
 
 export interface NumberDescriptorProps extends TypeDescriptorProps {

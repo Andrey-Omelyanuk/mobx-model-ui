@@ -1,9 +1,9 @@
-import { TypeDescriptor, TypeDescriptorProps } from "./type"
+import { TypeDescriptor, TypeDescriptorProps } from './type'
 
 export interface BooleanDescriptorProps extends TypeDescriptorProps {}
 
 
-export class BooleanDescriptor extends TypeDescriptor<boolean>{
+export class BooleanDescriptor extends TypeDescriptor<boolean> {
     constructor(props?: BooleanDescriptorProps) {
         super()
         this.config = props

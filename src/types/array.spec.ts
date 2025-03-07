@@ -16,7 +16,7 @@ describe('ArrayDescriptor', () => {
         it('["a", "b", "c"] => "a,b,c"' , () => { expect(descStr.toString(['a', 'b', 'c'])).toBe('a,b,c') })
         it('[1, 2, 3] => "1,2,3"'       , () => { expect(descNum.toString([1, 2, 3])).toBe('1,2,3') })
         it('[["a", ASC], ["b", DESC]] => "a,-b"',
-            () => { expect(descOrder.toString([["a", ASC], ["b", DESC]])).toBe('a,-b') })
+            () => { expect(descOrder.toString([['a', ASC], ['b', DESC]])).toBe('a,-b') })
     })
 
     describe('fromString', () => {
@@ -27,7 +27,7 @@ describe('ArrayDescriptor', () => {
         it('"a,b,c" => ["a", "b", "c"]' , () => { expect(descStr.fromString('a,b,c')).toEqual(['a','b','c']) })
         it('"1,2,3" => [1, 2, 3]'       , () => { expect(descNum.fromString('1,2,3')).toEqual([1, 2, 3]) })
         it('"a,-b" => [["a", ASC], ["b", DESC]]',
-            () => { expect(descOrder.fromString('a,-b')).toEqual([["a", ASC], ["b", DESC]]) })
+            () => { expect(descOrder.fromString('a,-b')).toEqual([['a', ASC], ['b', DESC]]) })
     })
 
     describe('constructor', () => {

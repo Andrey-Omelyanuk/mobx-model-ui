@@ -144,7 +144,7 @@ describe('Query', () => {
                 }
             }
 
-            const repository = new Repository<A>(new ModelDescriptor((()=>{}) as any), new ErrorAdapter<A>())
+            const repository = new Repository<A>(new ModelDescriptor((() => {}) as any), new ErrorAdapter<A>())
             const query = new Query<A>({repository: repository})
             await query.load()
             expect(query.error).toBe(undefined)
@@ -209,7 +209,7 @@ describe('Query', () => {
 
     describe('e2e', () => {
         it('NeedToUpdate', async () => {
-            Object.defineProperty(window, "location", {
+            Object.defineProperty(window, 'location', {
                 value: { search: "?a-test=2" }
             })
             const aData= [
