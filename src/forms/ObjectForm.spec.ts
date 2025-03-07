@@ -1,15 +1,16 @@
-import { model, Model, local, Input, NUMBER, STRING, ObjectForm } from '..'
+import { model, Model, local, Input, NUMBER, STRING, ObjectForm, id } from '..'
 
 describe('ObjectForm', () => {
 
     @local()
     @model class A extends Model {
+        @id(NUMBER()) id: number
         a: string
         b: number
     }
 
     afterEach(async () => {
-        A.repository.cache.clear() 
+        A.getModelDescriptor().defaultRepository.cache.clear() 
         jest.clearAllMocks()
     })
 

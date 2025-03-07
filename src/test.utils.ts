@@ -82,7 +82,7 @@ export class  TestRepository<M extends Model> extends Repository<M> {
 
     async get(ids: ID[], config?: RequestConfig): Promise<M> { return super.get(ids) }
     async create(obj: M, config?: RequestConfig) : Promise<M> { return super.create(obj) }
-    async update(obj: M, config?: RequestConfig) : Promise<void> { return super.update(obj) }
+    async update(obj: M, config?: RequestConfig) : Promise<M> { return super.update(obj) }
     async delete(obj: M, config?: RequestConfig) : Promise<void> { return super.delete(obj) }
     async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> { return super.action(obj, name, kwargs) }
     async find(query: Query<M>, config?: RequestConfig): Promise<M> { return super.find(query) }

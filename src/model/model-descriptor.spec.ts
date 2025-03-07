@@ -1,3 +1,5 @@
+import { id } from '../fields'
+import { NUMBER } from '../types'
 import { Model, ModelDescriptor, model, models } from '.'
 
 
@@ -10,9 +12,11 @@ describe('Model Descriptor', () => {
 
     describe('constructor', () => {
         it('default values', () => {
-            @model class A extends Model { }     
+            @model class A extends Model {
+                @id(NUMBER()) id: number
+            }     
             let descriptor = new ModelDescriptor(A)
-            expect(descriptor.defaultRepository.model).toBe(A)
+            expect(descriptor.defaultRepository.modelDescriptor.cls).toBe(A)
         })
     })
 })

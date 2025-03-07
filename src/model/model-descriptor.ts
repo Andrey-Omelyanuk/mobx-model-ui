@@ -44,6 +44,7 @@ export class ModelDescriptor<T extends Model> {
 
     /**
      *  Calculate ID from obj based on Model config. 
+     *  If one of the ids is undefined, it returns undefined.
      * @param obj - any object, usually it's a raw object of model
      * @returns 
      * @example:

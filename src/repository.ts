@@ -55,11 +55,12 @@ export class  Repository<M extends Model> {
      * @param obj 
      * @param controller 
      */
-    async update(obj: M, config?: RequestConfig) : Promise<void> {
+    async update(obj: M, config?: RequestConfig) : Promise<M> {
         const ids = this.modelDescriptor.getIds(obj)
         let raw_obj = await this.adapter.update(ids, obj.only_changed_raw_data, config)
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
+        return obj
     }
 
     /**

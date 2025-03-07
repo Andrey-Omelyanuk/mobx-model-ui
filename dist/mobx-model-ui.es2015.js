@@ -7,10 +7,10 @@
    */
 
 import _ from 'lodash';
-import { observable, action, makeObservable, runInAction, autorun, reaction, computed, observe, intercept, extendObservable } from 'mobx';
+import { observable, action, makeObservable, runInAction, autorun, reaction, computed, observe, extendObservable, intercept } from 'mobx';
 
 // TODO: remove dependency of lodash 
-// Global config of Mobx-Model-UI
+// Global config of Mobx-ORM
 const config = {
     DEFAULT_PAGE_SIZE: 50,
     AUTO_UPDATE_DELAY: 100, // ms
@@ -60,55 +60,46 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
     return e.name = "SuppressedError", e.error = error, e.suppressed = suppressed, e;
 };
 
+/**
+ *
+ */
 class Cache {
-    constructor(model, name) {
-        Object.defineProperty(this, "name", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "model", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        }); // TODO: type
+    constructor() {
         Object.defineProperty(this, "store", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: void 0
+            value: new Map()
         });
-        this.name = name ? name : model.name;
-        this.model = model;
-        this.store = new Map();
         makeObservable(this);
     }
-    get(id) {
-        return this.store.get(id);
+    /**
+     * Get object by ID
+     */
+    get(ID) {
+        return this.store.get(ID);
     }
+    /**
+     * Inject object to the cache
+     */
     inject(obj) {
-        if (obj.id === undefined)
+        if (obj.ID === undefined || obj.ID === null || obj.ID === '')
             throw new Error(`Object should have id!`);
-        const exist_obj = this.store.get(obj.id);
+        const exist_obj = this.store.get(obj.ID);
         if (exist_obj && exist_obj !== obj)
-            throw new Error(`Object ${obj.constructor.name}: ${obj.id} already exist in the cache. ${this.name}`);
-        this.store.set(obj.id, obj);
+            throw new Error(`Object with ID ${obj.ID} already exist in the cache.`);
+        this.store.set(obj.ID, obj);
     }
+    /**
+     * Eject object from the cache
+     */
     eject(obj) {
-        return this.store.delete(obj.id);
+        if (obj.ID)
+            this.store.delete(obj.ID);
     }
-    update(raw_obj) {
-        let obj = this.store.get(raw_obj.id);
-        if (obj)
-            obj.updateFromRaw(raw_obj);
-        else {
-            obj = new this.model(raw_obj);
-            this.inject(obj);
-        }
-        return obj;
-    }
+    /**
+     * Clear the cache
+     */
     clear() {
         for (let obj of this.store.values())
             obj.destroy();
@@ -117,121 +108,168 @@ class Cache {
 }
 __decorate([
     observable,
-    __metadata("design:type", Map)
+    __metadata("design:type", Object)
 ], Cache.prototype, "store", void 0);
 __decorate([
-    action('cache - inject'),
+    action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Cache.prototype, "inject", null);
 __decorate([
-    action('cache - eject'),
+    action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Cache.prototype, "eject", null);
 __decorate([
-    action('cache - update'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Object)
-], Cache.prototype, "update", null);
-__decorate([
-    action('cache - clear'),
+    action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], Cache.prototype, "clear", null);
 
+/**
+ *
+ */
 class Repository {
-    constructor(model, adapter, cache) {
-        Object.defineProperty(this, "model", {
+    // readonly modelDescriptor: ModelDescriptor<M>
+    // readonly cache: Cache<M>
+    // readonly adapter: Adapter<M> 
+    constructor(modelDescriptor, adapter, cache = new Cache()) {
+        Object.defineProperty(this, "modelDescriptor", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "cache", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
+            value: modelDescriptor
         });
         Object.defineProperty(this, "adapter", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: void 0
+            value: adapter
         });
-        this.model = model;
-        this.adapter = adapter;
-        this.cache = cache ? cache : new Cache(model);
+        Object.defineProperty(this, "cache", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: cache
+        });
     }
+    /**
+     *
+     * @param obj
+     * @param name
+     * @param kwargs
+     * @param controller
+     * @returns
+     */
     async action(obj, name, kwargs, config) {
-        return await this.adapter.action(obj.id, name, kwargs, config);
+        const ids = this.modelDescriptor.getIds(obj);
+        return await this.adapter.action(ids, name, kwargs, config);
     }
+    /**
+     *
+     * @param obj
+     * @param controller
+     * @returns
+     */
     async create(obj, config) {
-        let raw_obj = await this.adapter.create(obj.raw_data, config);
-        obj.updateFromRaw(raw_obj); // update id and other fields
-        obj.refreshInitData(); // backend can return default values and they should be in __init_data
-        return obj;
-    }
-    async update(obj, config) {
-        let raw_obj = await this.adapter.update(obj.id, obj.only_changed_raw_data, config);
+        let raw_obj = await this.adapter.create(obj.rawData, config);
+        const rawObjID = this.modelDescriptor.getID(raw_obj);
+        const cachedObj = this.cache.get(rawObjID);
+        if (cachedObj)
+            obj = cachedObj;
         obj.updateFromRaw(raw_obj);
         obj.refreshInitData();
         return obj;
     }
-    async delete(obj, config) {
-        await this.adapter.delete(obj.id, config);
-        obj.destroy();
-        this.cache.eject(obj);
+    /**
+     *
+     * @param obj
+     * @param controller
+     */
+    async update(obj, config) {
+        const ids = this.modelDescriptor.getIds(obj);
+        let raw_obj = await this.adapter.update(ids, obj.only_changed_raw_data, config);
+        obj.updateFromRaw(raw_obj);
+        obj.refreshInitData();
         return obj;
     }
-    async get(obj_id, config) {
-        let raw_obj = await this.adapter.get(obj_id, config);
-        if (this.cache) {
-            const obj = this.cache.update(raw_obj);
-            obj.refreshInitData();
-            return obj;
-        }
-        return new this.model(raw_obj);
+    /**
+     *
+     * @param obj
+     * @param controller
+     */
+    async delete(obj, config) {
+        const ids = this.modelDescriptor.getIds(obj);
+        await this.adapter.delete(ids, config);
+        obj.destroy();
     }
-    /* Returns ONE object */
+    updateCachedObject(rawObj) {
+        const rawObjID = this.modelDescriptor.getID(rawObj);
+        const cachedObj = this.cache.get(rawObjID);
+        if (cachedObj) {
+            cachedObj.updateFromRaw(rawObj);
+            cachedObj.refreshInitData();
+            return cachedObj;
+        }
+    }
+    /**
+     *
+     * @param ids
+     * @param controller
+     * @returns
+     */
+    async get(ids, config) {
+        let raw_obj = await this.adapter.get(ids, config);
+        const cachedObj = this.updateCachedObject(raw_obj);
+        return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
+    }
+    /**
+     * Returns ONE object
+     * @param query
+     * @param controller
+     * @returns
+     */
     async find(query, config) {
         let raw_obj = await this.adapter.find(query, config);
-        if (this.cache) {
-            const obj = this.cache.update(raw_obj);
-            obj.refreshInitData();
-            return obj;
-        }
-        return new this.model(raw_obj);
+        const cachedObj = this.updateCachedObject(raw_obj);
+        return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
     }
-    /* Returns MANY objects */
+    /**
+     * Returns MANY objects
+     * @param query
+     * @param controller
+     * @returns
+     */
     async load(query, config) {
         let raw_objs = await this.adapter.load(query, config);
         let objs = [];
-        // it should invoke in one big action
         runInAction(() => {
-            if (this.cache) {
-                for (let raw_obj of raw_objs) {
-                    const obj = this.cache.update(raw_obj);
-                    obj.refreshInitData();
-                    objs.push(obj);
-                }
-            }
-            else {
-                for (let raw_obj of raw_objs) {
-                    objs.push(new this.model(raw_obj));
-                }
+            for (const raw_obj of raw_objs) {
+                const cachedObj = this.updateCachedObject(raw_obj);
+                objs.push(cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj));
             }
         });
         return objs;
     }
+    /**
+     *
+     * @param filter
+     * @param controller
+     * @returns
+     */
     async getTotalCount(filter, config) {
         return await this.adapter.getTotalCount(filter, config);
     }
+    /**
+     *
+     * @param filter
+     * @param field
+     * @param controller
+     * @returns
+     */
     async getDistinct(filter, field, config) {
         return await this.adapter.getDistinct(filter, field, config);
     }
@@ -267,123 +305,6 @@ function waitIsFalse(obj, field) {
 function timeout(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
-
-const ASC = true;
-const DESC = false;
-
-var TYPE;
-(function (TYPE) {
-    TYPE["ID"] = "id";
-    TYPE["STRING"] = "string";
-    TYPE["NUMBER"] = "number";
-    TYPE["DATE"] = "date";
-    TYPE["DATETIME"] = "datetime";
-    TYPE["BOOLEAN"] = "boolean";
-    TYPE["ARRAY_ID"] = "array-id";
-    TYPE["ARRAY_STRING"] = "array-string";
-    TYPE["ARRAY_NUMBER"] = "array-number";
-    TYPE["ARRAY_DATE"] = "array-date";
-    TYPE["ARRAY_DATETIME"] = "array-datetime";
-    TYPE["ORDER_BY"] = "order-by";
-})(TYPE || (TYPE = {}));
-const ARRAYS = [TYPE.ARRAY_STRING, TYPE.ARRAY_NUMBER, TYPE.ARRAY_DATE, TYPE.ARRAY_DATETIME, TYPE.ORDER_BY];
-const arrayToString = (type, value) => {
-    let result = [];
-    // if (value === null) return undefined
-    if (value) {
-        for (const i of value) {
-            let v = toString(type, i);
-            if (v !== undefined)
-                result.push(v);
-        }
-    }
-    return result.length ? result.join(',') : undefined;
-};
-const stringToArray = (type, value) => {
-    let result = [];
-    if (value) {
-        for (const i of value.split(',')) {
-            let v = stringTo(type, i);
-            if (v !== undefined) {
-                result.push(v);
-            }
-        }
-    }
-    return result;
-};
-const toString = (valueType, value) => {
-    if (value === undefined)
-        return undefined;
-    if (value === null && !ARRAYS.includes(valueType))
-        return 'null';
-    switch (valueType) {
-        case TYPE.NUMBER: return '' + value;
-        case TYPE.ID: return '' + value;
-        case TYPE.STRING: return value;
-        case TYPE.DATE: return value instanceof Date ? value.toISOString().split('T')[0] : '';
-        case TYPE.DATETIME: return value instanceof Date ? value.toISOString() : '';
-        case TYPE.BOOLEAN: return !!value ? 'true' : 'false';
-        case TYPE.ARRAY_STRING: return arrayToString(TYPE.STRING, value);
-        case TYPE.ARRAY_NUMBER: return arrayToString(TYPE.NUMBER, value);
-        case TYPE.ARRAY_DATE: return arrayToString(TYPE.DATE, value);
-        case TYPE.ARRAY_DATETIME: return arrayToString(TYPE.DATETIME, value);
-        case TYPE.ORDER_BY:
-            if (value) {
-                let result = '';
-                for (const [key, val] of value) {
-                    if (result)
-                        result += ',';
-                    if (val === DESC)
-                        result += '-';
-                    result += key.replace(/\./g, '__');
-                }
-                return result ? result : undefined;
-            }
-            return undefined;
-    }
-};
-const stringTo = (valueType, value, enumType) => {
-    let result;
-    if (!ARRAYS.includes(valueType)) {
-        if (value === undefined)
-            return undefined;
-        else if (value === 'null')
-            return null;
-        else if (value === null)
-            return null;
-    }
-    switch (valueType) {
-        case TYPE.NUMBER:
-            result = parseInt(value);
-            if (isNaN(result))
-                return undefined;
-            return result;
-        case TYPE.ID:
-            result = parseInt(value);
-            if (isNaN(result))
-                return value;
-            return result;
-        case TYPE.STRING: return value;
-        case TYPE.DATE: return new Date(value);
-        case TYPE.DATETIME: return new Date(value);
-        case TYPE.BOOLEAN: return value === 'true' ? true : value === 'false' ? false : undefined;
-        case TYPE.ARRAY_STRING: return stringToArray(TYPE.STRING, value);
-        case TYPE.ARRAY_NUMBER: return stringToArray(TYPE.NUMBER, value);
-        case TYPE.ARRAY_DATE: return stringToArray(TYPE.DATE, value);
-        case TYPE.ARRAY_DATETIME: return stringToArray(TYPE.DATETIME, value);
-        case TYPE.ORDER_BY:
-            result = new Map();
-            if (value) {
-                for (const item of value.split(',')) {
-                    if (item[0] === '-')
-                        result.set(item.slice(1), DESC);
-                    else
-                        result.set(item, ASC);
-                }
-            }
-            return result;
-    }
-};
 
 const syncURLHandler = (paramName, input) => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -437,7 +358,9 @@ const syncLocalStorageHandler = (paramName, input) => {
 };
 
 class Input {
-    constructor(args) {
+    // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
+    // it's look like a bug in the TypeScript
+    constructor(type, args) {
         Object.defineProperty(this, "type", {
             enumerable: true,
             configurable: true,
@@ -511,8 +434,8 @@ class Input {
             value: void 0
         });
         // init all observables before use it in reaction
-        this.value = args === null || args === void 0 ? void 0 : args.value;
-        this.type = args === null || args === void 0 ? void 0 : args.type;
+        this.type = type;
+        this.value = args && args.value !== undefined ? args.value : type.default();
         this.isRequired = !!(args === null || args === void 0 ? void 0 : args.required);
         this.isDisabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
         this.isDebouncing = false;
@@ -549,10 +472,10 @@ class Input {
             || this.isRequired && (this.value === undefined || (Array.isArray(this.value) && !this.value.length)));
     }
     setFromString(value) {
-        this.set(stringTo(this.type, value));
+        this.set(this.type.fromString(value));
     }
     toString() {
-        return toString(this.type, this.value);
+        return this.type.toString(this.value);
     }
 }
 __decorate([
@@ -585,83 +508,10 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Input.prototype, "set", null);
-// export class StringInput        extends Input<string>   { readonly type = TYPE.STRING }
-const StringInput = (args) => {
-    if (!args)
-        args = {};
-    args.type = TYPE.STRING;
-    return new Input(args);
-};
-// export class NumberInput        extends Input<number>   { readonly type = TYPE.NUMBER }
-const NumberInput = (args) => {
-    if (!args)
-        args = {};
-    args.type = TYPE.NUMBER;
-    return new Input(args);
-};
-// export class DateInput          extends Input<Date>     { readonly type = TYPE.DATE }
-const DateInput = (args) => {
-    if (!args)
-        args = {};
-    args.type = TYPE.DATE;
-    return new Input(args);
-};
-// export class DateTimeInput      extends Input<Date>     { readonly type = TYPE.DATETIME }
-const DateTimeInput = (args) => {
-    if (!args)
-        args = {};
-    args.type = TYPE.DATETIME;
-    return new Input(args);
-};
-// export class BooleanInput       extends Input<boolean>  { readonly type = TYPE.BOOLEAN }
-const BooleanInput = (args) => {
-    if (!args)
-        args = {};
-    args.type = TYPE.BOOLEAN;
-    return new Input(args);
-};
-// export class OrderByInput       extends Input<ORDER_BY> { readonly type = TYPE.ORDER_BY }
-const OrderByInput = (args) => {
-    if (!args)
-        args = {};
-    args.type = TYPE.ORDER_BY;
-    return new Input(args);
-};
-// export class ArrayStringInput   extends ArrayInput<string[]> { readonly type = TYPE.ARRAY_STRING }
-const ArrayStringInput = (args) => {
-    if (args === undefined || args.value === undefined)
-        args = Object.assign(Object.assign({}, args), { value: [] });
-    args.type = TYPE.ARRAY_STRING;
-    return new Input(args);
-};
-// export class ArrayNumberInput   extends ArrayInput<number[]> { readonly type = TYPE.ARRAY_NUMBER }
-const ArrayNumberInput = (args) => {
-    if (args === undefined || args.value === undefined)
-        args = Object.assign(Object.assign({}, args), { value: [] });
-    args.type = TYPE.ARRAY_NUMBER;
-    return new Input(args);
-};
-// export class ArrayDateInput     extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATE }
-const ArrayDateInput = (args) => {
-    if (args === undefined || args.value === undefined)
-        args = Object.assign(Object.assign({}, args), { value: [] });
-    args.type = TYPE.ARRAY_DATE;
-    return new Input(args);
-};
-// export class ArrayDateTimeInput extends ArrayInput<Date[]>   { readonly type = TYPE.ARRAY_DATETIME }
-const ArrayDateTimeInput = (args) => {
-    if (args === undefined || args.value === undefined)
-        args = Object.assign(Object.assign({}, args), { value: [] });
-    args.type = TYPE.ARRAY_DATETIME;
-    return new Input(args);
-};
 
 class ObjectInput extends Input {
-    constructor(args) {
-        if (!args)
-            args = {};
-        args.type = TYPE.ID;
-        super(args);
+    constructor(type, args) {
+        super(type, args);
         Object.defineProperty(this, "options", {
             enumerable: true,
             configurable: true,
@@ -704,7 +554,223 @@ function autoResetId(input) {
     input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.id);
 }
 
-const DISPOSER_AUTOUPDATE = '__autoupdate';
+/**
+ *  Base class for the type descriptor
+ * It is used to define the field of the model
+ * It is used to convert the value to the string and back
+ */
+class TypeDescriptor {
+    constructor() {
+        /**
+         * Configuration of the descriptor
+         */
+        Object.defineProperty(this, "config", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+    }
+}
+
+class StringDescriptor extends TypeDescriptor {
+    constructor(props) {
+        super();
+        this.config = props ? props : { maxLength: 255 };
+    }
+    toString(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return 'null';
+        return value;
+    }
+    fromString(value) {
+        if (value === undefined)
+            return undefined;
+        else if (value === 'null')
+            return null;
+        else if (value === null)
+            return null;
+        return value;
+    }
+    validate(value) {
+        if (value === null && !this.config.null)
+            throw new Error('Field is required');
+        if (value === '' && this.config.required)
+            throw new Error('Field is required');
+        if (this.config.maxLength && value.length > this.config.maxLength)
+            throw new Error('String is too long');
+    }
+    default() {
+        return '';
+    }
+}
+function STRING(props) {
+    return new StringDescriptor(props);
+}
+
+class NumberDescriptor extends TypeDescriptor {
+    constructor(props) {
+        super();
+        this.config = props ? props : {};
+    }
+    toString(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return 'null';
+        return value.toString();
+    }
+    fromString(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === 'null')
+            return null;
+        if (value === null)
+            return null;
+        const result = parseInt(value);
+        if (isNaN(result))
+            return undefined;
+        return result;
+    }
+    validate(value) {
+        if (value === null && !this.config.null)
+            throw new Error('Field is required');
+        if (this.config.min && value < this.config.min)
+            throw new Error('Number is too small');
+        if (this.config.max && value > this.config.max)
+            throw new Error('Number is too big');
+    }
+    default() {
+        return undefined;
+    }
+}
+function NUMBER(props) {
+    return new NumberDescriptor(props);
+}
+
+class BooleanDescriptor extends TypeDescriptor {
+    constructor(props) {
+        super();
+        this.config = props;
+    }
+    toString(value) {
+        return value.toString();
+    }
+    fromString(value) {
+        return value === 'true';
+    }
+    validate(value) {
+        var _a;
+        if (((_a = this.config) === null || _a === void 0 ? void 0 : _a.required) && value === undefined)
+            throw new Error('Field is required');
+    }
+    default() {
+        return false;
+    }
+}
+function BOOLEAN(props) {
+    return new BooleanDescriptor(props);
+}
+
+class DateDescriptor extends TypeDescriptor {
+    constructor(props) {
+        super();
+        this.config = props;
+    }
+    toString(value) {
+        return value.toISOString();
+    }
+    fromString(value) {
+        return new Date(value);
+    }
+    validate(value) {
+        if (this.config.min && value < this.config.min)
+            throw new Error('Date is too early');
+        if (this.config.max && value > this.config.max)
+            throw new Error('Date is too late');
+    }
+    default() {
+        return new Date();
+    }
+}
+function DATE(props) {
+    return new DateDescriptor(props);
+}
+
+class DateTimeDescriptor extends DateDescriptor {
+    toString(value) {
+        return value.toISOString();
+    }
+}
+function DATETIME(props) {
+    return new DateTimeDescriptor(props);
+}
+
+class ArrayDescriptor extends TypeDescriptor {
+    constructor(type, props) {
+        super();
+        this.config = props ? props : {};
+        this.config.type = type;
+    }
+    toString(value) {
+        if (!value)
+            return undefined;
+        if (!value.length)
+            return undefined;
+        return value.map(item => this.config.type.toString(item)).join(',');
+    }
+    fromString(value) {
+        if (!value)
+            return [];
+        return value.split(',').map(item => this.config.type.fromString(item));
+    }
+    validate(value) {
+        if (this.config.minItems && value.length < this.config.minItems)
+            throw new Error('Array is too short');
+        if (this.config.maxItems && value.length > this.config.maxItems)
+            throw new Error('Array is too long');
+        value.forEach(item => this.config.type.validate(item));
+    }
+    default() {
+        return [];
+    }
+}
+function ARRAY(type, props) {
+    return new ArrayDescriptor(type, props);
+}
+
+const ASC = true;
+const DESC = false;
+class OrderByDescriptor extends TypeDescriptor {
+    toString(value) {
+        if (!value || !value[0])
+            return undefined;
+        return value[1] ? value[0] : '-' + value[0];
+    }
+    fromString(value) {
+        if (!value)
+            return undefined;
+        return value[0] === '-' ? [value.substring(1), false] : [value, true];
+    }
+    validate(value) {
+        if (!value)
+            throw new Error('Field is required');
+        if (!value[0])
+            throw new Error('Field is required');
+        if (value[1] === undefined)
+            throw new Error('Field is required');
+    }
+    default() {
+        return [undefined, ASC];
+    }
+}
+function ORDER_BY() {
+    return new OrderByDescriptor();
+}
+
+const DISPOSER_AUTOUPDATE = "__autoupdate";
 /* Query live cycle:
 
     Event           isLoading   needToUpdate    isReady     items
@@ -844,12 +910,12 @@ class Query {
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
         this.repository = repository;
         this.filter = filter;
-        this.orderBy = orderBy ? orderBy : OrderByInput();
-        this.offset = offset ? offset : NumberInput();
-        this.limit = limit ? limit : NumberInput();
-        this.relations = relations ? relations : ArrayStringInput();
-        this.fields = fields ? fields : ArrayStringInput();
-        this.omit = omit ? omit : ArrayStringInput();
+        this.orderBy = orderBy ? orderBy : new Input(ARRAY(ORDER_BY()));
+        this.offset = offset ? offset : new Input(NUMBER());
+        this.limit = limit ? limit : new Input(NUMBER());
+        this.relations = relations ? relations : new Input(ARRAY(STRING()));
+        this.fields = fields ? fields : new Input(ARRAY(STRING()));
+        this.omit = omit ? omit : new Input(ARRAY(STRING()));
         this.autoupdate = autoupdate;
         makeObservable(this);
         this.disposers.push(reaction(
@@ -1063,7 +1129,7 @@ class QueryCacheSync extends Query {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
-            if (change.type == 'delete') {
+            if (change.type == "delete") {
                 let id = change.name;
                 let obj = change.oldValue;
                 this.disposerObjects[id]();
@@ -1100,7 +1166,7 @@ class QueryCacheSync extends Query {
     }
     get items() {
         let __items = this.__items.map(x => x); // copy __items (not deep)
-        if (this.orderBy.value && this.orderBy.value.size) {
+        if (this.orderBy.value && this.orderBy.value.length) {
             let compare = (a, b) => {
                 for (const [key, value] of this.orderBy.value) {
                     if (value === ASC) {
@@ -1237,89 +1303,108 @@ class QueryDistinct extends Query {
     }
 }
 
+/**
+ * Is a map of all registered models in the application.
+ * It's a singleton.
+ */
+const models = new Map();
+
 class Model {
-    static getQuery(props) {
-        return new Query(Object.assign(Object.assign({}, props), { repository: this.repository }));
+    /**
+     * @returns {ModelDescriptor} - model description
+     */
+    static getModelDescriptor() {
+        return models.get(this.modelName);
     }
-    static getQueryPage(props) {
-        return new QueryPage(Object.assign(Object.assign({}, props), { repository: this.repository }));
-    }
-    static getQueryRaw(props) {
-        return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.repository }));
-    }
-    static getQueryRawPage(props) {
-        return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this.repository }));
-    }
-    static getQueryCacheSync(props) {
-        return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this.repository }));
-    }
-    static getQueryStream(props) {
-        return new QueryStream(Object.assign(Object.assign({}, props), { repository: this.repository }));
-    }
-    static getQueryDistinct(field, props) {
-        return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.repository }));
-    }
-    static get(id) {
-        return this.repository.cache.get(id);
-    }
-    static async findById(id) {
-        return this.repository.get(id);
-    }
-    static async find(query) {
-        return this.repository.find(query);
-    }
-    constructor(...args) {
-        Object.defineProperty(this, "id", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: undefined
-        });
-        // TODO: should it be observable?
-        Object.defineProperty(this, "__init_data", {
+    /**
+     * @param init - initial data of the object
+     */
+    constructor(init) {
+        Object.defineProperty(this, "modelName", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "__disposers", {
+        /**
+         * Save the initial data of the object that was loaded from the server.
+         */
+        Object.defineProperty(this, "init_data", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        /**
+         * disposers for mobx reactions and interceptors, you can add your own disposers
+         */
+        Object.defineProperty(this, "disposers", {
             enumerable: true,
             configurable: true,
             writable: true,
             value: new Map()
         });
     }
+    /**
+     * @returns {ModelDescriptor} - model descriptor
+     */
+    get modelDescriptor() {
+        return models.get(this.modelName);
+    }
+    /**
+     * ID is string based on join ids.
+     * It's base for using in the lib.
+     */
+    get ID() {
+        return this.modelDescriptor.getID(this);
+    }
+    /**
+     * Destructor of the object.
+     * It eject from cache and removes all disposers.
+     */
     destroy() {
-        while (this.__disposers.size) {
-            this.__disposers.forEach((disposer, key) => {
+        // trigger in id fields will ejenct the object from cache
+        for (const fieldName in this.modelDescriptor.ids) {
+            this[fieldName] = undefined;
+        }
+        while (this.disposers.size) {
+            this.disposers.forEach((disposer, key) => {
                 disposer();
-                this.__disposers.delete(key);
+                this.disposers.delete(key);
             });
         }
     }
     get model() {
         return this.constructor.__proto__;
     }
-    // data only from fields (no ids)
-    get raw_data() {
-        let raw_data = {};
-        for (let field_name in this.model.__fields) {
-            if (this[field_name] !== undefined) {
-                raw_data[field_name] = this[field_name];
+    /**
+     * @returns {Object} - data only from fields (no ids)
+     */
+    get rawData() {
+        let rawData = {};
+        for (const fieldName in this.modelDescriptor.ids) {
+            if (this[fieldName] !== undefined) {
+                rawData[fieldName] = this[fieldName];
             }
         }
-        return raw_data;
+        return rawData;
     }
-    // it is raw_data + id
-    get raw_obj() {
-        let raw_obj = this.raw_data;
-        raw_obj.id = this.id;
-        return raw_obj;
+    /**
+     * @returns {Object} - it is rawData + ids fields
+     */
+    get rawObj() {
+        let rawObj = this.rawData;
+        for (const fieldName in this.modelDescriptor.ids) {
+            if (this[fieldName] !== undefined) {
+                rawObj[fieldName] = this[fieldName];
+            }
+        }
+        return rawObj;
     }
     get only_changed_raw_data() {
         let raw_data = {};
         for (let field_name in this.model.__fields) {
-            if (this[field_name] !== undefined && this[field_name] != this.__init_data[field_name]) {
+            if (this[field_name] !== undefined && this[field_name] != this.init_data[field_name]) {
                 raw_data[field_name] = this[field_name];
             }
         }
@@ -1327,95 +1412,129 @@ class Model {
     }
     get is_changed() {
         for (let field_name in this.model.__fields) {
-            if (this[field_name] != this.__init_data[field_name]) {
+            if (this[field_name] != this.init_data[field_name]) {
                 return true;
             }
         }
         return false;
     }
-    async action(name, kwargs) { return await this.model.repository.action(this, name, kwargs); }
-    async create() { return await this.model.repository.create(this); }
-    async update() { return await this.model.repository.update(this); }
-    async delete() { return await this.model.repository.delete(this); }
-    async save() { return this.id === undefined ? this.create() : this.update(); }
-    // update the object from the server
-    async refresh() { return await this.model.repository.get(this.id); }
     refreshInitData() {
-        if (this.__init_data === undefined)
-            this.__init_data = {};
+        if (this.init_data === undefined)
+            this.init_data = {};
         for (let field_name in this.model.__fields) {
-            this.__init_data[field_name] = this[field_name];
+            this.init_data[field_name] = this[field_name];
         }
     }
     cancelLocalChanges() {
         for (let field_name in this.model.__fields) {
-            if (this[field_name] !== this.__init_data[field_name]) {
-                this[field_name] = this.__init_data[field_name];
+            if (this[field_name] !== this.init_data[field_name]) {
+                this[field_name] = this.init_data[field_name];
             }
         }
     }
-    updateFromRaw(raw_obj) {
-        if (this.id === undefined && raw_obj.id !== undefined && this.model.repository) {
-            // Note: object with equal id can be already in the cache (race condition)
-            // I have got the object from websocket before the response from the server
-            // Solution: remove the object (that came from websocket) from the cache
-            let exist_obj = this.model.repository.cache.get(raw_obj.id);
-            if (exist_obj) {
-                exist_obj.id = undefined;
+    /**
+     * Update the object from the raw data.
+     * @description
+     * It is used when raw data comes from any source (server, websocket, etc.) and you want to update the object.
+     * TODO: ID is not ready! I'll finish it later.
+     */
+    updateFromRaw(rawObj) {
+        // update ids if not exist
+        for (const fieldName in this.modelDescriptor.ids) {
+            if (this[fieldName] === null || this[fieldName] === undefined) {
+                this[fieldName] = rawObj[fieldName];
             }
-            this.id = raw_obj.id;
         }
         // update the fields if the raw data is exist and it is different
-        for (let field_name in this.model.__fields) {
-            if (raw_obj[field_name] !== undefined && raw_obj[field_name] !== this[field_name]) {
-                this[field_name] = raw_obj[field_name];
+        for (let fieldName in this.modelDescriptor.fields) {
+            if (rawObj[fieldName] !== undefined && rawObj[fieldName] !== this[fieldName]) {
+                this[fieldName] = rawObj[fieldName];
             }
         }
-        for (let relation in this.model.__relations) {
-            const settings = this.model.__relations[relation].settings;
-            if (settings.foreign_model && raw_obj[relation]) {
-                settings.foreign_model.repository.cache.update(raw_obj[relation]);
-                this[settings.foreign_id_name] = raw_obj[relation].id;
+        // update related objects 
+        for (let relation in this.modelDescriptor.relations) {
+            const settings = this.modelDescriptor.relations[relation].settings;
+            if (settings.foreign_model && rawObj[relation]) {
+                settings.foreign_model.repository.cache.update(rawObj[relation]);
+                this[settings.foreign_id_name] = rawObj[relation].id;
             }
-            else if (settings.remote_model && raw_obj[relation]) {
+            else if (settings.remote_model && rawObj[relation]) {
                 // many
-                if (Array.isArray(raw_obj[relation])) {
-                    for (const i of raw_obj[relation]) {
+                if (Array.isArray(rawObj[relation])) {
+                    for (const i of rawObj[relation]) {
                         settings.remote_model.repository.cache.update(i);
                     }
                 }
                 // one
                 else {
-                    settings.remote_model.repository.cache.update(raw_obj[relation]);
+                    settings.remote_model.repository.cache.update(rawObj[relation]);
                 }
             }
         }
     }
+    // --------------------------------------------------------------------------------------------
+    // helper instance functions
+    // --------------------------------------------------------------------------------------------
+    async action(name, kwargs) { return await this.model.repository.action(this, name, kwargs); }
+    async create() { return await this.modelDescriptor.defaultRepository.create(this); }
+    async update() { return await this.modelDescriptor.defaultRepository.update(this); }
+    async save() { return this.ID ? await this.update() : await this.create(); }
+    async delete() { return await this.modelDescriptor.defaultRepository.delete(this); }
+    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.modelDescriptor.getIds(this)); }
+    // --------------------------------------------------------------------------------------------
+    // helper class functions
+    // --------------------------------------------------------------------------------------------
+    static getQuery(props) {
+        return new Query(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static getQueryPage(props) {
+        return new QueryPage(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static getQueryRaw(props) {
+        return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static getQueryRawPage(props) {
+        return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static getQueryCacheSync(props) {
+        return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static getQueryStream(props) {
+        return new QueryStream(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static getQueryDistinct(field, props) {
+        return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+    }
+    static get(ID) {
+        let repository = this.getModelDescriptor().defaultRepository;
+        return repository.cache.get(ID);
+    }
+    static async findById(ids) {
+        let repository = this.getModelDescriptor().defaultRepository;
+        return repository.get(ids);
+    }
+    static async find(query) {
+        let repository = this.getModelDescriptor().defaultRepository;
+        return repository.find(query);
+    }
 }
-// Original Class will be decorated by model decorator,
-// use this flag to detect original class 
-Object.defineProperty(Model, "isOriginalClass", {
-    enumerable: true,
-    configurable: true,
-    writable: true,
-    value: true
-});
+__decorate([
+    computed({ keepAlive: true }),
+    __metadata("design:type", String),
+    __metadata("design:paramtypes", [])
+], Model.prototype, "ID", null);
 __decorate([
     observable,
     __metadata("design:type", Object)
-], Model.prototype, "id", void 0);
+], Model.prototype, "init_data", void 0);
 __decorate([
-    observable,
-    __metadata("design:type", Object)
-], Model.prototype, "__init_data", void 0);
-__decorate([
-    action('model - destroy'),
+    action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], Model.prototype, "destroy", null);
 __decorate([
-    action('MO: obj - refresh init data'),
+    action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
@@ -1427,130 +1546,280 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], Model.prototype, "cancelLocalChanges", null);
 __decorate([
-    action('MO: obj - update from raw'),
+    action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
 ], Model.prototype, "updateFromRaw", null);
 
+/**
+ * Model decorator.
+ * Note: Class decorator has constructor of class as argument.
+ */
 function model(constructor) {
-    var original = constructor;
+    const modelName = constructor.name;
+    // check that class extends Model
+    if (!(constructor.prototype instanceof Model))
+        throw new Error(`Class "${modelName}" should extends Model!`);
+    // id fields should register the model into models
+    if (!models.has(modelName))
+        throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`);
     // the new constructor
     let f = function (...args) {
-        let c = class extends original {
+        let c = class extends constructor {
             constructor(...args) { super(...args); }
         };
-        c.__proto__ = original;
+        c.__proto__ = constructor;
         let obj = new c();
+        obj.modelName = modelName;
         makeObservable(obj);
-        // id field reactions
-        obj.__disposers.set('before changes', intercept(obj, 'id', (change) => {
-            if (change.newValue !== undefined && obj.id !== undefined)
-                throw new Error(`You cannot change id field: ${obj.id} to ${change.newValue}`);
-            if (obj.id !== undefined && change.newValue === undefined)
-                obj.model.repository.cache.eject(obj);
-            return change;
-        }));
-        obj.__disposers.set('after changes', observe(obj, 'id', (change) => {
-            if (obj.id !== undefined)
-                obj.model.repository.cache.inject(obj);
-        }));
-        // apply fields decorators
-        for (let field_name in obj.model.__fields) {
-            obj.model.__fields[field_name].decorator(obj, field_name);
-        }
-        // apply __relations decorators
-        for (let field_name in obj.model.__relations) {
-            obj.model.__relations[field_name].decorator(obj, field_name);
-        }
+        const descriptor = obj.modelDescriptor;
+        // apply id decorators
+        if (Object.keys(descriptor.ids).length === 0)
+            throw new Error(`Model "${modelName}" should have id field decorator!`);
+        for (const fieldName in descriptor.ids)
+            descriptor.ids[fieldName].decorator(obj, fieldName);
+        // apply field decorators 
+        for (const fieldName in descriptor.fields)
+            descriptor.fields[fieldName].decorator(obj, fieldName);
+        // apply relations decorators
+        for (const fieldName in descriptor.relations)
+            descriptor.relations[fieldName].decorator(obj, fieldName);
         if (args[0])
             obj.updateFromRaw(args[0]);
         obj.refreshInitData();
         return obj;
     };
-    f.__proto__ = original;
-    f.prototype = original.prototype; // copy prototype so intanceof operator still works
-    Object.defineProperty(f, 'name', { value: original.name });
+    f.modelName = modelName;
+    f.__proto__ = constructor;
+    f.prototype = constructor.prototype; // copy prototype so intanceof operator still works
+    Object.defineProperty(f, "name", { value: constructor.name });
     return f; // return new constructor (will override original)
 }
 
-function field_field(obj, field_name) {
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: obj[field_name] });
+/**
+ * ModelFieldDescriptor is a class that contains all the information about the field.
+ */
+class ModelFieldDescriptor {
+    constructor() {
+        Object.defineProperty(this, "decorator", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "type", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        Object.defineProperty(this, "settings", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+    }
 }
-function field(cls, field_name) {
-    let model = cls.constructor;
-    if (model.__fields === undefined)
-        model.__fields = {};
-    model.__fields[field_name] = { decorator: field_field }; // register field 
+/**
+ * ModelDescriptor is a class that contains all the information about the model.
+ */
+class ModelDescriptor {
+    constructor(modelClass) {
+        /**
+         * Model class
+         */
+        Object.defineProperty(this, "cls", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        /**
+         * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
+         */
+        Object.defineProperty(this, "defaultRepository", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
+        /**
+         * Id fields
+         */
+        Object.defineProperty(this, "ids", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: {}
+        });
+        /**
+         * Fields is a map of all fields in the model that usually use in repository.
+         */
+        Object.defineProperty(this, "fields", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: {}
+        });
+        /**
+         * Relations is a map of all relations (foreign, one, many) in the model.
+         * It is derivative and does not come from outside.
+         */
+        Object.defineProperty(this, "relations", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: {}
+        });
+        this.cls = modelClass;
+        this.defaultRepository = new Repository(this);
+    }
+    /**
+     *  Calculate ID from obj based on Model config.
+     *  If one of the ids is undefined, it returns undefined.
+     * @param obj - any object, usually it's a raw object of model
+     * @returns
+     * @example:
+     *  - id1=1, id2=2 => '1=2'
+     */
+    getID(obj) {
+        let ids = [];
+        for (const fieldName in this.ids) {
+            const id = this.ids[fieldName].type.toString(obj[fieldName]);
+            if (id === undefined)
+                return undefined;
+            ids.push(id);
+        }
+        return ids.join("=");
+    }
+    /**
+     * Calculate ID from values based on Model config.
+     */
+    getIDByValues(values) {
+        const ids = [];
+        const configs = Object.values(this.ids);
+        for (let i = 0; i < values.length; i++) {
+            const value = configs[i].type.toString(values[i]);
+            if (value === undefined)
+                return undefined;
+            ids.push(value);
+        }
+        return ids.join("=");
+    }
+    /**
+     * Get all original values of ids from object.
+     * @param obj - any object of model, not only T extends Model, it can be a raw object.
+     * @returns
+     */
+    getIds(obj) {
+        const ids = [];
+        for (const fieldName in this.ids) {
+            const id = obj[fieldName];
+            if (id === undefined)
+                return undefined;
+            ids.push(id);
+        }
+        return ids;
+    }
 }
 
-function field_foreign(obj, field_name) {
-    let settings = obj.model.__relations[field_name].settings;
-    let foreign_model = settings.foreign_model;
-    let foreign_id_name = settings.foreign_id_name;
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: undefined });
-    reaction(
-    // watch on foreign cache for foreign object
-    () => {
-        if (obj[foreign_id_name] === undefined)
-            return undefined;
-        if (obj[foreign_id_name] === null)
-            return null;
-        return foreign_model.repository.cache.get(obj[foreign_id_name]);
-    }, 
-    // update foreign field
-    action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true });
-}
-function foreign(foreign_model, foreign_id_name) {
-    return function (cls, field_name) {
-        var _a;
-        // if cls already was decorated by model decorator then use original constructor
-        let model = ((_a = cls.prototype) === null || _a === void 0 ? void 0 : _a.constructor.isOriginalClass) ? cls.prototype.constructor : cls.constructor;
-        // let model = cls.prototype.constructor
-        if (model.__relations === undefined)
-            model.__relations = {};
-        // register field 
-        model.__relations[field_name] = {
-            decorator: field_foreign,
-            settings: {
-                foreign_model: foreign_model,
-                // if it is empty then try auto detect it (it works only with single id) 
-                foreign_id_name: foreign_id_name !== undefined ? foreign_id_name : `${field_name}_id`
-            }
+/**
+ * Decorator for fields
+ */
+function field(typeDescriptor, observable = true) {
+    return (cls, fieldName) => {
+        const modelName = cls.constructor.name;
+        if (!models.has(modelName))
+            throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`);
+        let modelDescription = models.get(modelName);
+        modelDescription.fields[fieldName] = {
+            decorator: (obj) => {
+                if (observable)
+                    extendObservable(obj, { [fieldName]: obj[fieldName] });
+            },
+            type: typeDescriptor,
+            settings: {}
         };
     };
 }
 
-function field_one(obj, field_name) {
-    // make observable and set default value
-    extendObservable(obj, { [field_name]: undefined });
-}
-function one(remote_model, remote_foreign_id_name) {
+/**
+ * Decorator for foreign fields
+ */
+function foreign(foreign_model, foreign_ids) {
     return function (cls, field_name) {
-        let model = cls.prototype.constructor;
-        if (model.__relations === undefined)
-            model.__relations = {};
+        var _a;
+        const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+        if (!modelName)
+            throw new Error('Model name is not defined. Did you forget to declare any id fields?');
+        const modelDescription = models.get(modelName);
+        if (!modelDescription)
+            throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
-        model.__relations[field_name] = {
-            decorator: field_one,
-            settings: {
-                remote_model: remote_model,
-                remote_foreign_id_name: remote_foreign_id_name
-            }
+        foreign_ids = foreign_ids !== null && foreign_ids !== void 0 ? foreign_ids : [`${field_name}_id`];
+        modelDescription.relations[field_name] = {
+            decorator: (obj) => {
+                // make observable and set default value
+                extendObservable(obj, { [field_name]: undefined });
+                // watch on foreign id
+                obj.disposers.set(`foreign ${field_name}`, reaction(
+                // watch on foreign cache for foreign object
+                () => {
+                    const values = foreign_ids.map(id => obj[id]);
+                    const foreignModelDescriptor = foreign_model.getModelDescriptor();
+                    const foreignID = foreignModelDescriptor.getIDByValues(values);
+                    // console.warn('foreign', foreign_ids, values, `fID '${foreignID}'`) 
+                    if (foreignID === undefined)
+                        return undefined;
+                    if (foreignID === '')
+                        return undefined;
+                    if (foreignID === null)
+                        return null; // foreign object can be null
+                    if (foreignID === 'null')
+                        return null; // foreign object can be null
+                    // console.warn('foreign', foreignID, foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID))
+                    // console.warn(foreign_model.getModelDescriptor().defaultRepository.cache.store)
+                    return foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID);
+                }, 
+                // update foreign field
+                action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true }));
+            },
+            settings: { foreign_model, foreign_ids }
         };
-        const disposer_name = `MO: One - update - ${model.name}.${field_name}`;
-        observe(remote_model.repository.cache.store, (change) => {
+    };
+}
+
+function one(remote_model, remote_foreign_ids) {
+    return function (cls, field_name) {
+        var _a;
+        const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+        if (!modelName)
+            throw new Error('Model name is not defined. Did you forget to declare any id fields?');
+        const modelDescription = models.get(modelName);
+        if (!modelDescription)
+            throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
+        remote_foreign_ids = remote_foreign_ids !== null && remote_foreign_ids !== void 0 ? remote_foreign_ids : [`${modelName.toLowerCase()}_id`];
+        modelDescription.relations[field_name] = {
+            decorator: (obj) => {
+                extendObservable(obj, { [field_name]: [] });
+            },
+            settings: { remote_model, remote_foreign_ids }
+        };
+        const remoteModelDescriptor = remote_model.getModelDescriptor();
+        const disposer_name = `MO: One - update - ${modelName}.${field_name}`;
+        observe(remoteModelDescriptor.defaultRepository.cache.store, (change) => {
             let remote_obj;
             switch (change.type) {
                 case 'add':
                     remote_obj = change.newValue;
-                    remote_obj.__disposers.set(disposer_name, reaction(() => {
+                    remote_obj.disposers.set(disposer_name, reaction(() => {
+                        const values = remote_foreign_ids.map(id => remote_obj[id]);
+                        const foreignID = modelDescription.getIDByValues(values);
                         return {
-                            id: remote_obj[remote_foreign_id_name],
-                            obj: model.repository.cache.get(remote_obj[remote_foreign_id_name])
+                            id: foreignID,
+                            obj: modelDescription.defaultRepository.cache.get(foreignID)
                         };
                     }, action(disposer_name, (_new, _old) => {
                         if (_old === null || _old === void 0 ? void 0 : _old.obj)
@@ -1561,11 +1830,13 @@ function one(remote_model, remote_foreign_id_name) {
                     break;
                 case 'delete':
                     remote_obj = change.oldValue;
-                    if (remote_obj.__disposers.get(disposer_name)) {
-                        remote_obj.__disposers.get(disposer_name)();
-                        remote_obj.__disposers.delete(disposer_name);
+                    if (remote_obj.disposers.get(disposer_name)) {
+                        remote_obj.disposers.get(disposer_name)();
+                        remote_obj.disposers.delete(disposer_name);
                     }
-                    let obj = model.repository.cache.get(remote_obj[remote_foreign_id_name]);
+                    const values = remote_foreign_ids.map(id => remote_obj[id]);
+                    const foreignID = modelDescription.getIDByValues(values);
+                    let obj = modelDescription.defaultRepository.cache.get(foreignID);
                     if (obj)
                         runInAction(() => { obj[field_name] = undefined; });
                     break;
@@ -1574,31 +1845,39 @@ function one(remote_model, remote_foreign_id_name) {
     };
 }
 
-function field_many(obj, field_name) {
-    extendObservable(obj, { [field_name]: [] });
-}
-function many(remote_model, remote_foreign_id_name) {
+/**
+ * Decorator for many fields
+ */
+function many(remote_model, remote_foreign_ids) {
     return function (cls, field_name) {
-        let model = cls.prototype.constructor;
-        if (model.__relations === undefined)
-            model.__relations = {};
+        var _a;
+        const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+        if (!modelName)
+            throw new Error('Model name is not defined. Did you forget to declare any id fields?');
+        const modelDescription = models.get(modelName);
+        if (!modelDescription)
+            throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_id_name = remote_foreign_id_name !== undefined ? remote_foreign_id_name : `${model.name.toLowerCase()}_id`;
-        model.__relations[field_name] = {
-            decorator: field_many,
-            settings: {
-                remote_model: remote_model,
-                remote_foreign_id_name: remote_foreign_id_name
-            }
+        remote_foreign_ids = remote_foreign_ids !== null && remote_foreign_ids !== void 0 ? remote_foreign_ids : [`${modelName.toLowerCase()}_id`];
+        modelDescription.relations[field_name] = {
+            decorator: (obj) => {
+                extendObservable(obj, { [field_name]: [] });
+            },
+            settings: { remote_model, remote_foreign_ids }
         };
-        const disposer_name = `MO: Many - update - ${model.name}.${field_name}`;
+        const remoteModelDescriptor = remote_model.getModelDescriptor();
+        const disposer_name = `MO: Many - update - ${modelName}.${field_name}`;
         // watch for remote object in the cache 
-        observe(remote_model.repository.cache.store, (remote_change) => {
+        observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change) => {
             let remote_obj;
             switch (remote_change.type) {
                 case 'add':
                     remote_obj = remote_change.newValue;
-                    remote_obj.__disposers.set(disposer_name, reaction(() => model.repository.cache.get(remote_obj[remote_foreign_id_name]), action(disposer_name, (_new, _old) => {
+                    remote_obj.disposers.set(disposer_name, reaction(() => {
+                        const values = remote_foreign_ids.map(id => remote_obj[id]);
+                        const foreignID = modelDescription.getIDByValues(values);
+                        return modelDescription.defaultRepository.cache.get(foreignID);
+                    }, action(disposer_name, (_new, _old) => {
                         if (_old) {
                             const i = _old[field_name].indexOf(remote_obj);
                             if (i > -1)
@@ -1613,11 +1892,13 @@ function many(remote_model, remote_foreign_id_name) {
                     break;
                 case 'delete':
                     remote_obj = remote_change.oldValue;
-                    if (remote_obj.__disposers.get(disposer_name)) {
-                        remote_obj.__disposers.get(disposer_name)();
-                        remote_obj.__disposers.delete(disposer_name);
+                    if (remote_obj.disposers.get(disposer_name)) {
+                        remote_obj.disposers.get(disposer_name)();
+                        remote_obj.disposers.delete(disposer_name);
                     }
-                    let obj = model.repository.cache.get(remote_obj[remote_foreign_id_name]);
+                    const values = remote_foreign_ids.map(id => remote_obj[id]);
+                    const foreignID = modelDescription.getIDByValues(values);
+                    let obj = modelDescription.defaultRepository.cache.get(foreignID);
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj);
                         if (i > -1)
@@ -1626,6 +1907,48 @@ function many(remote_model, remote_foreign_id_name) {
                     break;
             }
         });
+    };
+}
+
+/**
+ * Decorator for id fields
+ * Only id field can register model in models map,
+ * because it invoke before a model decorator.
+ */
+function id(typeDescriptor, observable = true) {
+    return (cls, fieldName) => {
+        var _a;
+        const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+        let modelDescription = models.get(modelName);
+        // id field is first decorator that invoke before model and other fields decorators
+        // so we need to check if model is already registered and if not then register it
+        if (!modelDescription) {
+            modelDescription = new ModelDescriptor(cls);
+            models.set(modelName, modelDescription);
+        }
+        if (modelDescription.ids[fieldName])
+            throw new Error(`Id field "${fieldName}" already registered in model "${modelDescription.cls.name}"`);
+        const type = typeDescriptor ? typeDescriptor : new NumberDescriptor();
+        modelDescription.ids[fieldName] = {
+            decorator: (obj) => {
+                if (observable)
+                    extendObservable(obj, { [fieldName]: obj[fieldName] });
+                obj.disposers.set('before changes', intercept(obj, fieldName, (change) => {
+                    let oldValue = obj[fieldName];
+                    if (change.newValue !== undefined && oldValue !== undefined)
+                        throw new Error(`You cannot change id field: ${oldValue} to ${change.newValue}`);
+                    if (change.newValue === undefined && oldValue !== undefined)
+                        modelDescription.defaultRepository.cache.eject(obj);
+                    return change;
+                }));
+                obj.disposers.set('after changes', observe(obj, fieldName, (change) => {
+                    if (obj.ID !== undefined)
+                        modelDescription.defaultRepository.cache.inject(obj);
+                }));
+            },
+            type,
+            settings: {}
+        };
     };
 }
 
@@ -1795,19 +2118,29 @@ class AND_Filter extends ComboFilter {
 }
 function AND(...filters) { return new AND_Filter(filters); }
 
+/**
+ * Adapter is a class that provides a way to interact with the server or other data source.
+ */
 class Adapter {
 }
 
+/**
+ * ReadOnlyAdapter not allow to create, update or delete objects.
+ */
 class ReadOnlyAdapter extends Adapter {
     async create() { throw (`You cannot create using READ ONLY adapter.`); }
     async update() { throw (`You cannot update using READ ONLY adapter.`); }
     async delete() { throw (`You cannot delete using READ ONLY adapter.`); }
 }
 
-/*
-You can use this adapter for mock data or for unit test
-*/
+/**
+ * Local storage.
+ */
 let local_store = {};
+/**
+ * LocalAdapter connects to the local storage.
+ * You can use this adapter for mock data or for unit test
+ */
 class LocalAdapter {
     init_local_data(data) {
         let objs = {};
@@ -1832,7 +2165,8 @@ class LocalAdapter {
         this.store_name = store_name;
         local_store[this.store_name] = {};
     }
-    async action(obj_id, name, kwargs) {
+    async action(ids, name, kwargs) {
+        throw (`Not implemented`);
     }
     async create(raw_data) {
         if (this.delay)
@@ -1853,18 +2187,20 @@ class LocalAdapter {
         let raw_obj = Object.values(local_store[this.store_name])[0];
         return raw_obj;
     }
-    async update(obj_id, only_changed_raw_data) {
+    async update(ids, only_changed_raw_data) {
         if (this.delay)
             await timeout(this.delay);
+        const obj_id = ids.join("-");
         let raw_obj = local_store[this.store_name][obj_id];
         for (let field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field];
         }
         return raw_obj;
     }
-    async delete(obj_id) {
+    async delete(ids) {
         if (this.delay)
             await timeout(this.delay);
+        const obj_id = ids.join("-");
         delete local_store[this.store_name][obj_id];
     }
     async find(query) {
@@ -1911,14 +2247,10 @@ class LocalAdapter {
 // model decorator
 function local() {
     return (cls) => {
-        let repository = new Repository(cls, new LocalAdapter(cls.name));
-        cls.__proto__.repository = repository;
+        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(cls.modelName);
     };
 }
 
-/**
- * ConstantAdapter is a class that provides a way to use constant data as a data source.
- */
 class ConstantAdapter extends Adapter {
     constructor(constant) {
         super();
@@ -1965,29 +2297,7 @@ class ConstantAdapter extends Adapter {
 // model decorator
 function constant(constant) {
     return (cls) => {
-        // cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant)
-        let repository = new Repository(cls, new ConstantAdapter(constant));
-        cls.__proto__.repository = repository;
-    };
-}
-
-class MockAdapter {
-    async create(raw_data) { return raw_data; }
-    async update(obj_id, only_changed_raw_data) { return only_changed_raw_data; }
-    async delete(obj_id) { }
-    async action(obj_id, name, kwargs) { }
-    async get(obj_id) { return obj_id; }
-    async find(query) { return {}; }
-    async load(query) { return []; }
-    async getTotalCount(filter) { return 0; }
-    async getDistinct(filter, filed) { return []; }
-    getURLSearchParams(query) { return new URLSearchParams(); }
-}
-// model decorator
-function mock() {
-    return (cls) => {
-        let repository = new Repository(cls, new MockAdapter());
-        cls.__proto__.repository = repository;
+        cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant);
     };
 }
 
@@ -2089,7 +2399,7 @@ class ObjectForm extends Form {
             for (let fieldName of Object.keys(inputs)) {
                 this.obj[fieldName] = inputs[fieldName].value;
             }
-            const response = await this.obj.save();
+            const response = await this.obj.create();
             if (onSubmitted)
                 onSubmitted(response);
         }, onCancelled);
@@ -2102,5 +2412,5 @@ class ObjectForm extends Form {
     }
 }
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ObjectForm, ObjectInput, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, config, constant, field, foreign, id, local, local_store, many, model, models, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map

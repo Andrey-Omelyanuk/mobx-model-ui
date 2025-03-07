@@ -4,7 +4,7 @@ import {
     QueryCacheSync, QueryDistinct, QueryStream
 } from '../queries'
 import { Repository } from '../repository'
-import { ARRAY, ID, STRING } from '../types'
+import { ID } from '../types'
 import models from './models'
 import { ModelDescriptor } from './model-descriptor'
 
@@ -34,7 +34,6 @@ export default abstract class Model {
     get modelDescriptor(): ModelDescriptor<Model> {
         return models.get(this.modelName)
     }
-
 
     /**
      * ID is string based on join ids. 
@@ -185,7 +184,8 @@ export default abstract class Model {
 
     async action(name: string, kwargs: Object) { return await this.model.repository.action(this, name, kwargs) }
     async create<T extends Model>(): Promise<T> { return await this.modelDescriptor.defaultRepository.create(this) as T }
-    async update() { return await this.modelDescriptor.defaultRepository.update(this) }
+    async update<T extends Model>(): Promise<T> { return await this.modelDescriptor.defaultRepository.update(this) as T }
+    async save<T extends Model>(): Promise<T> { return this.ID ? await this.update() : await this.create() as T }
     async delete() { return await this.modelDescriptor.defaultRepository.delete(this) }
     async refresh() { return await this.modelDescriptor.defaultRepository.get(this.modelDescriptor.getIds(this)) }
 

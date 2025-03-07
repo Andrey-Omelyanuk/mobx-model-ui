@@ -1,26 +1,26 @@
 ///<reference path="../dist/mobx-model-ui.d.ts" />
-import { Model, model, field, foreign, one, local } from '../dist/mobx-model-ui'
+import {  NUMBER, STRING, Model, model, id, field, foreign, one, local } from '../dist/mobx-model-ui'
 
 
 describe('User Profile.', () => {
+    @local()
+    @model
+    class User extends Model {
+        @id(NUMBER())                                   id      : number
+        @field(STRING({maxLength: 24, required: true})) name    : string
+        profile : UserProfile
+    }
+
+    @local()
+    @model
+    class UserProfile extends Model {
+        @id(NUMBER())                    id         : number
+        @field(NUMBER({required: true})) user_id	: number
+        @foreign(User)                   user       : User
+    }
+    one(UserProfile)(User, 'profile') 
 
     it('...', async ()=> {
-        @local()
-        @model
-        class User extends Model {
-            @field  name    : string
-                    profile : UserProfile
-        }
-
-        @local()
-        @model
-        class UserProfile extends Model {
-            @field              user_id	: number
-            @foreign(User)      user    : User
-            @field              test    : string
-        }
-        one(UserProfile)(User, 'profile') 
-
         let user_a = new User({id: 1, name: 'A'})
         let user_b = new User({id: 2, name: 'B'})
         expect(user_a.profile).toBe(undefined)

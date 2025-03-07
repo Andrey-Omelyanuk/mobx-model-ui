@@ -7,30 +7,119 @@ declare const config: {
     DEBOUNCE: (func: Function, debounce: number) => any;
 };
 
-type ID = string | number;
+interface TypeDescriptorProps {
+    null?: boolean;
+    required?: boolean;
+}
+/**
+ *  Base class for the type descriptor
+ * It is used to define the field of the model
+ * It is used to convert the value to the string and back
+ */
+declare abstract class TypeDescriptor<T> {
+    /**
+     * Configuration of the descriptor
+     */
+    config: any;
+    /**
+     * Convert value to the string
+     */
+    abstract toString(value: T): string;
+    /**
+     * Convert string to the value
+     */
+    abstract fromString(value: string): T;
+    /**
+     * Check if the value is valid
+     * If not, throw an error
+     */
+    abstract validate(value: T): void;
+    abstract default(): T;
+}
+
+interface StringDescriptorProps extends TypeDescriptorProps {
+    maxLength?: number;
+}
+declare class StringDescriptor extends TypeDescriptor<string> {
+    constructor(props?: StringDescriptorProps);
+    toString(value: string): string;
+    fromString(value: string): string;
+    validate(value: string): void;
+    default(): string;
+}
+declare function STRING(props?: StringDescriptorProps): StringDescriptor;
+
+interface NumberDescriptorProps extends TypeDescriptorProps {
+    min?: number;
+    max?: number;
+}
+declare class NumberDescriptor extends TypeDescriptor<number> {
+    constructor(props?: NumberDescriptorProps);
+    toString(value: number): string;
+    fromString(value: string): number;
+    validate(value: number): void;
+    default(): number;
+}
+declare function NUMBER(props?: NumberDescriptorProps): NumberDescriptor;
+
+interface BooleanDescriptorProps extends TypeDescriptorProps {
+}
+declare class BooleanDescriptor extends TypeDescriptor<boolean> {
+    constructor(props?: BooleanDescriptorProps);
+    toString(value: boolean): string;
+    fromString(value: string): boolean;
+    validate(value: boolean): void;
+    default(): boolean;
+}
+declare function BOOLEAN(props?: BooleanDescriptorProps): BooleanDescriptor;
+
+interface DateDescriptorProps extends TypeDescriptorProps {
+    min?: Date;
+    max?: Date;
+}
+declare class DateDescriptor extends TypeDescriptor<Date> {
+    constructor(props?: DateDescriptorProps);
+    toString(value: Date): string;
+    fromString(value: string): Date;
+    validate(value: Date): void;
+    default(): Date;
+}
+declare function DATE(props?: DateDescriptorProps): DateDescriptor;
+
+declare class DateTimeDescriptor extends DateDescriptor {
+    toString(value: Date): string;
+}
+declare function DATETIME(props?: DateDescriptorProps): DateTimeDescriptor;
+
+interface ArrayDescriptorProps extends TypeDescriptorProps {
+    minItems?: number;
+    maxItems?: number;
+}
+declare class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
+    constructor(type: TypeDescriptor<T>, props?: ArrayDescriptorProps);
+    toString(value: T[]): string;
+    fromString(value: string): T[];
+    validate(value: T[]): void;
+    default(): T[];
+}
+declare function ARRAY<T>(type: TypeDescriptor<T>, props?: ArrayDescriptorProps): ArrayDescriptor<T>;
+
 declare const ASC = true;
 declare const DESC = false;
-type ORDER_BY = Map<string, boolean>;
+declare class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
+    toString(value: [string, boolean]): string;
+    fromString(value: string): [string, boolean];
+    validate(value: [string, boolean]): void;
+    default(): [string, boolean];
+}
+declare function ORDER_BY(): OrderByDescriptor;
+
+type ID = string | number;
 
 declare abstract class Filter {
     abstract get URLSearchParams(): URLSearchParams;
     abstract isMatch(obj: any): boolean;
     abstract get isReady(): boolean;
-}
-
-declare enum TYPE {
-    ID = "id",
-    STRING = "string",
-    NUMBER = "number",
-    DATE = "date",
-    DATETIME = "datetime",
-    BOOLEAN = "boolean",
-    ARRAY_ID = "array-id",
-    ARRAY_STRING = "array-string",
-    ARRAY_NUMBER = "array-number",
-    ARRAY_DATE = "array-date",
-    ARRAY_DATETIME = "array-datetime",
-    ORDER_BY = "order-by"
 }
 
 interface InputConstructorArgs<T> {
@@ -40,10 +129,9 @@ interface InputConstructorArgs<T> {
     debounce?: number;
     syncURL?: string;
     syncLocalStorage?: string;
-    type?: TYPE;
 }
 declare class Input<T> {
-    readonly type: TYPE;
+    type: TypeDescriptor<T>;
     value: T;
     isRequired: boolean;
     isDisabled: boolean;
@@ -54,7 +142,7 @@ declare class Input<T> {
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
     __disposers: any[];
-    constructor(args?: InputConstructorArgs<T>);
+    constructor(type: TypeDescriptor<T>, args?: InputConstructorArgs<any>);
     destroy(): void;
     private stopDebouncing;
     set(value: T): void;
@@ -62,16 +150,6 @@ declare class Input<T> {
     setFromString(value: string): void;
     toString(): string;
 }
-declare const StringInput: (args?: InputConstructorArgs<string>) => Input<string>;
-declare const NumberInput: (args?: InputConstructorArgs<number>) => Input<number>;
-declare const DateInput: (args?: InputConstructorArgs<Date>) => Input<Date>;
-declare const DateTimeInput: (args?: InputConstructorArgs<Date>) => Input<Date>;
-declare const BooleanInput: (args?: InputConstructorArgs<boolean>) => Input<boolean>;
-declare const OrderByInput: (args?: InputConstructorArgs<ORDER_BY>) => Input<ORDER_BY>;
-declare const ArrayStringInput: (args?: InputConstructorArgs<string[]>) => Input<string[]>;
-declare const ArrayNumberInput: (args?: InputConstructorArgs<number[]>) => Input<number[]>;
-declare const ArrayDateInput: (args?: InputConstructorArgs<Date[]>) => Input<Date[]>;
-declare const ArrayDateTimeInput: (args?: InputConstructorArgs<Date[]>) => Input<Date[]>;
 
 declare class SingleFilter extends Filter {
     readonly field: string;
@@ -107,20 +185,19 @@ declare class AND_Filter extends ComboFilter {
 }
 declare function AND(...filters: Filter[]): Filter;
 
-/**
- * Adapter is a class that provides a way to interact with the server or other data source.
- * M is a model class that the adapter is responsible for.
- */
 type RequestConfig = {
     controller?: AbortController;
     onUploadProgress?: (progressEvent: ProgressEvent) => void;
 };
+/**
+ * Adapter is a class that provides a way to interact with the server or other data source.
+ */
 declare abstract class Adapter<M extends Model> {
     abstract create(raw_data: any, config?: RequestConfig): Promise<any>;
-    abstract update(obj_id: ID, only_changed_raw_data: any, config?: RequestConfig): Promise<any>;
-    abstract delete(obj_id: ID, config?: RequestConfig): Promise<void>;
-    abstract action(obj_id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
-    abstract get(obj_id: ID, config?: RequestConfig): Promise<any>;
+    abstract update(obs: ID[], only_changed_raw_data: any, config?: RequestConfig): Promise<any>;
+    abstract delete(ids: ID[], config?: RequestConfig): Promise<void>;
+    abstract action(ids: ID[], name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    abstract get(ids: ID[], config?: RequestConfig): Promise<any>;
     abstract find(query: Query<M>, config?: RequestConfig): Promise<any>;
     abstract load(query: Query<M>, config?: RequestConfig): Promise<any[]>;
     abstract getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
@@ -128,35 +205,94 @@ declare abstract class Adapter<M extends Model> {
     abstract getURLSearchParams(query: Query<M>): URLSearchParams;
 }
 
+/**
+ *
+ */
 declare class Repository<M extends Model> {
-    readonly model: any;
-    readonly cache?: Cache<M>;
-    readonly adapter: Adapter<M>;
-    constructor(model: any, adapter: any, cache?: any);
+    readonly modelDescriptor: ModelDescriptor<M>;
+    adapter?: Adapter<M>;
+    readonly cache: Cache<M>;
+    constructor(modelDescriptor: ModelDescriptor<M>, adapter?: Adapter<M>, cache?: Cache<M>);
+    /**
+     *
+     * @param obj
+     * @param name
+     * @param kwargs
+     * @param controller
+     * @returns
+     */
     action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    /**
+     *
+     * @param obj
+     * @param controller
+     * @returns
+     */
     create(obj: M, config?: RequestConfig): Promise<M>;
+    /**
+     *
+     * @param obj
+     * @param controller
+     */
     update(obj: M, config?: RequestConfig): Promise<M>;
-    delete(obj: M, config?: RequestConfig): Promise<M>;
-    get(obj_id: ID, config?: RequestConfig): Promise<M>;
+    /**
+     *
+     * @param obj
+     * @param controller
+     */
+    delete(obj: M, config?: RequestConfig): Promise<void>;
+    updateCachedObject(rawObj: Object): M | undefined;
+    /**
+     *
+     * @param ids
+     * @param controller
+     * @returns
+     */
+    get(ids: ID[], config?: RequestConfig): Promise<M>;
+    /**
+     * Returns ONE object
+     * @param query
+     * @param controller
+     * @returns
+     */
     find(query: Query<M>, config?: RequestConfig): Promise<M>;
+    /**
+     * Returns MANY objects
+     * @param query
+     * @param controller
+     * @returns
+     */
     load(query: Query<M>, config?: RequestConfig): Promise<M[]>;
+    /**
+     *
+     * @param filter
+     * @param controller
+     * @returns
+     */
     getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
+    /**
+     *
+     * @param filter
+     * @param field
+     * @param controller
+     * @returns
+     */
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
 }
 declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
 interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
     options?: Query<M>;
-    autoReset?: (input: ObjectInput<M>) => void;
+    autoReset?: (input: ObjectInput<T, M>) => void;
 }
-declare class ObjectInput<M extends Model> extends Input<ID> {
+declare class ObjectInput<T, M extends Model> extends Input<T> {
     readonly options?: Query<M>;
-    constructor(args?: ObjectInputConstructorArgs<ID, M>);
+    constructor(type: TypeDescriptor<T>, args?: ObjectInputConstructorArgs<T, M>);
     get isReady(): boolean;
     destroy(): void;
 }
 
-declare function autoResetId(input: ObjectInput<any>): void;
+declare function autoResetId(input: ObjectInput<any, any>): void;
 
 declare const syncURLHandler: (paramName: string, input: Input<any>) => void;
 
@@ -166,7 +302,7 @@ declare const DISPOSER_AUTOUPDATE = "__autoupdate";
 interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
-    orderBy?: Input<ORDER_BY>;
+    orderBy?: Input<[string, boolean][]>;
     offset?: Input<number>;
     limit?: Input<number>;
     relations?: Input<string[]>;
@@ -177,7 +313,7 @@ interface QueryProps<M extends Model> {
 declare class Query<M extends Model> {
     readonly repository: Repository<M>;
     readonly filter: Filter;
-    readonly orderBy: Input<ORDER_BY>;
+    readonly orderBy: Input<[string, boolean][]>;
     readonly offset: Input<number>;
     readonly limit: Input<number>;
     readonly relations: Input<string[]>;
@@ -264,98 +400,235 @@ declare class QueryDistinct extends Query<any> {
     __load(): Promise<void>;
 }
 
-declare abstract class Model {
-    static readonly repository: Repository<Model>;
-    static readonly isOriginalClass = true;
-    static __fields: {
-        [field_name: string]: {
-            decorator: (obj: Model, field_name: string) => void;
-            settings: any;
-            serialize: any;
-            deserialize: any;
-        };
+/**
+ * ModelFieldDescriptor is a class that contains all the information about the field.
+ */
+declare class ModelFieldDescriptor<T, F> {
+    decorator: (obj: T) => void;
+    type?: TypeDescriptor<F>;
+    settings?: any;
+}
+/**
+ * ModelDescriptor is a class that contains all the information about the model.
+ */
+declare class ModelDescriptor<T extends Model> {
+    constructor(modelClass: new () => T);
+    /**
+     * Model class
+     */
+    cls: new (args: any) => T;
+    /**
+     * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
+     */
+    defaultRepository: Repository<T>;
+    /**
+     * Id fields
+     */
+    ids: {
+        [field_name: string]: ModelFieldDescriptor<T, any>;
     };
-    static __relations: {
-        [field_name: string]: {
-            decorator: (obj: Model, field_name: string) => void;
-            settings: any;
-        };
+    /**
+     * Fields is a map of all fields in the model that usually use in repository.
+     */
+    fields: {
+        [field_name: string]: ModelFieldDescriptor<T, any>;
     };
-    static getQuery<T extends Model>(props: QueryProps<T>): Query<T>;
-    static getQueryPage(props: QueryProps<Model>): QueryPage<Model>;
-    static getQueryRaw(props: QueryProps<Model>): QueryRaw<Model>;
-    static getQueryRawPage(props: QueryProps<Model>): QueryRawPage<Model>;
-    static getQueryCacheSync(props: QueryProps<Model>): QueryCacheSync<Model>;
-    static getQueryStream(props: QueryProps<Model>): QueryStream<Model>;
-    static getQueryDistinct(field: string, props: QueryProps<Model>): QueryDistinct;
-    static get(id: ID): Model;
-    static findById(id: ID): Promise<Model>;
-    static find(query: Query<Model>): Promise<Model>;
-    id: ID;
-    __init_data: any;
-    __disposers: Map<any, any>;
-    constructor(...args: any[]);
-    destroy(): void;
-    get model(): any;
-    get raw_data(): any;
-    get raw_obj(): any;
-    get only_changed_raw_data(): any;
-    get is_changed(): boolean;
-    action(name: string, kwargs: Object): Promise<any>;
-    create(): Promise<any>;
-    update(): Promise<any>;
-    delete(): Promise<any>;
-    save(): Promise<any>;
-    refresh(): Promise<any>;
-    refreshInitData(): void;
-    cancelLocalChanges(): void;
-    updateFromRaw(raw_obj: any): void;
+    /**
+     * Relations is a map of all relations (foreign, one, many) in the model.
+     * It is derivative and does not come from outside.
+     */
+    relations: {
+        [field_name: string]: ModelFieldDescriptor<T, any>;
+    };
+    /**
+     *  Calculate ID from obj based on Model config.
+     *  If one of the ids is undefined, it returns undefined.
+     * @param obj - any object, usually it's a raw object of model
+     * @returns
+     * @example:
+     *  - id1=1, id2=2 => '1=2'
+     */
+    getID(obj: Object): string | undefined;
+    /**
+     * Calculate ID from values based on Model config.
+     */
+    getIDByValues(values: ID[]): string | undefined;
+    /**
+     * Get all original values of ids from object.
+     * @param obj - any object of model, not only T extends Model, it can be a raw object.
+     * @returns
+     */
+    getIds(obj: Object): ID[] | undefined;
 }
 
+declare abstract class Model {
+    /**
+     * Static version initializes in the id decorator.
+     * Instance version initializes in the constructor that declare in model decorator.
+     * It is used for registering the model in the models map.
+     * It is used for get the model descriptor from the models map.
+     */
+    static modelName: string;
+    readonly modelName: string;
+    /**
+     * @returns {ModelDescriptor} - model description
+     */
+    static getModelDescriptor<T extends Model>(): ModelDescriptor<T>;
+    /**
+     * @param init - initial data of the object
+     */
+    constructor(init?: {});
+    /**
+     * @returns {ModelDescriptor} - model descriptor
+     */
+    get modelDescriptor(): ModelDescriptor<Model>;
+    /**
+     * ID is string based on join ids.
+     * It's base for using in the lib.
+     */
+    get ID(): string | undefined;
+    /**
+     * Save the initial data of the object that was loaded from the server.
+     */
+    init_data: any;
+    /**
+     * disposers for mobx reactions and interceptors, you can add your own disposers
+     */
+    disposers: Map<any, any>;
+    /**
+     * Destructor of the object.
+     * It eject from cache and removes all disposers.
+     */
+    destroy(): void;
+    get model(): any;
+    /**
+     * @returns {Object} - data only from fields (no ids)
+     */
+    get rawData(): any;
+    /**
+     * @returns {Object} - it is rawData + ids fields
+     */
+    get rawObj(): any;
+    get only_changed_raw_data(): any;
+    get is_changed(): boolean;
+    refreshInitData(): void;
+    cancelLocalChanges(): void;
+    /**
+     * Update the object from the raw data.
+     * @description
+     * It is used when raw data comes from any source (server, websocket, etc.) and you want to update the object.
+     * TODO: ID is not ready! I'll finish it later.
+     */
+    updateFromRaw(rawObj: any): void;
+    action(name: string, kwargs: Object): Promise<any>;
+    create<T extends Model>(): Promise<T>;
+    update<T extends Model>(): Promise<T>;
+    save<T extends Model>(): Promise<T>;
+    delete(): Promise<void>;
+    refresh(): Promise<Model>;
+    static getQuery<T extends Model>(props: QueryProps<T>): Query<T>;
+    static getQueryPage<T extends Model>(props: QueryProps<T>): QueryPage<T>;
+    static getQueryRaw<T extends Model>(props: QueryProps<T>): QueryRaw<T>;
+    static getQueryRawPage<T extends Model>(props: QueryProps<T>): QueryRawPage<T>;
+    static getQueryCacheSync<T extends Model>(props: QueryProps<T>): QueryCacheSync<T>;
+    static getQueryStream<T extends Model>(props: QueryProps<T>): QueryStream<T>;
+    static getQueryDistinct<T extends Model>(field: string, props: QueryProps<T>): QueryDistinct;
+    static get<T extends Model>(ID: string): T;
+    static findById<T extends Model>(ids: ID[]): Promise<T>;
+    static find<T extends Model>(query: Query<T>): Promise<T>;
+}
+
+/**
+ * Model decorator.
+ * Note: Class decorator has constructor of class as argument.
+ */
 declare function model(constructor: any): any;
 
+/**
+ * Is a map of all registered models in the application.
+ * It's a singleton.
+ */
+declare const models: Map<string, ModelDescriptor<any>>;
+
+/**
+ *
+ */
 declare class Cache<M extends Model> {
-    readonly name: string;
-    readonly model: any;
-    readonly store: Map<ID, M>;
-    constructor(model: any, name?: string);
-    get(id: any): M | undefined;
+    readonly store: Map<string, M>;
+    constructor();
+    /**
+     * Get object by ID
+     */
+    get(ID: string): M | undefined;
+    /**
+     * Inject object to the cache
+     */
     inject(obj: M): void;
-    eject(obj: M): boolean;
-    update(raw_obj: any): M;
+    /**
+     * Eject object from the cache
+     */
+    eject(obj: M): void;
+    /**
+     * Clear the cache
+     */
     clear(): void;
 }
 
-declare function field_field(obj: any, field_name: any): void;
-declare function field(cls: any, field_name: string): void;
+/**
+ * Decorator for fields
+ */
+declare function field<T>(typeDescriptor?: TypeDescriptor<T>, observable?: boolean): (cls: any, fieldName: string) => void;
 
-declare function foreign(foreign_model: any, foreign_id_name?: string): (cls: any, field_name: string) => void;
+/**
+ * Decorator for foreign fields
+ */
+declare function foreign<M extends Model>(foreign_model: any, foreign_ids?: string[]): (cls: any, field_name: string) => void;
 
-declare function one(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
+declare function one<M extends Model>(remote_model: any, remote_foreign_ids?: string[]): (cls: any, field_name: string) => void;
 
-declare function many(remote_model: any, remote_foreign_id_name?: string): (cls: any, field_name: string) => void;
+/**
+ * Decorator for many fields
+ */
+declare function many<M extends Model>(remote_model: any, remote_foreign_ids?: string[]): (cls: any, field_name: string) => void;
 
+/**
+ * Decorator for id fields
+ * Only id field can register model in models map,
+ * because it invoke before a model decorator.
+ */
+declare function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, observable?: boolean): (cls: any, fieldName: string) => void;
+
+/**
+ * ReadOnlyAdapter not allow to create, update or delete objects.
+ */
 declare abstract class ReadOnlyAdapter<M extends Model> extends Adapter<M> {
     create(): Promise<void>;
     update(): Promise<void>;
     delete(): Promise<void>;
 }
 
+/**
+ * Local storage.
+ */
 declare let local_store: {
     string?: {
         any: Model;
     };
 };
+/**
+ * LocalAdapter connects to the local storage.
+ * You can use this adapter for mock data or for unit test
+ */
 declare class LocalAdapter<M extends Model> implements Adapter<M> {
     readonly store_name: string;
     delay: number;
     init_local_data(data: any[]): void;
     constructor(store_name: string);
-    action(obj_id: number, name: string, kwargs: Object): Promise<any>;
+    action(ids: ID[], name: string, kwargs: Object): Promise<any>;
     create(raw_data: any): Promise<any>;
     get(obj_id: any): Promise<any>;
-    update(obj_id: number, only_changed_raw_data: any): Promise<any>;
-    delete(obj_id: number): Promise<void>;
+    update(ids: ID[], only_changed_raw_data: any): Promise<any>;
+    delete(ids: ID[]): Promise<void>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter: Filter): Promise<number>;
@@ -364,9 +637,6 @@ declare class LocalAdapter<M extends Model> implements Adapter<M> {
 }
 declare function local(): (cls: any) => void;
 
-/**
- * ConstantAdapter is a class that provides a way to use constant data as a data source.
- */
 declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[];
     constructor(constant: any);
@@ -382,20 +652,6 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     getURLSearchParams(): URLSearchParams;
 }
 declare function constant(constant: any[]): (cls: any) => void;
-
-declare class MockAdapter<M extends Model> implements Adapter<M> {
-    create(raw_data: any): Promise<any>;
-    update(obj_id: number, only_changed_raw_data: any): Promise<any>;
-    delete(obj_id: number): Promise<void>;
-    action(obj_id: number, name: string, kwargs: Object): Promise<any>;
-    get(obj_id: any): Promise<any>;
-    find(query: Query<M>): Promise<any>;
-    load(query: Query<M>): Promise<any[]>;
-    getTotalCount(filter: Filter): Promise<number>;
-    getDistinct(filter: any, filed: any): Promise<any[]>;
-    getURLSearchParams(query: Query<M>): URLSearchParams;
-}
-declare function mock(): (cls: any) => void;
 
 declare class Form {
     readonly inputs: {
@@ -425,4 +681,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ASC, Adapter, ArrayDateInput, ArrayDateTimeInput, ArrayNumberInput, ArrayStringInput, BooleanInput, Cache, ComboFilter, ConstantAdapter, DESC, DISPOSER_AUTOUPDATE, DateInput, DateTimeInput, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, MockAdapter, Model, NOT_EQ, NumberInput, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByInput, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, SingleFilter, StringInput, autoResetId, config, constant, field, field_field, foreign, local, local_store, many, mock, model, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, config, constant, field, foreign, id, local, local_store, many, model, models, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
