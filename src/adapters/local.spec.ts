@@ -24,7 +24,7 @@ describe('LocalAdapter', () => {
     })
 
     it('create', async ()=> {
-        expect(await adapter.create({a: 1})).toStrictEqual({id: 1, a: 1}); expect(local_store['A']).toEqual({1: {id: 1, a: 1}})
+        expect(await adapter.create({a: 1})).toStrictEqual({id: 1, a: 1})
         expect(await adapter.create({a: 2})).toStrictEqual({id: 2, a: 2})
         expect(await adapter.create({a: 3})).toStrictEqual({id: 3, a: 3})
         expect(await adapter.create({a: 4})).toStrictEqual({id: 4, a: 4})
@@ -36,16 +36,43 @@ describe('LocalAdapter', () => {
         })
     })
 
-    it('get', async ()=> {
-    })
-
     it('update', async ()=> {
+        local_store['A'] = {
+            '1': {id: 1, a: 1},
+            '2': {id: 2, a: 2},
+        }
+        const obj = {id: 1, a: 2}
+        expect(await adapter.update([1], obj)).toStrictEqual(obj)
+        expect(local_store['A'][1]).toStrictEqual(obj)
     })
 
     it('delete', async ()=> {
+        local_store['A'] = {
+            '1': {id: 1, a: 1},
+            '2': {id: 2, a: 2},
+        }
+        await adapter.delete([1])
+        expect(local_store['A']).toEqual({'2': {id: 2, a: 2}, })
+        await adapter.delete([1])  // no error, just ignore
+        expect(local_store['A']).toEqual({'2': {id: 2, a: 2}, })
+        await adapter.delete([2])
+        expect(local_store['A']).toEqual({})
     })
 
-    it('action', async ()=> {
+    it('action', (done) => {
+        adapter.action([1], 'action', {}).catch((e) => {
+            expect(e).toBe('Not implemented')
+            done()
+        })
+    })
+
+    it('get', async ()=> {
+        local_store['A'] = {
+            '1': {id: 1, a: 1},
+            '2': {id: 2, a: 2},
+        }
+        expect(await adapter.get([1])).toStrictEqual({id: 1, a: 1})
+        expect(await adapter.get([2])).toStrictEqual({id: 2, a: 2})
     })
 
     it('find', async ()=> {
@@ -61,6 +88,11 @@ describe('LocalAdapter', () => {
     })
 
     it('getDistinct', async ()=> {
+    })
+
+    it('getID', async ()=> {
+        expect(adapter.getID([1])).toBe('1')
+        expect(adapter.getID([1, 2])).toBe('1-2')
     })
 
     describe('init_local_data', () => {

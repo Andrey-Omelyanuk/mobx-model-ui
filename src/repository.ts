@@ -7,38 +7,17 @@ import { Filter } from './filters'
 import { Adapter, RequestConfig } from './adapters/adapter'
 
 /**
- * 
+ * Repository class is responsible for CRUD operations on the model.
  */
 export class  Repository<M extends Model> {
-    // readonly modelDescriptor: ModelDescriptor<M>
-    // readonly cache: Cache<M>
-    // readonly adapter: Adapter<M> 
-
     constructor(
-        readonly modelDescriptor: ModelDescriptor<M>,
-        public   adapter?: Adapter<M>,
-        readonly cache: Cache<M> = new Cache<M>(),
+        readonly modelDescriptor : ModelDescriptor<M>,
+        public   adapter        ?: Adapter<M>,
+        readonly cache           : Cache<M> = new Cache<M>(),
     ) {}
 
     /**
-     * 
-     * @param obj 
-     * @param name 
-     * @param kwargs 
-     * @param controller 
-     * @returns 
-     */
-
-    async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
-        const ids = this.modelDescriptor.getIds(obj)
-        return await this.adapter.action(ids, name, kwargs, config)
-    }
-
-    /**
-     * 
-     * @param obj 
-     * @param controller 
-     * @returns 
+     * Create the object. 
      */
     async create(obj: M, config?: RequestConfig) : Promise<M> {
         let raw_obj = await this.adapter.create(obj.rawData, config)
@@ -51,9 +30,7 @@ export class  Repository<M extends Model> {
     }
 
     /**
-     * 
-     * @param obj 
-     * @param controller 
+     * Update the object.
      */
     async update(obj: M, config?: RequestConfig) : Promise<M> {
         const ids = this.modelDescriptor.getIds(obj)
@@ -64,9 +41,7 @@ export class  Repository<M extends Model> {
     }
 
     /**
-     * 
-     * @param obj 
-     * @param controller 
+     * Delete the object.
      */
     async delete(obj: M, config?: RequestConfig) : Promise<void> {
         const ids = this.modelDescriptor.getIds(obj)
@@ -74,21 +49,16 @@ export class  Repository<M extends Model> {
         obj.destroy()
     }
 
-    updateCachedObject(rawObj: Object) : M | undefined {
-        const rawObjID = this.modelDescriptor.getID(rawObj)
-        const cachedObj = this.cache.get(rawObjID)
-        if (cachedObj) {
-            cachedObj.updateFromRaw(rawObj)
-            cachedObj.refreshInitData()
-            return cachedObj
-        } 
+    /**
+     * Run action for the object.
+     */
+    async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+        const ids = this.modelDescriptor.getIds(obj)
+        return await this.adapter.action(ids, name, kwargs, config)
     }
 
     /**
-     * 
-     * @param ids 
-     * @param controller 
-     * @returns 
+     * Returns ONE object by ids.
      */
     async get(ids: ID[], config?: RequestConfig): Promise<M> {
         let raw_obj = await this.adapter.get(ids, config)
@@ -97,10 +67,7 @@ export class  Repository<M extends Model> {
     }
 
     /**
-     * Returns ONE object 
-     * @param query 
-     * @param controller 
-     * @returns 
+     * Returns ONE object by query.
      */
     async find(query: Query<M>, config?: RequestConfig): Promise<M> {
         let raw_obj = await this.adapter.find(query, config)
@@ -109,10 +76,7 @@ export class  Repository<M extends Model> {
     }
 
     /**
-     * Returns MANY objects 
-     * @param query 
-     * @param controller 
-     * @returns 
+     * Returns MANY objects by query. 
      */
     async load(query: Query<M>, config?: RequestConfig):Promise<M[]> {
         let raw_objs = await this.adapter.load(query, config)
@@ -127,24 +91,28 @@ export class  Repository<M extends Model> {
     }
 
     /**
-     * 
-     * @param filter 
-     * @param controller 
-     * @returns 
+     * Returns total count of objects.
      */
-    async getTotalCount  (filter: Filter, config?: RequestConfig): Promise<number> {
+    async getTotalCount(filter: Filter, config?: RequestConfig): Promise<number> {
         return await this.adapter.getTotalCount(filter, config)
     }
     /**
-     * 
-     * @param filter 
-     * @param field 
-     * @param controller 
-     * @returns 
+     * Returns distinct values for the field.
      */
-    async getDistinct    (filter: Filter, field: string, config?: RequestConfig): Promise<any[]> {
+    async getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]> {
         return await this.adapter.getDistinct(filter, field, config)
     }
+
+    updateCachedObject(rawObj: Object) : M | undefined {
+        const rawObjID = this.modelDescriptor.getID(rawObj)
+        const cachedObj = this.cache.get(rawObjID)
+        if (cachedObj) {
+            cachedObj.updateFromRaw(rawObj)
+            cachedObj.refreshInitData()
+            return cachedObj
+        } 
+    }
+
 }
 
 

@@ -1,81 +1,87 @@
 import { model, Model } from './model'
 import { EQ } from './filters'
-import { obj_a, obj_b } from './test.utils'
-import { Adapter } from './adapters'
+import { obj_a, obj_b, TestAdapter } from './test.utils'
+import { Adapter, ConstantAdapter, local, local_store } from './adapters'
 import { Repository } from './repository'
+import { NUMBER, STRING } from './types'
+import { field, id } from './fields'
+import { Cache } from './cache'
 
 
 
 describe('Repository', () => {
 
-    it('constructor', async ()=> {
+    @local()
+    @model class A extends Model {
+        @id   (NUMBER()) id : number
+        @field(STRING()) b  : string
+    }
+    const adapter = new TestAdapter('test')
+
+    afterEach(async () => {
+        jest.clearAllMocks()
+        A.getModelDescriptor().defaultRepository.cache.clear()
+        adapter.clear()
     })
 
-    // @model class A extends Model { @field b: string }
+    it('constructor', async ()=> {
+        const adapter = new ConstantAdapter([])
+        const cache = new Cache<A>()
+        const repositoryA = new Repository(A.getModelDescriptor())
+        expect(repositoryA.modelDescriptor).toBe(A.getModelDescriptor())
+        expect(repositoryA.cache).toBeDefined()
+        expect(repositoryA.adapter).toBeUndefined()
 
-    // class TestAdapter extends Adapter<A> {
-    //     async __create(raw_data: RawObject, controller?: AbortController) : Promise<RawObject> { raw_data.id = 1; return raw_data }
-    //     async __update(obj_id: number, only_changed_raw_data: RawObject, controller?: AbortController) : Promise<RawObject> { return only_changed_raw_data }
-    //     async __delete(obj_id: number, controller?: AbortController) : Promise<RawObject> { return }
-    //     async __action(obj_id: number, name: string, kwargs: Object, controller?: AbortController) : Promise<any> { return }
-    //     async __find(selector: Selector, controller?: AbortController): Promise<object> { return obj_a; }
-    //     async __get(obj_id: number, controller?: AbortController): Promise<object> { return obj_a; }
-    //     async __load(selector: Selector, controller?: AbortController) : Promise<RawObject[]> {
-    //         return new Promise<RawObject[]>((resolve, reject) => {
-    //             controller?.signal.addEventListener('abort', () => reject('abort'))
-    //             setTimeout(() => resolve([obj_a, obj_b]), 1000)
-    //         })
-    //     }
-    //     async getTotalCount(where?, controller?: AbortController): Promise<number> { return 0 }
-    //     async getDistinct(where, field, controller?: AbortController): Promise<any[]> { return [] }
-    // }
+        const repositoryB = new Repository(A.getModelDescriptor(), adapter)
+        expect(repositoryB.modelDescriptor).toBe(A.getModelDescriptor())
+        expect(repositoryB.cache).toBeDefined()
+        expect(repositoryB.adapter).toBe(adapter)
 
-    // let adapter: TestAdapter, cache: Map<any, A>, __load: any, __create: any, __update: any, __delete: any, __get: any, __find: any
+       const repositoryC = new Repository(A.getModelDescriptor(), adapter, cache)
+        expect(repositoryC.modelDescriptor).toBe(A.getModelDescriptor())
+        expect(repositoryC.cache).toBe(cache)
+        expect(repositoryC.adapter).toBe(adapter)
+    })
 
-    // beforeAll(() => {
-    //     cache = A.repository.cache.store
-    //     adapter = new TestAdapter(A)
-    //     __load   = jest.spyOn(adapter, '__load')
-    //     __create = jest.spyOn(adapter, '__create')
-    //     __update = jest.spyOn(adapter, '__update')
-    //     __delete = jest.spyOn(adapter, '__delete')
-    //     __get    = jest.spyOn(adapter, '__get')
-    //     __find   = jest.spyOn(adapter, '__find')
-    // })
 
-    // afterEach(async () => {
-    //     A.clearCache()
-    //     jest.clearAllMocks()
-    // })
+    it('create', async ()=> {
+        const repository = new Repository(A.getModelDescriptor(), adapter)
+        expect(adapter.create).toHaveBeenCalledTimes(0)
 
-    // it('constructor', async ()=> {
-    //     let adapter = new TestAdapter(A);   expect(adapter.model).toBe(A)
-    // })
+        let a = new A({b: 'test'})
+        let response = await repository.create(a)
+        expect(response).toBe(a)
+        expect(adapter.create).toHaveBeenCalledTimes(1)
+        expect(a.id).toBe(1)
+        expect(local_store['test']['1']).toEqual({id: 1, b: 'test'})
+    })
 
-    // it('create', async ()=> {
-    //     let a = new A({});                  expect(__create).toHaveBeenCalledTimes(0)
-    //                                         expect(a.id).toBe(undefined)
-    //     let b = await adapter.create(a);    expect(b).toBe(a)
-    //                                         expect(a.id).toBe(1)
-    //                                         expect(__create).toHaveBeenCalledTimes(1)
-    // })
+    it('update', async ()=> {
+        const repository = new Repository(A.getModelDescriptor(), adapter)
+        let a = new A({id: 1, b: 'test'})
+        await repository.create(a)
+        a.b = 'xxx'
+        expect(adapter.update).toHaveBeenCalledTimes(0)
 
-    // it('update', async ()=> {
-    //     let a = new A({id: 1, b: 'test'});  expect(__update).toHaveBeenCalledTimes(0)
-    //                                         expect(a.__init_data).toEqual({b: 'test'})
-    //         a.b = 'xxx';                    expect(a.__init_data).toEqual({b: 'test'})
-    //     let b = await adapter.update(a);    expect(b).toBe(a)
-    //                                         expect(__update).toHaveBeenCalledTimes(1)
-    //                                         expect(a.__init_data).toEqual({b: 'xxx'})
-    // })
+        const response = await repository.update(a)
+        expect(response).toBe(a)
+        expect(adapter.update).toHaveBeenCalledTimes(1)
+        expect(a.b).toBe('xxx')
+        expect(local_store['test']['1']).toEqual({id: 1, b: 'xxx'})
+    })
 
-    // it('delete', async ()=> {
-    //     let a = new A({id: 1});             expect(__delete).toHaveBeenCalledTimes(0)
-    //                                         expect(a.id).toBe(1)
-    //     let b = await adapter.delete(a);    expect(b).toBe(a)
-    //                                         expect(a.id).toBe(undefined)
-    //                                         expect(__delete).toHaveBeenCalledTimes(1)
-    // })
+    it('delete', async ()=> {
+        const repository = new Repository(A.getModelDescriptor(), adapter)
+        let a = new A({id: 1, b: 'test'})
+        await repository.create(a)
+        expect(adapter.delete).toHaveBeenCalledTimes(0)
+        expect(local_store['test']['1']).toEqual({id: 1, b: 'test'})
+
+        const response = await repository.delete(a)
+        expect(response).toBeUndefined()
+        expect(adapter.delete).toHaveBeenCalledTimes(1)
+        expect(local_store['test']).toEqual({})
+    })
 
     // it('get', async ()=> {
     //     let a = new A({id: 0, b: 'test'});  expect(__get).toHaveBeenCalledTimes(0)

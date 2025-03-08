@@ -137,12 +137,9 @@
     ], Cache.prototype, "clear", null);
 
     /**
-     *
+     * Repository class is responsible for CRUD operations on the model.
      */
     class Repository {
-        // readonly modelDescriptor: ModelDescriptor<M>
-        // readonly cache: Cache<M>
-        // readonly adapter: Adapter<M> 
         constructor(modelDescriptor, adapter, cache = new Cache()) {
             Object.defineProperty(this, "modelDescriptor", {
                 enumerable: true,
@@ -164,22 +161,7 @@
             });
         }
         /**
-         *
-         * @param obj
-         * @param name
-         * @param kwargs
-         * @param controller
-         * @returns
-         */
-        async action(obj, name, kwargs, config) {
-            const ids = this.modelDescriptor.getIds(obj);
-            return await this.adapter.action(ids, name, kwargs, config);
-        }
-        /**
-         *
-         * @param obj
-         * @param controller
-         * @returns
+         * Create the object.
          */
         async create(obj, config) {
             let raw_obj = await this.adapter.create(obj.rawData, config);
@@ -192,9 +174,7 @@
             return obj;
         }
         /**
-         *
-         * @param obj
-         * @param controller
+         * Update the object.
          */
         async update(obj, config) {
             const ids = this.modelDescriptor.getIds(obj);
@@ -204,29 +184,22 @@
             return obj;
         }
         /**
-         *
-         * @param obj
-         * @param controller
+         * Delete the object.
          */
         async delete(obj, config) {
             const ids = this.modelDescriptor.getIds(obj);
             await this.adapter.delete(ids, config);
             obj.destroy();
         }
-        updateCachedObject(rawObj) {
-            const rawObjID = this.modelDescriptor.getID(rawObj);
-            const cachedObj = this.cache.get(rawObjID);
-            if (cachedObj) {
-                cachedObj.updateFromRaw(rawObj);
-                cachedObj.refreshInitData();
-                return cachedObj;
-            }
+        /**
+         * Run action for the object.
+         */
+        async action(obj, name, kwargs, config) {
+            const ids = this.modelDescriptor.getIds(obj);
+            return await this.adapter.action(ids, name, kwargs, config);
         }
         /**
-         *
-         * @param ids
-         * @param controller
-         * @returns
+         * Returns ONE object by ids.
          */
         async get(ids, config) {
             let raw_obj = await this.adapter.get(ids, config);
@@ -234,10 +207,7 @@
             return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
         }
         /**
-         * Returns ONE object
-         * @param query
-         * @param controller
-         * @returns
+         * Returns ONE object by query.
          */
         async find(query, config) {
             let raw_obj = await this.adapter.find(query, config);
@@ -245,10 +215,7 @@
             return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
         }
         /**
-         * Returns MANY objects
-         * @param query
-         * @param controller
-         * @returns
+         * Returns MANY objects by query.
          */
         async load(query, config) {
             let raw_objs = await this.adapter.load(query, config);
@@ -262,23 +229,25 @@
             return objs;
         }
         /**
-         *
-         * @param filter
-         * @param controller
-         * @returns
+         * Returns total count of objects.
          */
         async getTotalCount(filter, config) {
             return await this.adapter.getTotalCount(filter, config);
         }
         /**
-         *
-         * @param filter
-         * @param field
-         * @param controller
-         * @returns
+         * Returns distinct values for the field.
          */
         async getDistinct(filter, field, config) {
             return await this.adapter.getDistinct(filter, field, config);
+        }
+        updateCachedObject(rawObj) {
+            const rawObjID = this.modelDescriptor.getID(rawObj);
+            const cachedObj = this.cache.get(rawObjID);
+            if (cachedObj) {
+                cachedObj.updateFromRaw(rawObj);
+                cachedObj.refreshInitData();
+                return cachedObj;
+            }
         }
     }
     // Model.repository is readonly, use decorator to customize repository 
@@ -777,7 +746,7 @@
         return new OrderByDescriptor();
     }
 
-    const DISPOSER_AUTOUPDATE = "__autoupdate";
+    const DISPOSER_AUTOUPDATE = '__autoupdate';
     /* Query live cycle:
 
         Event           isLoading   needToUpdate    isReady     items
@@ -1136,7 +1105,7 @@
                 if (change.type == 'add') {
                     this.__watch_obj(change.newValue);
                 }
-                if (change.type == "delete") {
+                if (change.type == 'delete') {
                     let id = change.name;
                     let obj = change.oldValue;
                     this.disposerObjects[id]();
@@ -1403,7 +1372,7 @@
          */
         get rawData() {
             let rawData = {};
-            for (const fieldName in this.modelDescriptor.ids) {
+            for (const fieldName in this.modelDescriptor.fields) {
                 if (this[fieldName] !== undefined) {
                     rawData[fieldName] = this[fieldName];
                 }
@@ -1424,7 +1393,7 @@
         }
         get only_changed_raw_data() {
             let raw_data = {};
-            for (let field_name in this.model.__fields) {
+            for (let field_name in this.modelDescriptor.fields) {
                 if (this[field_name] !== undefined && this[field_name] != this.init_data[field_name]) {
                     raw_data[field_name] = this[field_name];
                 }
@@ -1432,7 +1401,7 @@
             return raw_data;
         }
         get is_changed() {
-            for (let field_name in this.model.__fields) {
+            for (let field_name in this.modelDescriptor.fields) {
                 if (this[field_name] != this.init_data[field_name]) {
                     return true;
                 }
@@ -1442,12 +1411,12 @@
         refreshInitData() {
             if (this.init_data === undefined)
                 this.init_data = {};
-            for (let field_name in this.model.__fields) {
+            for (let field_name in this.modelDescriptor.fields) {
                 this.init_data[field_name] = this[field_name];
             }
         }
         cancelLocalChanges() {
-            for (let field_name in this.model.__fields) {
+            for (let field_name in this.modelDescriptor.fields) {
                 if (this[field_name] !== this.init_data[field_name]) {
                     this[field_name] = this.init_data[field_name];
                 }
@@ -1561,7 +1530,7 @@
         __metadata("design:returntype", void 0)
     ], Model.prototype, "refreshInitData", null);
     __decorate([
-        mobx.action('MO: obj - cancel local changes'),
+        mobx.action,
         __metadata("design:type", Function),
         __metadata("design:paramtypes", []),
         __metadata("design:returntype", void 0)
@@ -1614,7 +1583,7 @@
         f.modelName = modelName;
         f.__proto__ = constructor;
         f.prototype = constructor.prototype; // copy prototype so intanceof operator still works
-        Object.defineProperty(f, "name", { value: constructor.name });
+        Object.defineProperty(f, 'name', { value: constructor.name });
         return f; // return new constructor (will override original)
     }
 
@@ -1719,7 +1688,7 @@
                     return undefined;
                 ids.push(id);
             }
-            return ids.join("=");
+            return ids.join('=');
         }
         /**
          * Calculate ID from values based on Model config.
@@ -1733,7 +1702,7 @@
                     return undefined;
                 ids.push(value);
             }
-            return ids.join("=");
+            return ids.join('=');
         }
         /**
          * Get all original values of ids from object.
@@ -2184,6 +2153,12 @@
      * You can use this adapter for mock data or for unit test
      */
     class LocalAdapter {
+        getID(ids) {
+            return ids.join('-');
+        }
+        clear() {
+            local_store[this.store_name] = {};
+        }
         init_local_data(data) {
             let objs = {};
             for (let obj of data) {
@@ -2207,9 +2182,6 @@
             this.store_name = store_name;
             local_store[this.store_name] = {};
         }
-        async action(ids, name, kwargs) {
-            throw (`Not implemented`);
-        }
         async create(raw_data) {
             if (this.delay)
                 await timeout(this.delay);
@@ -2223,16 +2195,10 @@
             local_store[this.store_name][raw_data.id] = raw_data;
             return raw_data;
         }
-        async get(obj_id) {
-            if (this.delay)
-                await timeout(this.delay);
-            let raw_obj = Object.values(local_store[this.store_name])[0];
-            return raw_obj;
-        }
         async update(ids, only_changed_raw_data) {
             if (this.delay)
                 await timeout(this.delay);
-            const obj_id = ids.join("-");
+            const obj_id = ids.join('-');
             let raw_obj = local_store[this.store_name][obj_id];
             for (let field of Object.keys(only_changed_raw_data)) {
                 raw_obj[field] = only_changed_raw_data[field];
@@ -2242,8 +2208,17 @@
         async delete(ids) {
             if (this.delay)
                 await timeout(this.delay);
-            const obj_id = ids.join("-");
+            const obj_id = ids.join('-');
             delete local_store[this.store_name][obj_id];
+        }
+        async action(ids, name, kwargs) {
+            throw (`Not implemented`);
+        }
+        async get(ids, config) {
+            if (this.delay)
+                await timeout(this.delay);
+            const ID = this.getID(ids);
+            return local_store[this.store_name][ID];
         }
         async find(query) {
             if (this.delay)

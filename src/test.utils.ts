@@ -1,4 +1,4 @@
-import { Cache, Adapter, Repository, Model , Query, Filter, ID, RequestConfig } from '.'
+import { Cache, Adapter, Repository, Model , Query, Filter, ID, RequestConfig, LocalAdapter } from '.'
 
 /**
  * Data set for testing.
@@ -36,25 +36,13 @@ TestCache.prototype.eject   = jest.fn(TestCache.prototype.eject)
  * TestAdapter for testing.
  * Use it when you neet to count how many times the method was called.
  */
-export class TestAdapter<M extends Model> extends Adapter<M> {
-
-    async create  (raw_data: any): Promise<Object> { return {}}
-    async get     (obj_id, controller?) { return {} }
-    async update  () {}
-    async delete  (obj_id, controller?) {}
-    async action  (obj_id, name, kwargs, controller?) { return }
-    async find    (selector, controller?) { return {} }
-    async load    (selector, controller?) { return [1,2,3] }
-    async getTotalCount(where?, controller?): Promise<number> { return 0 }
-    async getDistinct(where, field, controller?) { return [] }
-    getURLSearchParams(query: Query<M>): URLSearchParams { return new URLSearchParams() }
-
+export class TestAdapter<M extends Model> extends LocalAdapter<M> {
     static mockClear() {
         (TestAdapter.prototype.create        as jest.Mock).mockClear(); 
-        (TestAdapter.prototype.get           as jest.Mock).mockClear(); 
         (TestAdapter.prototype.update        as jest.Mock).mockClear(); 
         (TestAdapter.prototype.delete        as jest.Mock).mockClear(); 
         (TestAdapter.prototype.action        as jest.Mock).mockClear(); 
+        (TestAdapter.prototype.get           as jest.Mock).mockClear(); 
         (TestAdapter.prototype.find          as jest.Mock).mockClear(); 
         (TestAdapter.prototype.load          as jest.Mock).mockClear(); 
         (TestAdapter.prototype.getTotalCount as jest.Mock).mockClear(); 
@@ -62,10 +50,10 @@ export class TestAdapter<M extends Model> extends Adapter<M> {
     }
 }
 TestAdapter.prototype.create        = jest.fn(TestAdapter.prototype.create)
-TestAdapter.prototype.get           = jest.fn(TestAdapter.prototype.get)
 TestAdapter.prototype.update        = jest.fn(TestAdapter.prototype.update)
-TestAdapter.prototype.delete        = jest.fn(TestAdapter.prototype.update)
+TestAdapter.prototype.delete        = jest.fn(TestAdapter.prototype.delete)
 TestAdapter.prototype.action        = jest.fn(TestAdapter.prototype.update)
+TestAdapter.prototype.get           = jest.fn(TestAdapter.prototype.get)
 TestAdapter.prototype.find          = jest.fn(TestAdapter.prototype.find)
 TestAdapter.prototype.load          = jest.fn(TestAdapter.prototype.load)
 TestAdapter.prototype.getTotalCount = jest.fn(TestAdapter.prototype.getTotalCount)

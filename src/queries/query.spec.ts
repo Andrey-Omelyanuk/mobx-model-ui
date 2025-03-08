@@ -131,7 +131,7 @@ describe('Query', () => {
                     throw new Error('error')
                 }
             }
-            const repository = new Repository<A>((() => {}) as any, new ErrorAdapter<A>())
+            const repository = new Repository<A>((() => {}) as any, new ErrorAdapter<A>('test'))
             const query = new Query<A>({repository: repository})
             await query.load()
             expect(query.error).toBe('error')
@@ -144,7 +144,7 @@ describe('Query', () => {
                 }
             }
 
-            const repository = new Repository<A>(new ModelDescriptor((() => {}) as any), new ErrorAdapter<A>())
+            const repository = new Repository<A>(new ModelDescriptor((() => {}) as any), new ErrorAdapter<A>('test'))
             const query = new Query<A>({repository: repository})
             await query.load()
             expect(query.error).toBe(undefined)

@@ -206,7 +206,7 @@ declare abstract class Adapter<M extends Model> {
 }
 
 /**
- *
+ * Repository class is responsible for CRUD operations on the model.
  */
 declare class Repository<M extends Model> {
     readonly modelDescriptor: ModelDescriptor<M>;
@@ -214,70 +214,42 @@ declare class Repository<M extends Model> {
     readonly cache: Cache<M>;
     constructor(modelDescriptor: ModelDescriptor<M>, adapter?: Adapter<M>, cache?: Cache<M>);
     /**
-     *
-     * @param obj
-     * @param name
-     * @param kwargs
-     * @param controller
-     * @returns
-     */
-    action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
-    /**
-     *
-     * @param obj
-     * @param controller
-     * @returns
+     * Create the object.
      */
     create(obj: M, config?: RequestConfig): Promise<M>;
     /**
-     *
-     * @param obj
-     * @param controller
+     * Update the object.
      */
     update(obj: M, config?: RequestConfig): Promise<M>;
     /**
-     *
-     * @param obj
-     * @param controller
+     * Delete the object.
      */
     delete(obj: M, config?: RequestConfig): Promise<void>;
-    updateCachedObject(rawObj: Object): M | undefined;
     /**
-     *
-     * @param ids
-     * @param controller
-     * @returns
+     * Run action for the object.
+     */
+    action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    /**
+     * Returns ONE object by ids.
      */
     get(ids: ID[], config?: RequestConfig): Promise<M>;
     /**
-     * Returns ONE object
-     * @param query
-     * @param controller
-     * @returns
+     * Returns ONE object by query.
      */
     find(query: Query<M>, config?: RequestConfig): Promise<M>;
     /**
-     * Returns MANY objects
-     * @param query
-     * @param controller
-     * @returns
+     * Returns MANY objects by query.
      */
     load(query: Query<M>, config?: RequestConfig): Promise<M[]>;
     /**
-     *
-     * @param filter
-     * @param controller
-     * @returns
+     * Returns total count of objects.
      */
     getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
     /**
-     *
-     * @param filter
-     * @param field
-     * @param controller
-     * @returns
+     * Returns distinct values for the field.
      */
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
+    updateCachedObject(rawObj: Object): M | undefined;
 }
 declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
@@ -613,11 +585,7 @@ declare abstract class ReadOnlyAdapter<M extends Model> extends Adapter<M> {
 /**
  * Local storage.
  */
-declare let local_store: {
-    string?: {
-        any: Model;
-    };
-};
+declare let local_store: Record<string, Record<string, any>>;
 /**
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
@@ -625,13 +593,15 @@ declare let local_store: {
 declare class LocalAdapter<M extends Model> implements Adapter<M> {
     readonly store_name: string;
     delay: number;
+    getID(ids: ID[]): string;
+    clear(): void;
     init_local_data(data: any[]): void;
     constructor(store_name: string);
-    action(ids: ID[], name: string, kwargs: Object): Promise<any>;
     create(raw_data: any): Promise<any>;
-    get(obj_id: any): Promise<any>;
     update(ids: ID[], only_changed_raw_data: any): Promise<any>;
     delete(ids: ID[]): Promise<void>;
+    action(ids: ID[], name: string, kwargs: Object): Promise<any>;
+    get(ids: ID[], config?: RequestConfig): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter: Filter): Promise<number>;

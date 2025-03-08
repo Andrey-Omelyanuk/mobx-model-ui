@@ -1,7 +1,7 @@
 import { Model } from '../model'
 import { Query } from '../queries/query'
 import { Filter } from '../filters/Filter'
-import { Adapter } from './adapter'
+import { Adapter, RequestConfig } from './adapter'
 import { timeout } from '../utils'
 import { ID } from '../types'
 
@@ -9,7 +9,7 @@ import { ID } from '../types'
 /**
  * Local storage. 
  */
-export let local_store: {string?: {any: Model}} = {}
+export let local_store: Record<string, Record<string, any>> = {}
 
 /**
  * LocalAdapter connects to the local storage.
@@ -19,6 +19,14 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 
     readonly    store_name  : string
                 delay       : number  // delays for simulate real usage, use it only for tests
+
+    getID(ids: ID[]): string {
+        return ids.join('-')
+    }
+
+    clear() {
+        local_store[this.store_name] = {}
+    }
 
     init_local_data(data: any[]) {
         let objs = {} 
@@ -31,11 +39,6 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
     constructor(store_name: string) {
         this.store_name = store_name
         local_store[this.store_name] = {}
-    }
-
-
-    async action (ids: ID[], name: string, kwargs: Object) : Promise<any> {
-        throw(`Not implemented`)
     }
 
     async create(raw_data: any) : Promise<any> {
@@ -52,13 +55,6 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         return raw_data
     }
 
-    async get(obj_id: any) : Promise<any> {
-        if (this.delay) await timeout(this.delay) 
-        let raw_obj = Object.values(local_store[this.store_name])[0]
-        return raw_obj
-    }
-
-
     async update (ids: ID[], only_changed_raw_data: any): Promise<any> {
         if (this.delay) await timeout(this.delay) 
         const obj_id = ids.join('-')
@@ -73,6 +69,16 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         if (this.delay) await timeout(this.delay) 
         const obj_id = ids.join('-')
         delete local_store[this.store_name][obj_id]
+    }
+
+    async action (ids: ID[], name: string, kwargs: Object) : Promise<any> {
+        throw(`Not implemented`)
+    }
+
+    async get(ids: ID[], config?: RequestConfig) : Promise<any> {
+        if (this.delay) await timeout(this.delay) 
+        const ID = this.getID(ids)
+        return local_store[this.store_name][ID]
     }
 
     async find(query: Query<M>) : Promise<any> {
