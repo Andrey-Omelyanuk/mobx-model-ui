@@ -131,8 +131,8 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
 
 
 // model decorator
-export function local() {
+export function local(store_name?: string) {
     return (cls: any) => {
-        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(cls.modelName)
+        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName)
     }
 }
