@@ -15,8 +15,13 @@ export default function model(constructor) {
         throw new Error(`Class "${modelName}" should extends Model!`)
 
     // id fields should register the model into models
-    if (!models.has(modelName))
+    const modelDescriptor = models.get(modelName)
+    if (!modelDescriptor)
         throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`)
+
+    // the field decorators run first, then the model decorator
+    // id decorator creates the model descriptor and registers it in models 
+    // so, we cannot catch the case when we try to declare a model with the same name 
 
     // the new constructor
     let f : any = function (...args) {
@@ -46,7 +51,8 @@ export default function model(constructor) {
     }
     f.modelName = modelName
     f.__proto__ = constructor 
-    f.prototype = constructor.prototype   // copy prototype so intanceof operator still works
+    f.prototype = constructor.prototype  // copy prototype so intanceof operator still works
     Object.defineProperty(f, 'name', { value: constructor.name })
-    return f                      // return new constructor (will override original)
+    modelDescriptor.cls = f
+    return f  // return new constructor (will override original)
 }

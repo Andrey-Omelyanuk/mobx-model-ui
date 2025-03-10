@@ -89,8 +89,8 @@ describe('Field: foreign', () => {
         }
 
         beforeEach(() => {
-            A.getModelDescriptor().defaultRepository.cache.clear() 
-            B.getModelDescriptor().defaultRepository.cache.clear() 
+            A.getModelDescriptor().cache.clear() 
+            B.getModelDescriptor().cache.clear() 
         })
 
         afterAll(() => {

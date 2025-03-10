@@ -9,8 +9,8 @@ describe('Cache', () => {
     @model class B extends Model { @id(NUMBER()) id: number }
 
     afterEach(() => {
-        A.getModelDescriptor().defaultRepository.cache.clear()
-        B.getModelDescriptor().defaultRepository.cache.clear()
+        A.getModelDescriptor().cache.clear()
+        B.getModelDescriptor().cache.clear()
     })
     afterAll(() => {
         models.clear()

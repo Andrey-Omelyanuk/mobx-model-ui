@@ -36,7 +36,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_ids?: strin
                         if (foreignID === 'null') return null  // foreign object can be null
                         // console.warn('foreign', foreignID, foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID))
                         // console.warn(foreign_model.getModelDescriptor().defaultRepository.cache.store)
-                        return foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID)
+                        return foreign_model.getModelDescriptor().cache.get(foreignID)
                     },
                     // update foreign field
                     action('MO: Foreign - update',

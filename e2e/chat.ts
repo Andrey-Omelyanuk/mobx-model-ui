@@ -46,9 +46,9 @@ describe('e2e: Chat.', () => {
         let userA = new User({first_name: 'A', last_name: 'X'}); await userA.save()
         let userB = new User({first_name: 'B', last_name: 'X'}); await userB.save()
 
-        expect(User.getModelDescriptor().defaultRepository.cache.store.size).toBe(2)
-        expect(Channel.getModelDescriptor().defaultRepository.cache.store.size).toBe(2)
-        expect(Message.getModelDescriptor().defaultRepository.cache.store.size).toBe(0)
+        expect(User.getModelDescriptor().cache.store.size).toBe(2)
+        expect(Channel.getModelDescriptor().cache.store.size).toBe(2)
+        expect(Message.getModelDescriptor().cache.store.size).toBe(0)
 
         await channelA.sendMessage(userA, 'First  message from userA')
         await channelA.sendMessage(userA, 'Second message from userA')

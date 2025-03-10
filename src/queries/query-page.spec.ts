@@ -14,7 +14,7 @@ describe('QueryPage', () => {
 
     afterEach(async () => {
         query.destroy()
-        repository.cache.clear()
+        A.getModelDescriptor().cache.clear()
         jest.clearAllMocks()
     })
 

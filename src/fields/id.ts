@@ -16,7 +16,7 @@ export function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, obser
         // id field is first decorator that invoke before model and other fields decorators
         // so we need to check if model is already registered and if not then register it
         if (!modelDescription) {
-            modelDescription = new ModelDescriptor(cls)
+            modelDescription = new ModelDescriptor()
             models.set(modelName, modelDescription)
         }
 
@@ -34,14 +34,14 @@ export function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, obser
                         if (change.newValue !== undefined && oldValue !== undefined)
                             throw new Error(`You cannot change id field: ${oldValue} to ${change.newValue}`)
                         if (change.newValue === undefined && oldValue !== undefined)
-                            modelDescription.defaultRepository.cache.eject(obj)
+                            modelDescription.cache.eject(obj)
                         return change
                     })
                 )
                 obj.disposers.set('after changes',
                     observe(obj as any, fieldName, (change) => {
                         if (obj.ID !== undefined)
-                            modelDescription.defaultRepository.cache.inject(obj)
+                            modelDescription.cache.inject(obj)
                     })
                 )
             },

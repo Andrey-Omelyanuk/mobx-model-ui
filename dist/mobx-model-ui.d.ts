@@ -211,8 +211,7 @@ declare abstract class Adapter<M extends Model> {
 declare class Repository<M extends Model> {
     readonly modelDescriptor: ModelDescriptor<M>;
     adapter?: Adapter<M>;
-    readonly cache: Cache<M>;
-    constructor(modelDescriptor: ModelDescriptor<M>, adapter?: Adapter<M>, cache?: Cache<M>);
+    constructor(modelDescriptor: ModelDescriptor<M>, adapter?: Adapter<M>);
     /**
      * Create the object.
      */
@@ -251,7 +250,6 @@ declare class Repository<M extends Model> {
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
     updateCachedObject(rawObj: Object): M | undefined;
 }
-declare function repository(adapter: any, cache?: any): (cls: any) => void;
 
 interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
     options?: Query<M>;
@@ -385,13 +383,13 @@ declare class ModelFieldDescriptor<T, F> {
  * ModelDescriptor is a class that contains all the information about the model.
  */
 declare class ModelDescriptor<T extends Model> {
-    constructor(modelClass: new () => T);
     /**
      * Model class
      */
     cls: new (args: any) => T;
     /**
      * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
+     * It can be changed later (e.g. in model decorator)
      */
     defaultRepository: Repository<T>;
     /**
@@ -413,6 +411,7 @@ declare class ModelDescriptor<T extends Model> {
     relations: {
         [field_name: string]: ModelFieldDescriptor<T, any>;
     };
+    readonly cache: Cache<T>;
     /**
      *  Calculate ID from obj based on Model config.
      *  If one of the ids is undefined, it returns undefined.
@@ -608,7 +607,7 @@ declare class LocalAdapter<M extends Model> implements Adapter<M> {
     getDistinct(filter: any, filed: any): Promise<any[]>;
     getURLSearchParams(query: Query<M>): URLSearchParams;
 }
-declare function local(): (cls: any) => void;
+declare function local(store_name?: string): (cls: any) => void;
 
 declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[];
@@ -654,4 +653,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, repository, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

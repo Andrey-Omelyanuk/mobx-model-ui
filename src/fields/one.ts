@@ -21,7 +21,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
         modelDescription.relations[field_name] = {
             decorator: (obj: M) => {
                 let foreignObj = undefined
-                for(let [_, cacheObj] of remoteModelDescriptor.defaultRepository.cache.store) {
+                for(let [_, cacheObj] of remoteModelDescriptor.cache.store) {
                     const values = remote_foreign_ids.map(id => cacheObj[id])
                     const ID = modelDescription.getIDByValues(values)
                     if (obj.ID === ID && ID !== undefined) {
@@ -36,8 +36,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
         }
 
         modelDescription.relations[field_name].disposers.push(
-            observe(remoteModelDescriptor.defaultRepository.cache.store, (change: any) => {
-                debugger
+            observe(remoteModelDescriptor.cache.store, (change: any) => {
                 let remote_obj
                 switch (change.type) {
                     case 'add':
@@ -48,7 +47,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
                                 const foreignID = modelDescription.getIDByValues(values)
                                 return { 
                                     id: foreignID, 
-                                    obj: modelDescription.defaultRepository.cache.get(foreignID) 
+                                    obj: modelDescription.cache.get(foreignID) 
                                 }
                             },
                             action(disposer_name, (_new: any, _old: any) => {
@@ -66,7 +65,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
                         }
                         const values = remote_foreign_ids.map(id => remote_obj[id])
                         const foreignID = modelDescription.getIDByValues(values)
-                        let obj = modelDescription.defaultRepository.cache.get(foreignID)
+                        let obj = modelDescription.cache.get(foreignID)
                         if (obj) 
                             runInAction(() => { obj[field_name] = undefined })
                         break

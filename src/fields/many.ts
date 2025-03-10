@@ -32,7 +32,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
         
         // watch for remote object in the cache 
         modelDescription.relations[field_name].disposers.push(
-            observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change: any) => {
+            observe(remoteModelDescriptor.cache.store, (remote_change: any) => {
                 let remote_obj
                 switch (remote_change.type) {
                     case 'add':
@@ -41,7 +41,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
                             () => {
                                 const values = remote_foreign_ids.map(id => remote_obj[id])
                                 const foreignID = modelDescription.getIDByValues(values)
-                                return modelDescription.defaultRepository.cache.get(foreignID)
+                                return modelDescription.cache.get(foreignID)
                             },
                             action(disposer_name, (_new, _old) => {
                                 if (_old) {
@@ -66,7 +66,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
                         }
                         const values = remote_foreign_ids.map(id => remote_obj[id])
                         const foreignID = modelDescription.getIDByValues(values)
-                        let obj = modelDescription.defaultRepository.cache.get(foreignID)
+                        let obj = modelDescription.cache.get(foreignID)
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj)
                             if (i > -1)

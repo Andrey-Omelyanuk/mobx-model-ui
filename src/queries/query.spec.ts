@@ -21,8 +21,8 @@ describe('Query', () => {
     const repositoryB = B.getModelDescriptor().defaultRepository as Repository<B>
 
     afterEach(async () => {
-        repositoryA.cache.clear() 
-        repositoryB.cache.clear() 
+        A.getModelDescriptor().cache.clear()
+        B.getModelDescriptor().cache.clear()
         jest.clearAllMocks()
     })
 
@@ -144,7 +144,7 @@ describe('Query', () => {
                 }
             }
 
-            const repository = new Repository<A>(new ModelDescriptor((() => {}) as any), new ErrorAdapter<A>('test'))
+            const repository = new Repository<A>(new ModelDescriptor(), new ErrorAdapter<A>('test'))
             const query = new Query<A>({repository: repository})
             await query.load()
             expect(query.error).toBe(undefined)

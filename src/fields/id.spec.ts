@@ -11,7 +11,7 @@ describe('Id field', () => {
     }
 
     beforeEach(() => {
-        TestModel.getModelDescriptor().defaultRepository.cache.clear() 
+        TestModel.getModelDescriptor().cache.clear() 
     })
 
     afterEach(async () => {
@@ -29,7 +29,7 @@ describe('Id field', () => {
         obj.id = 1
         expect(obj.id).toBe(1)
         
-        const cachedObj = models.get('TestModel').defaultRepository.cache.get('1')
+        const cachedObj = models.get('TestModel').cache.get('1')
         expect(cachedObj).toBe(obj)
     })
 
@@ -44,7 +44,7 @@ describe('Id field', () => {
     it('should eject model from cache when id is set to undefined', () => {
         const obj = new TestModel({ id: 1 })
         const modelDesc = models.get('TestModel')
-        const spy = jest.spyOn(modelDesc.defaultRepository.cache, 'eject')
+        const spy = jest.spyOn(modelDesc.cache, 'eject')
         
         runInAction(() => obj.id = undefined)
         expect(spy).toHaveBeenCalledWith(obj)

@@ -10,7 +10,7 @@ describe('ObjectForm', () => {
     }
 
     afterEach(async () => {
-        A.getModelDescriptor().defaultRepository.cache.clear() 
+        A.getModelDescriptor().cache.clear() 
         jest.clearAllMocks()
     })
 

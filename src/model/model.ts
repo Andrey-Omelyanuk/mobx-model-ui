@@ -214,8 +214,7 @@ export default abstract class Model {
         return new QueryDistinct(field, {...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
     static get<T extends Model>(ID: string): T {
-        let repository = this.getModelDescriptor().defaultRepository as Repository<T>
-        return repository.cache.get(ID)
+        return this.getModelDescriptor().cache.get(ID) as T
     }
     static async findById<T extends Model>(ids: ID[]) : Promise<T> {
     let repository = this.getModelDescriptor().defaultRepository as Repository<T>

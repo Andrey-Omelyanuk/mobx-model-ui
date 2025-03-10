@@ -20,7 +20,7 @@ describe('Repository', () => {
 
     afterEach(async () => {
         jest.clearAllMocks()
-        A.getModelDescriptor().defaultRepository.cache.clear()
+        A.getModelDescriptor().cache.clear()
         adapter.clear()
     })
 
@@ -29,17 +29,14 @@ describe('Repository', () => {
         const cache = new Cache<A>()
         const repositoryA = new Repository(A.getModelDescriptor())
         expect(repositoryA.modelDescriptor).toBe(A.getModelDescriptor())
-        expect(repositoryA.cache).toBeDefined()
         expect(repositoryA.adapter).toBeUndefined()
 
         const repositoryB = new Repository(A.getModelDescriptor(), adapter)
         expect(repositoryB.modelDescriptor).toBe(A.getModelDescriptor())
-        expect(repositoryB.cache).toBeDefined()
         expect(repositoryB.adapter).toBe(adapter)
 
-       const repositoryC = new Repository(A.getModelDescriptor(), adapter, cache)
+       const repositoryC = new Repository(A.getModelDescriptor(), adapter)
         expect(repositoryC.modelDescriptor).toBe(A.getModelDescriptor())
-        expect(repositoryC.cache).toBe(cache)
         expect(repositoryC.adapter).toBe(adapter)
     })
 
@@ -83,14 +80,17 @@ describe('Repository', () => {
         expect(local_store['test']).toEqual({})
     })
 
-    // it('get', async ()=> {
-    //     let a = new A({id: 0, b: 'test'});  expect(__get).toHaveBeenCalledTimes(0)
-    //                                         expect(a.__init_data).toEqual({b: 'test'})
-    //     let b = await adapter.get(0);       expect(__get).toHaveBeenCalledTimes(1)
-    //                                         expect(__get).toHaveBeenCalledWith(0)
-    //                                         expect(b).toBe(a)
-    //                                         expect(a.__init_data).toEqual({b: 'a'})
-    // })
+    it('get', async ()=> {
+        const repository = new Repository(A.getModelDescriptor(), adapter)
+        let a = new A({id: 1, b: 'test'})
+        await repository.create(a)
+        expect(adapter.delete).toHaveBeenCalledTimes(0)
+        expect(local_store['test']['1']).toEqual({id: 1, b: 'test'})
+
+        const response = await repository.get([1])
+        expect(response).toBe(a)
+        expect(adapter.get).toHaveBeenCalledTimes(1)
+    })
 
     // it('find', async ()=> {
     //     const selector: Selector = { filter: EQ ('')  }

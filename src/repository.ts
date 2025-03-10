@@ -12,8 +12,7 @@ import { Adapter, RequestConfig } from './adapters/adapter'
 export class  Repository<M extends Model> {
     constructor(
         readonly modelDescriptor : ModelDescriptor<M>,
-        public   adapter        ?: Adapter<M>,
-        readonly cache           : Cache<M> = new Cache<M>(),
+        public   adapter        ?: Adapter<M>
     ) {}
 
     /**
@@ -22,7 +21,7 @@ export class  Repository<M extends Model> {
     async create(obj: M, config?: RequestConfig) : Promise<M> {
         let raw_obj = await this.adapter.create(obj.rawData, config)
         const rawObjID = this.modelDescriptor.getID(raw_obj)
-        const cachedObj = this.cache.get(rawObjID)
+        const cachedObj = this.modelDescriptor.cache.get(rawObjID)
         if (cachedObj) obj = cachedObj
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
@@ -61,8 +60,10 @@ export class  Repository<M extends Model> {
      * Returns ONE object by ids.
      */
     async get(ids: ID[], config?: RequestConfig): Promise<M> {
+        debugger
         let raw_obj = await this.adapter.get(ids, config)
         const cachedObj = this.updateCachedObject(raw_obj)
+        console.log(cachedObj, raw_obj)
         return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj) 
     }
 
@@ -105,7 +106,7 @@ export class  Repository<M extends Model> {
 
     updateCachedObject(rawObj: Object) : M | undefined {
         const rawObjID = this.modelDescriptor.getID(rawObj)
-        const cachedObj = this.cache.get(rawObjID)
+        const cachedObj = this.modelDescriptor.cache.get(rawObjID)
         if (cachedObj) {
             cachedObj.updateFromRaw(rawObj)
             cachedObj.refreshInitData()
@@ -113,13 +114,4 @@ export class  Repository<M extends Model> {
         } 
     }
 
-}
-
-
-// Model.repository is readonly, use decorator to customize repository 
-export function repository(adapter: any, cache?: any) {
-    return (cls: any) => {
-        let repository = new Repository(cls, adapter, cache) 
-        cls.__proto__.repository = repository
-    }
 }

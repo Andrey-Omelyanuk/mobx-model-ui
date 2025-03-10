@@ -1,3 +1,4 @@
+import { Cache } from '../cache'
 import { Repository } from '../repository' 
 import { ID, TypeDescriptor } from '../types'
 import Model from './model'
@@ -16,18 +17,15 @@ export class ModelFieldDescriptor<T, F> {
  * ModelDescriptor is a class that contains all the information about the model.
  */
 export class ModelDescriptor<T extends Model> {
-    constructor(modelClass: new () => T) {
-        this.cls = modelClass
-        this.defaultRepository = new Repository(this)
-    }
     /**
      * Model class
      */
     cls: new (args) => T
     /**
      * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
+     * It can be changed later (e.g. in model decorator)
      */
-    defaultRepository: Repository<T>
+    defaultRepository: Repository<T> = new Repository(this)
     /**
      * Id fields
      */
@@ -42,6 +40,7 @@ export class ModelDescriptor<T extends Model> {
      */
     relations : {[field_name: string]: ModelFieldDescriptor<T, any>} = {}
 
+    readonly cache: Cache<T> = new Cache<T>()
 
     /**
      *  Calculate ID from obj based on Model config. 

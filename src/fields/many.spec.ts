@@ -99,8 +99,8 @@ describe('Field: Many', () => {
         many(B)(A, 'bs')
 
         beforeEach(() => {
-            A.getModelDescriptor().defaultRepository.cache.clear()
-            B.getModelDescriptor().defaultRepository.cache.clear()
+            A.getModelDescriptor().cache.clear()
+            B.getModelDescriptor().cache.clear()
         })
 
         it('should be [] by default', async () => {

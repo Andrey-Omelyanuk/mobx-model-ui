@@ -140,7 +140,7 @@
      * Repository class is responsible for CRUD operations on the model.
      */
     class Repository {
-        constructor(modelDescriptor, adapter, cache = new Cache()) {
+        constructor(modelDescriptor, adapter) {
             Object.defineProperty(this, "modelDescriptor", {
                 enumerable: true,
                 configurable: true,
@@ -153,12 +153,6 @@
                 writable: true,
                 value: adapter
             });
-            Object.defineProperty(this, "cache", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: cache
-            });
         }
         /**
          * Create the object.
@@ -166,7 +160,7 @@
         async create(obj, config) {
             let raw_obj = await this.adapter.create(obj.rawData, config);
             const rawObjID = this.modelDescriptor.getID(raw_obj);
-            const cachedObj = this.cache.get(rawObjID);
+            const cachedObj = this.modelDescriptor.cache.get(rawObjID);
             if (cachedObj)
                 obj = cachedObj;
             obj.updateFromRaw(raw_obj);
@@ -202,8 +196,10 @@
          * Returns ONE object by ids.
          */
         async get(ids, config) {
+            debugger;
             let raw_obj = await this.adapter.get(ids, config);
             const cachedObj = this.updateCachedObject(raw_obj);
+            console.log(cachedObj, raw_obj);
             return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
         }
         /**
@@ -242,20 +238,13 @@
         }
         updateCachedObject(rawObj) {
             const rawObjID = this.modelDescriptor.getID(rawObj);
-            const cachedObj = this.cache.get(rawObjID);
+            const cachedObj = this.modelDescriptor.cache.get(rawObjID);
             if (cachedObj) {
                 cachedObj.updateFromRaw(rawObj);
                 cachedObj.refreshInitData();
                 return cachedObj;
             }
         }
-    }
-    // Model.repository is readonly, use decorator to customize repository 
-    function repository(adapter, cache) {
-        return (cls) => {
-            let repository = new Repository(cls, adapter, cache);
-            cls.__proto__.repository = repository;
-        };
     }
 
     function waitIsTrue(obj, field) {
@@ -1101,7 +1090,7 @@
         constructor(props) {
             super(props);
             // watch the cache for changes, and update items if needed
-            this.disposers.push(mobx.observe(props.repository.cache.store, mobx.action('MO: Query - update from cache changes', (change) => {
+            this.disposers.push(mobx.observe(props.repository.modelDescriptor.cache.store, mobx.action('MO: Query - update from cache changes', (change) => {
                 if (change.type == 'add') {
                     this.__watch_obj(change.newValue);
                 }
@@ -1118,7 +1107,7 @@
                 }
             })));
             // ch all exist objects of model 
-            for (let [id, obj] of props.repository.cache.store) {
+            for (let [id, obj] of props.repository.modelDescriptor.cache.store) {
                 this.__watch_obj(obj);
             }
         }
@@ -1496,8 +1485,7 @@
             return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
         }
         static get(ID) {
-            let repository = this.getModelDescriptor().defaultRepository;
-            return repository.cache.get(ID);
+            return this.getModelDescriptor().cache.get(ID);
         }
         static async findById(ids) {
             let repository = this.getModelDescriptor().defaultRepository;
@@ -1552,8 +1540,12 @@
         if (!(constructor.prototype instanceof Model))
             throw new Error(`Class "${modelName}" should extends Model!`);
         // id fields should register the model into models
-        if (!models.has(modelName))
+        const modelDescriptor = models.get(modelName);
+        if (!modelDescriptor)
             throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`);
+        // the field decorators run first, then the model decorator
+        // id decorator creates the model descriptor and registers it in models 
+        // so, we cannot catch the case when we try to declare a model with the same name 
         // the new constructor
         let f = function (...args) {
             let c = class extends constructor {
@@ -1584,6 +1576,7 @@
         f.__proto__ = constructor;
         f.prototype = constructor.prototype; // copy prototype so intanceof operator still works
         Object.defineProperty(f, 'name', { value: constructor.name });
+        modelDescriptor.cls = f;
         return f; // return new constructor (will override original)
     }
 
@@ -1622,7 +1615,7 @@
      * ModelDescriptor is a class that contains all the information about the model.
      */
     class ModelDescriptor {
-        constructor(modelClass) {
+        constructor() {
             /**
              * Model class
              */
@@ -1634,12 +1627,13 @@
             });
             /**
              * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
+             * It can be changed later (e.g. in model decorator)
              */
             Object.defineProperty(this, "defaultRepository", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: void 0
+                value: new Repository(this)
             });
             /**
              * Id fields
@@ -1669,8 +1663,12 @@
                 writable: true,
                 value: {}
             });
-            this.cls = modelClass;
-            this.defaultRepository = new Repository(this);
+            Object.defineProperty(this, "cache", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: new Cache()
+            });
         }
         /**
          *  Calculate ID from obj based on Model config.
@@ -1778,7 +1776,7 @@
                             return null; // foreign object can be null
                         // console.warn('foreign', foreignID, foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID))
                         // console.warn(foreign_model.getModelDescriptor().defaultRepository.cache.store)
-                        return foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID);
+                        return foreign_model.getModelDescriptor().cache.get(foreignID);
                     }, 
                     // update foreign field
                     mobx.action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true }));
@@ -1804,7 +1802,7 @@
             modelDescription.relations[field_name] = {
                 decorator: (obj) => {
                     let foreignObj = undefined;
-                    for (let [_, cacheObj] of remoteModelDescriptor.defaultRepository.cache.store) {
+                    for (let [_, cacheObj] of remoteModelDescriptor.cache.store) {
                         const values = remote_foreign_ids.map(id => cacheObj[id]);
                         const ID = modelDescription.getIDByValues(values);
                         if (obj.ID === ID && ID !== undefined) {
@@ -1817,8 +1815,7 @@
                 disposers: [],
                 settings: { remote_model, remote_foreign_ids }
             };
-            modelDescription.relations[field_name].disposers.push(mobx.observe(remoteModelDescriptor.defaultRepository.cache.store, (change) => {
-                debugger;
+            modelDescription.relations[field_name].disposers.push(mobx.observe(remoteModelDescriptor.cache.store, (change) => {
                 let remote_obj;
                 switch (change.type) {
                     case 'add':
@@ -1828,7 +1825,7 @@
                             const foreignID = modelDescription.getIDByValues(values);
                             return {
                                 id: foreignID,
-                                obj: modelDescription.defaultRepository.cache.get(foreignID)
+                                obj: modelDescription.cache.get(foreignID)
                             };
                         }, mobx.action(disposer_name, (_new, _old) => {
                             if (_old === null || _old === void 0 ? void 0 : _old.obj)
@@ -1845,7 +1842,7 @@
                         }
                         const values = remote_foreign_ids.map(id => remote_obj[id]);
                         const foreignID = modelDescription.getIDByValues(values);
-                        let obj = modelDescription.defaultRepository.cache.get(foreignID);
+                        let obj = modelDescription.cache.get(foreignID);
                         if (obj)
                             mobx.runInAction(() => { obj[field_name] = undefined; });
                         break;
@@ -1878,7 +1875,7 @@
             const remoteModelDescriptor = remote_model.getModelDescriptor();
             const disposer_name = `MO: Many - update - ${modelName}.${field_name}`;
             // watch for remote object in the cache 
-            modelDescription.relations[field_name].disposers.push(mobx.observe(remoteModelDescriptor.defaultRepository.cache.store, (remote_change) => {
+            modelDescription.relations[field_name].disposers.push(mobx.observe(remoteModelDescriptor.cache.store, (remote_change) => {
                 let remote_obj;
                 switch (remote_change.type) {
                     case 'add':
@@ -1886,7 +1883,7 @@
                         remote_obj.disposers.set(disposer_name, mobx.reaction(() => {
                             const values = remote_foreign_ids.map(id => remote_obj[id]);
                             const foreignID = modelDescription.getIDByValues(values);
-                            return modelDescription.defaultRepository.cache.get(foreignID);
+                            return modelDescription.cache.get(foreignID);
                         }, mobx.action(disposer_name, (_new, _old) => {
                             if (_old) {
                                 const i = _old[field_name].indexOf(remote_obj);
@@ -1908,7 +1905,7 @@
                         }
                         const values = remote_foreign_ids.map(id => remote_obj[id]);
                         const foreignID = modelDescription.getIDByValues(values);
-                        let obj = modelDescription.defaultRepository.cache.get(foreignID);
+                        let obj = modelDescription.cache.get(foreignID);
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj);
                             if (i > -1)
@@ -1933,7 +1930,7 @@
             // id field is first decorator that invoke before model and other fields decorators
             // so we need to check if model is already registered and if not then register it
             if (!modelDescription) {
-                modelDescription = new ModelDescriptor(cls);
+                modelDescription = new ModelDescriptor();
                 models.set(modelName, modelDescription);
             }
             if (modelDescription.ids[fieldName])
@@ -1948,12 +1945,12 @@
                         if (change.newValue !== undefined && oldValue !== undefined)
                             throw new Error(`You cannot change id field: ${oldValue} to ${change.newValue}`);
                         if (change.newValue === undefined && oldValue !== undefined)
-                            modelDescription.defaultRepository.cache.eject(obj);
+                            modelDescription.cache.eject(obj);
                         return change;
                     }));
                     obj.disposers.set('after changes', mobx.observe(obj, fieldName, (change) => {
                         if (obj.ID !== undefined)
-                            modelDescription.defaultRepository.cache.inject(obj);
+                            modelDescription.cache.inject(obj);
                     }));
                 },
                 disposers: [],
@@ -2262,9 +2259,9 @@
         }
     }
     // model decorator
-    function local() {
+    function local(store_name) {
         return (cls) => {
-            cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(cls.modelName);
+            cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName);
         };
     }
 
@@ -2495,7 +2492,6 @@
     exports.model = model;
     exports.models = models;
     exports.one = one;
-    exports.repository = repository;
     exports.syncLocalStorageHandler = syncLocalStorageHandler;
     exports.syncURLHandler = syncURLHandler;
     exports.timeout = timeout;

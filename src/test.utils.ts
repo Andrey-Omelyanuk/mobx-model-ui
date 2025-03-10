@@ -65,7 +65,7 @@ TestAdapter.prototype.getDistinct   = jest.fn(TestAdapter.prototype.getDistinct)
  * Use it when you neet to count how many times the method was called.
  */
 export class  TestRepository<M extends Model> extends Repository<M> {
-    constructor(model: any, adapter: any, cache?: any) { super(model, adapter, cache) }
+    constructor(model: any, adapter: any) { super(model, adapter) }
 
     async get(ids: ID[], config?: RequestConfig): Promise<M> { return super.get(ids) }
     async create(obj: M, config?: RequestConfig) : Promise<M> { return super.create(obj) }
