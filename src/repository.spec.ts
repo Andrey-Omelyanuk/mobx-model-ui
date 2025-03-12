@@ -1,5 +1,5 @@
 import { model, Model } from './model'
-import { EQ } from './filters'
+import { EQ, EQV } from './filters'
 import { obj_a, obj_b, TestAdapter } from './test.utils'
 import { Adapter, ConstantAdapter, local, local_store } from './adapters'
 import { Repository } from './repository'
@@ -92,34 +92,46 @@ describe('Repository', () => {
         expect(adapter.get).toHaveBeenCalledTimes(1)
     })
 
-    // it('find', async ()=> {
-    //     const selector: Selector = { filter: EQ ('')  }
-    //                                             expect(__find).toHaveBeenCalledTimes(0)
-    //     let obj = await adapter.find(selector); expect(__find).toHaveBeenCalledTimes(1)
-    //                                             expect(__find).toHaveBeenCalledWith(selector)
-    //                                             expect(obj).toBe(cache.get(obj_a.id))
-    // })
+    it('find', async ()=> {
+        const repository = new Repository(A.getModelDescriptor(), adapter)
+        let a = new A({id: 1, b: 'test'})
+        await repository.create(a)
+        expect(adapter.find).toHaveBeenCalledTimes(0)
+        expect(local_store['test']['1']).toEqual({id: 1, b: 'test'})
 
-    // it('load', async ()=> {
-    //                                         expect(__load).toHaveBeenCalledTimes(0)
-    //     let items = await adapter.load();   expect(__load).toHaveBeenCalledTimes(1)
-    //                                         expect(__load).toHaveBeenCalledWith(undefined, undefined)
-    //                                         expect(items).toEqual([
-    //                                             cache.get(obj_a.id),
-    //                                             cache.get(obj_b.id),
-    //                                         ])
-    // })
+        const query = A.getQuery({})
+        const response = await repository.find(query)
+        expect(response).toBe(a)
+        expect(adapter.find).toHaveBeenCalledTimes(1)
+    })
 
-    // it('cancel load', async ()=> {
-    //     const controller = new AbortController() 
-    //                                         expect(__load).toHaveBeenCalledTimes(0)
-    //     try {
-    //         setTimeout(() => controller.abort(), 500)
-    //         let items = await adapter.load(undefined, controller);   
-    //     } catch (e) {
-    //                                         expect(e).toBe('abort')
-    //     }
-    //                                         expect(__load).toHaveBeenCalledTimes(1)
-    //                                         expect(__load).toHaveBeenCalledWith(undefined, controller)
-    // })
+    it('load', async ()=> {
+        const repository = new Repository(A.getModelDescriptor(), adapter)
+        let a = new A({id: 1, b: 'test a'})
+        let b = new A({id: 2, b: 'test b'})
+        let c = new A({id: 3, b: 'test c'})
+        await repository.create(a)
+        await repository.create(b)
+        await repository.create(c)
+        expect(adapter.load).toHaveBeenCalledTimes(0)
+        expect(local_store['test']).toEqual({'1': {id: 1, b: 'test a'}, '2': {id: 2, b: 'test b'}, 3: {id: 3, b: 'test c'}})
+
+        const query = A.getQuery({})
+        const response = await repository.load(query)
+        expect(response).toEqual([a, b, c])
+        expect(adapter.load).toHaveBeenCalledTimes(1)
+    })
+
+    it('cancel load', async ()=> {
+        // const controller = new AbortController() 
+        //                                     expect(__load).toHaveBeenCalledTimes(0)
+        // try {
+        //     setTimeout(() => controller.abort(), 500)
+        //     let items = await adapter.load(undefined, controller);   
+        // } catch (e) {
+        //                                     expect(e).toBe('abort')
+        // }
+        //                                     expect(__load).toHaveBeenCalledTimes(1)
+        //                                     expect(__load).toHaveBeenCalledWith(undefined, controller)
+    })
 })

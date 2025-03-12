@@ -91,7 +91,7 @@ describe('Query', () => {
 
     describe('Destructor', () => {
         it('default', async ()=> {
-            const query = new Query<A>({repository: repositoryA}) as any
+            const query = new Query<A>({repository: repositoryA, autoupdate: false }) as any
             query.disposers.push(        reaction(() => query.isLoading, () => null));  expect(query.disposers.length).toBe(2)
             query.disposerObjects['x'] = reaction(() => query.isLoading, () => null );  expect(Object.keys(query.disposerObjects).length).toBe(1)
             query.destroy();                                                            expect(query.disposers.length).toBe(0)
@@ -161,7 +161,7 @@ describe('Query', () => {
 
     describe('autoupdate', () => {
         it('on/off', () => {
-            const query = new Query<A>({repository: repositoryA}) as any
+            const query = new Query<A>({repository: repositoryA, autoupdate: false }) as any
                                         expect(query.autoupdate).toBe(false)
                                         expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)
             query.autoupdate = true                    
@@ -172,7 +172,7 @@ describe('Query', () => {
         })
 
         it('in action', async () => {
-            const options = new Query<A>({repository: repositoryA})
+            const options = new Query<A>({repository: repositoryA, autoupdate: false })
             const input   = new ObjectInput(STRING(), {value: 'test', options})
             const query   = new Query<A>({repository: repositoryA, filter: EQ('name', input), autoupdate: true})
 

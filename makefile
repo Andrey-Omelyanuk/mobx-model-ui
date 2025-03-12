@@ -23,7 +23,7 @@ dev:
 # chrome://inspect/#devices
 debug:
 	docker run --rm -it -p 9229:9229 -v .:/app $(PROJECT_NAME) \
-		sh -c "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/repository.spec.ts'"
+		sh -c "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/ObjectInput.spec.ts'"
 lint:
 	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint"
 lint-fix:

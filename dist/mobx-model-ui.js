@@ -199,7 +199,6 @@
             debugger;
             let raw_obj = await this.adapter.get(ids, config);
             const cachedObj = this.updateCachedObject(raw_obj);
-            console.log(cachedObj, raw_obj);
             return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
         }
         /**
@@ -988,8 +987,10 @@
             }
             catch (e) {
                 // ignore the cancelation of the request
-                if (e.name !== 'AbortError' && e.message !== 'canceled')
+                if (e.name !== 'AbortError' && e.message !== 'canceled') {
+                    console.error(e);
                     mobx.runInAction(() => this.error = e.message);
+                }
             }
             finally {
                 this.controller = undefined;
@@ -1434,19 +1435,19 @@
             for (let relation in this.modelDescriptor.relations) {
                 const settings = this.modelDescriptor.relations[relation].settings;
                 if (settings.foreign_model && rawObj[relation]) {
-                    settings.foreign_model.repository.cache.update(rawObj[relation]);
+                    settings.foreign_model.getModelDescriptor().cache.update(rawObj[relation]);
                     this[settings.foreign_id_name] = rawObj[relation].id;
                 }
                 else if (settings.remote_model && rawObj[relation]) {
                     // many
                     if (Array.isArray(rawObj[relation])) {
                         for (const i of rawObj[relation]) {
-                            settings.remote_model.repository.cache.update(i);
+                            settings.remote_model.getModelDescriptor().cache.update(i);
                         }
                     }
                     // one
                     else {
-                        settings.remote_model.repository.cache.update(rawObj[relation]);
+                        settings.remote_model.getModelDescriptor().cache.update(rawObj[relation]);
                     }
                 }
             }

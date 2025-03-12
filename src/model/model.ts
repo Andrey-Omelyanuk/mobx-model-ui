@@ -159,19 +159,19 @@ export default abstract class Model {
         for (let relation in this.modelDescriptor.relations) {
             const settings = this.modelDescriptor.relations[relation].settings
             if (settings.foreign_model && rawObj[relation]) {
-                settings.foreign_model.repository.cache.update(rawObj[relation])
+                settings.foreign_model.getModelDescriptor().cache.update(rawObj[relation])
                 this[settings.foreign_id_name] = rawObj[relation].id
             }
             else if (settings.remote_model && rawObj[relation]) {
                 // many
                 if (Array.isArray(rawObj[relation])) {
                     for (const i of rawObj[relation]) {
-                        settings.remote_model.repository.cache.update(i)
+                        settings.remote_model.getModelDescriptor().cache.update(i)
                     }
                 }
                 // one
                 else {
-                    settings.remote_model.repository.cache.update(rawObj[relation])
+                    settings.remote_model.getModelDescriptor().cache.update(rawObj[relation])
                 }
             }
         }

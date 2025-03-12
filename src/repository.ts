@@ -63,7 +63,6 @@ export class  Repository<M extends Model> {
         debugger
         let raw_obj = await this.adapter.get(ids, config)
         const cachedObj = this.updateCachedObject(raw_obj)
-        console.log(cachedObj, raw_obj)
         return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj) 
     }
 

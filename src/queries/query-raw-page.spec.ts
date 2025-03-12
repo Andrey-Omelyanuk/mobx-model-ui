@@ -6,7 +6,6 @@ describe('QueryRawPage', () => {
     @model class A extends Model { @id(NUMBER()) id: number }
 
     afterEach(async () => {
-        // A.repository.cache.clear() 
         jest.clearAllMocks()
     })
 
