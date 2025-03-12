@@ -608,7 +608,7 @@ declare class LocalAdapter<M extends Model> implements Adapter<M> {
     getDistinct(filter: any, filed: any): Promise<any[]>;
     getURLSearchParams(query: Query<M>): URLSearchParams;
 }
-declare function local(): (cls: any) => void;
+declare function local(store_name?: string): (cls: any) => void;
 
 declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[];

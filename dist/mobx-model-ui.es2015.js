@@ -876,7 +876,7 @@ class Query {
             writable: true,
             value: async () => waitIsFalse(this, 'isReady')
         });
-        let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
+        let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
         this.repository = repository;
         this.filter = filter;
         this.orderBy = orderBy ? orderBy : new Input(ARRAY(ORDER_BY()));
@@ -2255,9 +2255,9 @@ class LocalAdapter {
     }
 }
 // model decorator
-function local() {
+function local(store_name) {
     return (cls) => {
-        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(cls.modelName);
+        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName);
     };
 }
 
