@@ -872,7 +872,7 @@
                 writable: true,
                 value: async () => waitIsFalse(this, 'isReady')
             });
-            let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = false } = props;
+            let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
             this.repository = repository;
             this.filter = filter;
             this.orderBy = orderBy ? orderBy : new Input(ARRAY(ORDER_BY()));
