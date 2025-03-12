@@ -88,4 +88,15 @@ export class ModelDescriptor<T extends Model> {
         }
         return ids
     }
+
+    updateCachedObject(rawObj: Object) : T | undefined {
+        const rawObjID = this.getID(rawObj)
+        const cachedObj = this.cache.get(rawObjID)
+        if (cachedObj) {
+            cachedObj.updateFromRaw(rawObj)
+            cachedObj.refreshInitData()
+            return cachedObj
+        } 
+    }
+
 }

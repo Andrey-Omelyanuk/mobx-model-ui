@@ -191,7 +191,7 @@ class Repository {
     async get(ids, config) {
         debugger;
         let raw_obj = await this.adapter.get(ids, config);
-        const cachedObj = this.updateCachedObject(raw_obj);
+        const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj);
         return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
     }
     /**
@@ -199,7 +199,7 @@ class Repository {
      */
     async find(query, config) {
         let raw_obj = await this.adapter.find(query, config);
-        const cachedObj = this.updateCachedObject(raw_obj);
+        const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj);
         return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
     }
     /**
@@ -210,7 +210,7 @@ class Repository {
         let objs = [];
         runInAction(() => {
             for (const raw_obj of raw_objs) {
-                const cachedObj = this.updateCachedObject(raw_obj);
+                const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj);
                 objs.push(cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj));
             }
         });
@@ -227,15 +227,6 @@ class Repository {
      */
     async getDistinct(filter, field, config) {
         return await this.adapter.getDistinct(filter, field, config);
-    }
-    updateCachedObject(rawObj) {
-        const rawObjID = this.modelDescriptor.getID(rawObj);
-        const cachedObj = this.modelDescriptor.cache.get(rawObjID);
-        if (cachedObj) {
-            cachedObj.updateFromRaw(rawObj);
-            cachedObj.refreshInitData();
-            return cachedObj;
-        }
     }
 }
 
@@ -1428,19 +1419,19 @@ class Model {
         for (let relation in this.modelDescriptor.relations) {
             const settings = this.modelDescriptor.relations[relation].settings;
             if (settings.foreign_model && rawObj[relation]) {
-                settings.foreign_model.getModelDescriptor().cache.update(rawObj[relation]);
+                settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation]);
                 this[settings.foreign_id_name] = rawObj[relation].id;
             }
             else if (settings.remote_model && rawObj[relation]) {
                 // many
                 if (Array.isArray(rawObj[relation])) {
                     for (const i of rawObj[relation]) {
-                        settings.remote_model.getModelDescriptor().cache.update(i);
+                        settings.remote_model.getModelDescriptor().updateCachedObject(i);
                     }
                 }
                 // one
                 else {
-                    settings.remote_model.getModelDescriptor().cache.update(rawObj[relation]);
+                    settings.remote_model.getModelDescriptor().updateCachedObject(rawObj[relation]);
                 }
             }
         }
@@ -1710,6 +1701,15 @@ class ModelDescriptor {
             ids.push(id);
         }
         return ids;
+    }
+    updateCachedObject(rawObj) {
+        const rawObjID = this.getID(rawObj);
+        const cachedObj = this.cache.get(rawObjID);
+        if (cachedObj) {
+            cachedObj.updateFromRaw(rawObj);
+            cachedObj.refreshInitData();
+            return cachedObj;
+        }
     }
 }
 

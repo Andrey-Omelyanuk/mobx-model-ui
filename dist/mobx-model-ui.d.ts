@@ -248,7 +248,6 @@ declare class Repository<M extends Model> {
      * Returns distinct values for the field.
      */
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
-    updateCachedObject(rawObj: Object): M | undefined;
 }
 
 interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
@@ -431,6 +430,7 @@ declare class ModelDescriptor<T extends Model> {
      * @returns
      */
     getIds(obj: Object): ID[] | undefined;
+    updateCachedObject(rawObj: Object): T | undefined;
 }
 
 declare abstract class Model {

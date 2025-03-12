@@ -62,7 +62,7 @@ export class  Repository<M extends Model> {
     async get(ids: ID[], config?: RequestConfig): Promise<M> {
         debugger
         let raw_obj = await this.adapter.get(ids, config)
-        const cachedObj = this.updateCachedObject(raw_obj)
+        const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj)
         return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj) 
     }
 
@@ -71,7 +71,7 @@ export class  Repository<M extends Model> {
      */
     async find(query: Query<M>, config?: RequestConfig): Promise<M> {
         let raw_obj = await this.adapter.find(query, config)
-        const cachedObj = this.updateCachedObject(raw_obj)
+        const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj)
         return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj) 
     }
 
@@ -83,7 +83,7 @@ export class  Repository<M extends Model> {
         let objs: M[] = []
         runInAction(() => {
             for (const raw_obj of raw_objs) {
-                const cachedObj = this.updateCachedObject(raw_obj)
+                const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj)
                 objs.push(cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj))
             }
         })
@@ -102,15 +102,4 @@ export class  Repository<M extends Model> {
     async getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]> {
         return await this.adapter.getDistinct(filter, field, config)
     }
-
-    updateCachedObject(rawObj: Object) : M | undefined {
-        const rawObjID = this.modelDescriptor.getID(rawObj)
-        const cachedObj = this.modelDescriptor.cache.get(rawObjID)
-        if (cachedObj) {
-            cachedObj.updateFromRaw(rawObj)
-            cachedObj.refreshInitData()
-            return cachedObj
-        } 
-    }
-
 }
