@@ -97,6 +97,7 @@ export class ModelDescriptor<T extends Model> {
             cachedObj.refreshInitData()
             return cachedObj
         } 
+        return new this.cls(rawObj)
     }
 
 }

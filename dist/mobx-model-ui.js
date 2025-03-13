@@ -198,16 +198,14 @@
         async get(ids, config) {
             debugger;
             let raw_obj = await this.adapter.get(ids, config);
-            const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj);
-            return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
+            return this.modelDescriptor.updateCachedObject(raw_obj);
         }
         /**
          * Returns ONE object by query.
          */
         async find(query, config) {
             let raw_obj = await this.adapter.find(query, config);
-            const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj);
-            return cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj);
+            return this.modelDescriptor.updateCachedObject(raw_obj);
         }
         /**
          * Returns MANY objects by query.
@@ -217,8 +215,7 @@
             let objs = [];
             mobx.runInAction(() => {
                 for (const raw_obj of raw_objs) {
-                    const cachedObj = this.modelDescriptor.updateCachedObject(raw_obj);
-                    objs.push(cachedObj ? cachedObj : new this.modelDescriptor.cls(raw_obj));
+                    objs.push(this.modelDescriptor.updateCachedObject(raw_obj));
                 }
             });
             return objs;
@@ -1366,9 +1363,7 @@
         get rawObj() {
             let rawObj = this.rawData;
             for (const fieldName in this.modelDescriptor.ids) {
-                if (this[fieldName] !== undefined) {
-                    rawObj[fieldName] = this[fieldName];
-                }
+                rawObj[fieldName] = this[fieldName];
             }
             return rawObj;
         }
@@ -1427,7 +1422,8 @@
                 const settings = this.modelDescriptor.relations[relation].settings;
                 if (settings.foreign_model && rawObj[relation]) {
                     settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation]);
-                    this[settings.foreign_id_name] = rawObj[relation].id;
+                    // TODO: I need to finish composite ids later, with single id it works
+                    this[settings.foreign_ids[0]] = rawObj[relation].id;
                 }
                 else if (settings.remote_model && rawObj[relation]) {
                     // many
@@ -1717,6 +1713,7 @@
                 cachedObj.refreshInitData();
                 return cachedObj;
             }
+            return new this.cls(rawObj);
         }
     }
 

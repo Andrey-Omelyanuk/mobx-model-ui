@@ -93,9 +93,7 @@ export default abstract class Model {
     get rawObj() : any {
         let rawObj: any = this.rawData
         for (const fieldName in this.modelDescriptor.ids) {
-            if(this[fieldName] !== undefined) {
-                rawObj[fieldName] = this[fieldName] 
-            }
+            rawObj[fieldName] = this[fieldName] 
         }
         return rawObj
     }
@@ -160,7 +158,8 @@ export default abstract class Model {
             const settings = this.modelDescriptor.relations[relation].settings
             if (settings.foreign_model && rawObj[relation]) {
                 settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation])
-                this[settings.foreign_id_name] = rawObj[relation].id
+                // TODO: I need to finish composite ids later, with single id it works
+                this[settings.foreign_ids[0]] = rawObj[relation].id
             }
             else if (settings.remote_model && rawObj[relation]) {
                 // many
