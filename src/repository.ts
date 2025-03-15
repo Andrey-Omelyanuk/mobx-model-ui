@@ -19,7 +19,7 @@ export class  Repository<M extends Model> {
      * Create the object. 
      */
     async create(obj: M, config?: RequestConfig) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.rawData, config)
+        let raw_obj = await this.adapter.create(obj.rawObj, config) // Id can be defined in the frontend => ids should be passed to the create method if they exist
         const rawObjID = this.modelDescriptor.getID(raw_obj)
         const cachedObj = this.modelDescriptor.cache.get(rawObjID)
         if (cachedObj) obj = cachedObj

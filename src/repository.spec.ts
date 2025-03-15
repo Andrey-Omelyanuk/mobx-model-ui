@@ -51,6 +51,13 @@ describe('Repository', () => {
         expect(adapter.create).toHaveBeenCalledTimes(1)
         expect(a.id).toBe(1)
         expect(local_store['test']['1']).toEqual({id: 1, b: 'test'})
+
+        let b = new A({id: 2, b: 'test b'})
+        response = await repository.create(b)
+        expect(response).toBe(b)
+        expect(adapter.create).toHaveBeenCalledTimes(2)
+        expect(b.id).toBe(2)
+        expect(local_store['test']['2']).toEqual({id: 2, b: 'test b'})
     })
 
     it('update', async ()=> {
