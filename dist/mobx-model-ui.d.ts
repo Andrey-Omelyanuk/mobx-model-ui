@@ -250,18 +250,19 @@ declare class Repository<M extends Model> {
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
 }
 
-interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
+interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
     options?: Query<M>;
-    autoReset?: (input: ObjectInput<T, M>) => void;
+    autoReset?: (input: ObjectInput<M>) => void;
 }
-declare class ObjectInput<T, M extends Model> extends Input<T> {
+declare class ObjectInput<M extends Model> extends Input<string> {
     readonly options?: Query<M>;
-    constructor(type: TypeDescriptor<T>, args?: ObjectInputConstructorArgs<T, M>);
+    constructor(args?: ObjectInputConstructorArgs<M>);
+    get obj(): M | undefined;
     get isReady(): boolean;
     destroy(): void;
 }
 
-declare function autoResetId(input: ObjectInput<any, any>): void;
+declare function autoResetId(input: ObjectInput<any>): void;
 
 declare const syncURLHandler: (paramName: string, input: Input<any>) => void;
 

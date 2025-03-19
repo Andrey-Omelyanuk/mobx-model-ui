@@ -19,9 +19,9 @@ describe('ObjectInput', () => {
     describe('constructor', () => {
         it('...', async () => {
             const options = TestModel.getQuery({})
-            const input = new ObjectInput(NUMBER(), { options })
+            const input = new ObjectInput({ options })
             expect(input).toMatchObject({
-                value           : undefined,
+                value           : "",
                 options         : options,
             })
             expect(input.__disposers.length).toBe(1)
@@ -30,7 +30,7 @@ describe('ObjectInput', () => {
     it('isReady', async () => {
         const options = TestModel.getQuery({})
         runInAction(() => options.isNeedToUpdate = false)
-        const input = new ObjectInput(NUMBER(), {options})  ; expect(input.isReady).toBe(true)
+        const input = new ObjectInput({ options })          ; expect(input.isReady).toBe(true)
         runInAction(() => input.isRequired = true)          ; expect(input.isReady).toBe(false)
         runInAction(() => input.isRequired = false)         ; expect(input.options.isReady).toBe(true)
                                                             ; expect(input.isReady).toBe(true)
@@ -40,7 +40,7 @@ describe('ObjectInput', () => {
     it('autoReset', async () => {
         let flag = false
         const options = TestModel.getQuery({})
-        const input = new ObjectInput(NUMBER(), {
+        const input = new ObjectInput({
             options,
             autoReset: (i) => flag = true 
         })                                                  ; expect(flag).toBe(false)
@@ -59,23 +59,23 @@ describe('ObjectInput', () => {
             value: { search: '?test=10' }
         })
 
-        const input1 = new ObjectInput(NUMBER(), {
+        const input1 = new ObjectInput({
             options,
             syncURL: 'test'
         })                                                  
         jest.runAllTimers()                                 ; expect(input1.isReady).toBe(false)  
-                                                            ; expect(input1.value).toBe(10)
-        const input2 = new ObjectInput(NUMBER(), {
+                                                            ; expect(input1.value).toBe('10')
+        const input2 = new ObjectInput({
             options,
             syncURL: 'test',
             autoReset: autoResetId
         })                                                  
         jest.runAllTimers()                                 ; expect(input2.isReady).toBe(false)  
-                                                            ; expect(input2.value).toBe(10)
+                                                            ; expect(input2.value).toBe('10')
         runInAction(() => options.isNeedToUpdate = false)
         jest.runAllTimers()                                 ; expect(input1.isReady).toBe(false)  
-                                                            ; expect(input1.value).toBe(10)
+                                                            ; expect(input1.value).toBe('10')
                                                             // ; expect(input2.isReady).toBe(true)  
-                                                            ; expect(input2.value).toBe(10)
+                                                            ; expect(input2.value).toBe('10')
     })
 })
