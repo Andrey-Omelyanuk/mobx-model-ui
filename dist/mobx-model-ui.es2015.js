@@ -472,6 +472,9 @@ class ObjectInput extends Input {
                 }
             }));
         }
+        else if (args === null || args === void 0 ? void 0 : args.autoReset) {
+            console.warn('autoReset function should be used only with options');
+        }
     }
     get isReady() {
         // options should be checked first

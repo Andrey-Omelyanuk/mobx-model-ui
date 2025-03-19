@@ -27,6 +27,9 @@ export class ObjectInput<T, M extends Model> extends Input<T> {
                 }
             ))
         }
+        else if (args?.autoReset) {
+            console.warn('autoReset function should be used only with options')
+        }
     }
 
     get isReady () {
