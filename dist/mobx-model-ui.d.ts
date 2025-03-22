@@ -626,17 +626,21 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
 }
 declare function constant(constant: any[]): (cls: any) => void;
 
+/**
+ * Form class
+ */
 declare class Form {
     readonly inputs: {
         [key: string]: Input<any>;
     };
-    isLoading: boolean;
-    errors: string[];
     private __submit;
     private __cancel;
+    isLoading: boolean;
+    errors: string[];
     constructor(inputs: {
         [key: string]: Input<any>;
-    }, submit: () => Promise<void>, cancel: () => void);
+    }, __submit: () => Promise<void>, __cancel: () => void);
+    destroy(): void;
     get isReady(): boolean;
     get isError(): boolean;
     submit(): Promise<void>;
@@ -645,9 +649,9 @@ declare class Form {
 
 declare class ObjectForm<M extends Model> extends Form {
     obj: M;
-    constructor(inputs: {
+    constructor(obj: M, inputs: {
         [key: string]: Input<any>;
-    }, onSubmitted?: (obj: M) => void, onCancelled?: () => void);
+    }, onDone?: () => void);
 }
 
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;

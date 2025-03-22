@@ -21,7 +21,7 @@ describe('ObjectInput', () => {
             const options = TestModel.getQuery({})
             const input = new ObjectInput({ options })
             expect(input).toMatchObject({
-                value           : "",
+                value           : '',
                 options         : options,
             })
             expect(input.__disposers.length).toBe(1)

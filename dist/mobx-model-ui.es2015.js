@@ -2316,13 +2316,28 @@ function constant(constant) {
     };
 }
 
+/**
+ * Form class
+ */
 class Form {
-    constructor(inputs, submit, cancel) {
+    constructor(inputs, __submit, __cancel) {
         Object.defineProperty(this, "inputs", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: void 0
+            value: inputs
+        });
+        Object.defineProperty(this, "__submit", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: __submit
+        });
+        Object.defineProperty(this, "__cancel", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: __cancel
         });
         Object.defineProperty(this, "isLoading", {
             enumerable: true,
@@ -2336,33 +2351,22 @@ class Form {
             writable: true,
             value: []
         });
-        Object.defineProperty(this, "__submit", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        Object.defineProperty(this, "__cancel", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
-        this.inputs = inputs;
-        this.__submit = submit;
-        this.__cancel = cancel;
+    }
+    destroy() {
+        for (const key in this.inputs) {
+            this.inputs[key].destroy();
+        }
     }
     get isReady() {
         return Object.values(this.inputs).every(input => input.isReady);
     }
     get isError() {
-        return this.errors.length > 0 || Object.values(this.inputs).some(input => input.errors.length > 0);
+        return this.errors.length > 0
+            || Object.values(this.inputs).some(input => input.errors.length > 0);
     }
     async submit() {
-        if (!this.isReady) {
-            // just ignore
-            return;
-        }
+        if (!this.isReady)
+            return; // just ignore
         this.isLoading = true;
         this.errors = [];
         try {
@@ -2397,32 +2401,24 @@ __decorate([
 ], Form.prototype, "errors", void 0);
 
 class ObjectForm extends Form {
-    constructor(inputs, onSubmitted, onCancelled) {
+    constructor(obj, inputs, onDone) {
         super(inputs, async () => {
-            if (!this.obj) {
-                // console.error('ObjectForm error: obj is not set', this)
-                throw new Error('ObjectForm error: obj is not set');
-            }
             const fieldsNames = Object.keys(this.obj);
-            for (let fieldName of Object.keys(this.inputs)) {
-                if (!fieldsNames.includes(fieldName)) {
-                    // console.error(`ObjectForm error: object has no field ${fieldName}`, this)
+            // check if all fields from inputs are in obj
+            for (let fieldName of Object.keys(this.inputs))
+                if (!fieldsNames.includes(fieldName))
                     throw new Error(`ObjectForm error: object has no field ${fieldName}`);
-                }
-            }
             // move all values from inputs to obj
-            for (let fieldName of Object.keys(inputs)) {
+            for (let fieldName of Object.keys(inputs))
                 this.obj[fieldName] = inputs[fieldName].value;
-            }
-            const response = await this.obj.create();
-            if (onSubmitted)
-                onSubmitted(response);
-        }, onCancelled);
+            await this.obj.save();
+            onDone && onDone();
+        }, onDone);
         Object.defineProperty(this, "obj", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: void 0
+            value: obj
         });
     }
 }

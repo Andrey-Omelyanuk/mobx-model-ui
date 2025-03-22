@@ -4,32 +4,27 @@ import { Form } from './Form'
 
 
 export class ObjectForm<M extends Model> extends Form {
-    obj: M
-    constructor(inputs: { [key: string]: Input<any> }, onSubmitted?: (obj: M) => void , onCancelled?: () => void) {
+    constructor(
+        public  obj     : M,
+                inputs  : {[key: string]: Input<any> },
+                onDone ?: () => void
+    ) {
         super(
             inputs,
             async () => {
-                if (!this.obj) {
-                    // console.error('ObjectForm error: obj is not set', this)
-                    throw new Error('ObjectForm error: obj is not set')
-                }
                 const fieldsNames = Object.keys(this.obj)
-                for (let fieldName of Object.keys(this.inputs)) {
-                    if (!fieldsNames.includes(fieldName)) {
-                        // console.error(`ObjectForm error: object has no field ${fieldName}`, this)
+                // check if all fields from inputs are in obj
+                for (let fieldName of Object.keys(this.inputs))
+                    if (!fieldsNames.includes(fieldName))
                         throw new Error(`ObjectForm error: object has no field ${fieldName}`)
-                    }
-                }
-
                 // move all values from inputs to obj
-                for (let fieldName of Object.keys(inputs)) {
+                for (let fieldName of Object.keys(inputs))
                     this.obj[fieldName] = inputs[fieldName].value
-                }
-                const response = await this.obj.create() as M
-                if (onSubmitted)
-                    onSubmitted(response)
+
+                await this.obj.save() as M
+                onDone && onDone()
             },
-            onCancelled
+            onDone
         )
     }
 }
