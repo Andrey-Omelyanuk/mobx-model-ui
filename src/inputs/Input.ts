@@ -74,7 +74,7 @@ export class Input<T> {
         return !(this.errors.length
             ||  this.isDebouncing
             ||  this.isNeedToUpdate
-            ||  this.isRequired && (this.value === undefined || (Array.isArray(this.value) && !this.value.length))
+            ||  this.isRequired && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length))
         )
     }
 

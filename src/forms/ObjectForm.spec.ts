@@ -18,48 +18,49 @@ describe('ObjectForm', () => {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
-        const form = new ObjectForm(inputs)
+        const form = new ObjectForm(new A(), inputs)
         expect(form.inputs).toBe(inputs)
     })
 
     it('submit', (done)=> {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
-        const onSubmitted = (obj: A) => {
-            expect(obj.a).toBe('a')
-            expect(obj.b).toBe(1)
+        const onDone= () => {
+            expect(form.obj.a).toBe('a')
+            expect(form.obj.b).toBe(1)
             done()
         }
-        const form = new ObjectForm<A>({a: inputA, b: inputB}, onSubmitted)
-        form.obj = new A({})
+        const form = new ObjectForm<A>(new A(), {a: inputA, b: inputB}, onDone)
         inputA.set('a')
         inputB.set(1)
         form.submit()
     })
 
     it('cancel', (done)=> {
-        const onSubmitted = (obj: Model) => {}
-        const onCancelled = () => {
-            done()
-        }
-        const form = new ObjectForm<A>({}, onSubmitted, onCancelled)
+        const onDone= () => { done() }
+        const form = new ObjectForm<A>(new A(), {}, onDone)
         form.cancel()
-    })
-
-    it('submit without obj', async ()=> {
-        const form = new ObjectForm<A>({})
-        await expect(form.submit())
-            .rejects
-            .toThrow('ObjectForm error: obj is not set')
     })
 
     it('submit without match fields between form and object', async ()=> {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
-        const form = new ObjectForm<A>({a: inputA, X: inputB})
-        form.obj = new A({})
+        const form = new ObjectForm<A>(new A({}), {a: inputA, X: inputB})
         await expect(form.submit())
             .rejects
             .toThrow('ObjectForm error: object has no field X')
     })
+    // it('...', (done)=> {
+    //     const inputA = new Input(STRING())
+    //     const inputB = new Input(NUMBER()) 
+    //     const onSubmitted = (obj: A) => {
+    //         expect(obj.a).toBe('a')
+    //         expect(obj.b).toBe(1)
+    //         done()
+    //     }
+    //     const form = new ObjectForm<A>(new A(), {a: inputA, b: inputB}, onSubmitted)
+    //     inputA.set('a')
+    //     inputB.set(1)
+    //     form.submit()
+    // })
 })

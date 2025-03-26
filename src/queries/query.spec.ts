@@ -173,7 +173,7 @@ describe('Query', () => {
 
         it('in action', async () => {
             const options = new Query<A>({repository: repositoryA, autoupdate: false })
-            const input   = new ObjectInput(STRING(), {value: 'test', options})
+            const input   = new ObjectInput({value: 'test', options})
             const query   = new Query<A>({repository: repositoryA, filter: EQ('name', input), autoupdate: true})
 
                                         expect(options.isNeedToUpdate   ).toBe(true)
@@ -228,7 +228,7 @@ describe('Query', () => {
             @constant(bData) @model class B extends Model {}
 
             const aQuery = A.getQuery({ autoupdate: true })
-            const aInput = new ObjectInput(NUMBER(), {
+            const aInput = new ObjectInput({
                 syncURL     : 'a-test',
                 required    :true,
                 options     : aQuery,
@@ -239,7 +239,7 @@ describe('Query', () => {
                 filter: EQ('a_id', aInput),
                 autoupdate: true
             }) 
-            const bInput = new ObjectInput(NUMBER(), {
+            const bInput = new ObjectInput({
                 syncURL     : 'b-test',
                 required    :true,
                 options     : bQuery,
@@ -248,10 +248,10 @@ describe('Query', () => {
 
             expect(aQuery.isReady).toBe(false)
             expect(aInput.isReady).toBe(false)
-            expect(aInput.value).toBe(2)          // got from url
+            expect(aInput.value).toBe('2')          // got from url
             expect(bQuery.isReady).toBe(false)
             expect(bInput.isReady).toBe(false)
-            expect(bInput.value).toBe(undefined)  // not 1 because autoResetId try to get first options, but options is empty (not ready) 
+            expect(bInput.value).toBe('') // not 1 because autoResetId try to get first options, but options is empty (not ready) 
 
             // aInput.set(2) // TODO: fix it, required field still required to set the value, set from url doesn't work
             // bInput.set(1) // TODO: fix it 

@@ -2,19 +2,19 @@ import { reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
 import { Input, InputConstructorArgs } from './Input'
-import { TypeDescriptor } from '../types'
+import { STRING, TypeDescriptor } from '../types'
 
 
-export interface ObjectInputConstructorArgs<T, M extends Model> extends InputConstructorArgs<T> {
+export interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
     options   ?: Query<M>
-    autoReset ?: (input: ObjectInput<T, M>) => void
+    autoReset ?: (input: ObjectInput<M>) => void
 }
 
-export class ObjectInput<T, M extends Model> extends Input<T> {
+export class ObjectInput<M extends Model> extends Input<string> {
     readonly options?: Query<M>
 
-    constructor (type: TypeDescriptor<T>, args?: ObjectInputConstructorArgs<T, M>) {
-        super(type, args)
+    constructor (args?: ObjectInputConstructorArgs<M>) {
+        super(STRING(), args)
         this.options = args.options
         if (this.options) {
             this.__disposers.push(reaction(
@@ -27,6 +27,17 @@ export class ObjectInput<T, M extends Model> extends Input<T> {
                 }
             ))
         }
+        else if (args?.autoReset) {
+            console.warn('autoReset function should be used only with options')
+        }
+    }
+
+    get obj(): M | undefined {
+        if (!this.options) {
+            console.warn('ObjectInput cannot return an object if options are not provided')
+            return undefined
+        }
+        return this.options.repository.modelDescriptor.cache.get(this.value)
     }
 
     get isReady () {

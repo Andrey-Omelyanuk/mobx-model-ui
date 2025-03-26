@@ -9,7 +9,7 @@ describe('SingleFilter', () => {
 
     it('isReady', () => {
         const options = TestModel.getQuery({})
-        const input =  new ObjectInput(NUMBER(), {value: 1, options})
+        const input =  new ObjectInput({value: '1', options})
         const filter = new SingleFilter('test', input, () => `test`, (a: any, b: any) => a === b)
                                                             ; expect(options.isReady).toBe(false)
                                                             ; expect(input  .isReady).toBe(false)
@@ -19,7 +19,7 @@ describe('SingleFilter', () => {
                                                             ; expect(input  .isNeedToUpdate).toBe(true)
                                                             ; expect(input  .isReady).toBe(false)
 
-        input.set(2)                                        ; expect(input  .isReady).toBe(true)
+        input.set('2')                                      ; expect(input  .isReady).toBe(true)
                                                             ; expect(filter .isReady).toBe(true)
 
         runInAction(() => options.isNeedToUpdate = true)    ; expect(options.isReady).toBe(false)

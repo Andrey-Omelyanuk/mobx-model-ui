@@ -98,7 +98,7 @@ export default abstract class Model {
     get only_changed_raw_data() : any {
         let raw_data: any = {}
         for(let field_name in this.modelDescriptor.fields) {
-            if(this[field_name] !== undefined && this[field_name] != this.init_data[field_name]) {
+            if(this[field_name] != this.init_data[field_name]) {
                 raw_data[field_name] = this[field_name]
             }
         }
