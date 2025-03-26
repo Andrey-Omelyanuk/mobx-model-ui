@@ -42,7 +42,7 @@ describe('LocalAdapter', () => {
             '2': {id: 2, a: 2},
         }
         const obj = {id: 1, a: 2}
-        expect(await adapter.update([1], obj)).toStrictEqual(obj)
+        expect(await adapter.update(1, obj)).toStrictEqual(obj)
         expect(local_store['A'][1]).toStrictEqual(obj)
     })
 
@@ -51,16 +51,16 @@ describe('LocalAdapter', () => {
             '1': {id: 1, a: 1},
             '2': {id: 2, a: 2},
         }
-        await adapter.delete([1])
+        await adapter.delete(1)
         expect(local_store['A']).toEqual({'2': {id: 2, a: 2}, })
-        await adapter.delete([1])  // no error, just ignore
+        await adapter.delete(1)  // no error, just ignore
         expect(local_store['A']).toEqual({'2': {id: 2, a: 2}, })
-        await adapter.delete([2])
+        await adapter.delete(2)
         expect(local_store['A']).toEqual({})
     })
 
     it('action', (done) => {
-        adapter.action([1], 'action', {}).catch((e) => {
+        adapter.action(1, 'action', {}).catch((e) => {
             expect(e).toBe('Not implemented')
             done()
         })
@@ -71,8 +71,8 @@ describe('LocalAdapter', () => {
             '1': {id: 1, a: 1},
             '2': {id: 2, a: 2},
         }
-        expect(await adapter.get([1])).toStrictEqual({id: 1, a: 1})
-        expect(await adapter.get([2])).toStrictEqual({id: 2, a: 2})
+        expect(await adapter.get(1)).toStrictEqual({id: 1, a: 1})
+        expect(await adapter.get(2)).toStrictEqual({id: 2, a: 2})
     })
 
     it('find', async ()=> {
@@ -88,11 +88,6 @@ describe('LocalAdapter', () => {
     })
 
     it('getDistinct', async ()=> {
-    })
-
-    it('getID', async ()=> {
-        expect(adapter.getID([1])).toBe('1')
-        expect(adapter.getID([1, 2])).toBe('1-2')
     })
 
     describe('init_local_data', () => {

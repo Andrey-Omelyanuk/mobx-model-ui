@@ -1,11 +1,12 @@
 import { action, makeObservable, observable } from 'mobx'
 import { Model } from './model'
+import { ID } from './types'
 
 /**
- * 
+ * Cache for model objects.
  */
 export class Cache<M extends Model> {
-    @observable readonly store = new Map<string, M>()
+    @observable readonly store = new Map<ID, M>()
 
     constructor() {
         makeObservable(this)
@@ -14,7 +15,7 @@ export class Cache<M extends Model> {
     /**
      * Get object by ID 
      */
-    get(ID: string): M|undefined {
+    get(ID: ID): M|undefined {
         return this.store.get(ID)
     }
 

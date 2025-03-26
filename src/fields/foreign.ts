@@ -5,7 +5,7 @@ import {extendObservable, reaction, action} from 'mobx'
 /**
  * Decorator for foreign fields
  */
-export function foreign<M extends Model>(foreign_model: any, foreign_ids?: string[]) {
+export function foreign<M extends Model>(foreign_model: any, foreign_id?: string) {
     return function (cls: any, field_name: string) {
         const modelName = cls.modelName ?? cls.constructor.name
         if (!modelName)
@@ -16,7 +16,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_ids?: strin
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`)
 
         // if it is empty then try auto detect it (it works only with single id) 
-        foreign_ids = foreign_ids ?? [`${field_name}_id`]
+        foreign_id = foreign_id ?? `${field_name}_id`
 
         modelDescription.relations[field_name] = {
             decorator: (obj: M) => {
@@ -26,9 +26,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_ids?: strin
                 obj.disposers.set(`foreign ${field_name}`, reaction(
                     // watch on foreign cache for foreign object
                     () => {
-                        const values = foreign_ids.map(id => obj[id])
-                        const foreignModelDescriptor: ModelDescriptor<any> = foreign_model.getModelDescriptor()
-                        const foreignID = foreignModelDescriptor.getIDByValues(values)
+                        const foreignID = obj[foreign_id] 
                         // console.warn('foreign', foreign_ids, values, `fID '${foreignID}'`) 
                         if (foreignID === undefined) return undefined
                         if (foreignID === '') return undefined
@@ -46,7 +44,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_ids?: strin
                 ))
             },
             disposers: [],
-            settings: { foreign_model, foreign_ids }
+            settings: { foreign_model, foreign_id }
         } 
     }
 }

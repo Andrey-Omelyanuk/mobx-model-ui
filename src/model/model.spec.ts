@@ -1,6 +1,7 @@
 import { Model, model, field, foreign, one, many, local, models, clearModels, id } from '..'
 import { STRING } from '../types/string'
 import { NUMBER } from '../types/number'
+import { runInAction } from 'mobx'
 
 
 describe('Model', () => {
@@ -212,8 +213,8 @@ describe('Model', () => {
             a.updateFromRaw({ id: 1, b: {id: 1, x: 'B'}, c: {id: 1, x: 'C'} })
 
             expect(a).toMatchObject({ id: 1, b_id: 1, c_id: 1, b: {id: 1, x: 'B'}, c: {id: 1, x: 'C'}, })
-            expect(B.get('1')).toMatchObject({x: 'B'})
-            expect(C.get('1')).toMatchObject({x: 'C'})
+            expect(B.get(1)).toMatchObject({x: 'B'})
+            expect(C.get(1)).toMatchObject({x: 'C'})
         })
 
         it('raw_obj with many relations', () => {
@@ -238,9 +239,9 @@ describe('Model', () => {
                 {id: 2, a_id: 1, x: 'B2'},
                 {id: 3, a_id: 1, x: 'B3'},
             ]})
-            expect(B.get('1')).toMatchObject({a_id: 1, x: 'B1'})
-            expect(B.get('2')).toMatchObject({a_id: 1, x: 'B2'})
-            expect(B.get('3')).toMatchObject({a_id: 1, x: 'B3'})
+            expect(B.get(1)).toMatchObject({a_id: 1, x: 'B1'})
+            expect(B.get(2)).toMatchObject({a_id: 1, x: 'B2'})
+            expect(B.get(3)).toMatchObject({a_id: 1, x: 'B3'})
         })
 
         it('raw_obj with one relations', () => {
@@ -257,7 +258,7 @@ describe('Model', () => {
             let a = new A({})   
 
             a.updateFromRaw({ id: 1, b: {id: 2, a_id: 1, x: 'B'}}); expect(a).toMatchObject({ id: 1, b: {id: 2, a_id: 1, x: 'B'}})
-                                                                    expect(B.get('2')).toMatchObject({a_id: 1, x: 'B'})
+                                                                    expect(B.get(2)).toMatchObject({a_id: 1, x: 'B'})
         })
     })
 
@@ -268,7 +269,7 @@ describe('Model', () => {
             }     
                                                   expect(A.getModelDescriptor().cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.getModelDescriptor().cache.store.size).toBe(1)
-                                                  expect(A.getModelDescriptor().cache.get(''+a.id)).toBe(a)
+                                                  expect(A.getModelDescriptor().cache.get(a.id)).toBe(a)
                                                   expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
         })
@@ -280,17 +281,17 @@ describe('Model', () => {
                                                   expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: undefined})
             a.id = 1                            ; expect(A.getModelDescriptor().cache.store.size).toBe(1)
-                                                  expect(A.getModelDescriptor().cache.get(''+a.id)).toBe(a)
+                                                  expect(A.getModelDescriptor().cache.get(a.id)).toBe(a)
         })
         it('edit', () => {
             @model class A extends Model {
                 @id   (NUMBER()) id: number
             }                                    expect(A.getModelDescriptor().cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.getModelDescriptor().cache.store.size).toBe(1)
-                                                  expect(A.getModelDescriptor().cache.get(''+a.id)).toBe(a)
+                                                  expect(A.getModelDescriptor().cache.get(a.id)).toBe(a)
                                                   expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
-            expect(() => a.id = 2)
+            expect(() => runInAction(() => a.id = 2))
                 .toThrow(new Error(`You cannot change id field: 1 to 2`))
         })
         it('edit to undefined', () => {
@@ -298,10 +299,10 @@ describe('Model', () => {
                 @id   (NUMBER()) id: number
             }                                    expect(A.getModelDescriptor().cache.store.size).toBe(0)
             let a = new A({id: 1})              ; expect(A.getModelDescriptor().cache.store.size).toBe(1)
-                                                  expect(A.getModelDescriptor().cache.get(''+a.id)).toBe(a)
+                                                  expect(A.getModelDescriptor().cache.get(a.id)).toBe(a)
                                                   expect(a.disposers.size).toBe(2) // before and after changes observers
                                                 ; expect(a).toMatchObject({id: 1})
-            a.id = undefined                    ; expect(A.getModelDescriptor().cache.store.size).toBe(0)
+            runInAction(() => a.id = undefined) ; expect(A.getModelDescriptor().cache.store.size).toBe(0)
         })
     }) 
 })

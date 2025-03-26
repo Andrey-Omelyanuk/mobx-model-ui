@@ -46,7 +46,7 @@ describe('Other tests: Passports.', () => {
             this.created = new Date()
         }
     }
-    one(Passport, ['user_id'])(User, 'passport') 
+    one(Passport, 'user_id')(User, 'passport') 
 
     @local()
     @model
@@ -78,7 +78,7 @@ describe('Other tests: Passports.', () => {
             return action
         }
     }
-    many(Key, ['user_id'])(User, 'keys') 
+    many(Key, 'user_id')(User, 'keys') 
 
     enum ActionType {
         ACCEPT = 1,

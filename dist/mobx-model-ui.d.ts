@@ -194,10 +194,10 @@ type RequestConfig = {
  */
 declare abstract class Adapter<M extends Model> {
     abstract create(raw_data: any, config?: RequestConfig): Promise<any>;
-    abstract update(obs: ID[], only_changed_raw_data: any, config?: RequestConfig): Promise<any>;
-    abstract delete(ids: ID[], config?: RequestConfig): Promise<void>;
-    abstract action(ids: ID[], name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
-    abstract get(ids: ID[], config?: RequestConfig): Promise<any>;
+    abstract update(id: ID, only_changed_raw_data: any, config?: RequestConfig): Promise<any>;
+    abstract delete(id: ID, config?: RequestConfig): Promise<void>;
+    abstract action(id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    abstract get(id: ID, config?: RequestConfig): Promise<any>;
     abstract find(query: Query<M>, config?: RequestConfig): Promise<any>;
     abstract load(query: Query<M>, config?: RequestConfig): Promise<any[]>;
     abstract getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
@@ -229,9 +229,9 @@ declare class Repository<M extends Model> {
      */
     action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     /**
-     * Returns ONE object by ids.
+     * Returns ONE object by id.
      */
-    get(ids: ID[], config?: RequestConfig): Promise<M>;
+    get(id: ID, config?: RequestConfig): Promise<M>;
     /**
      * Returns ONE object by query.
      */
@@ -394,9 +394,8 @@ declare class ModelDescriptor<T extends Model> {
     /**
      * Id fields
      */
-    ids: {
-        [field_name: string]: ModelFieldDescriptor<T, any>;
-    };
+    id: string;
+    idFieldDescriptors: ModelFieldDescriptor<T, ID>;
     /**
      * Fields is a map of all fields in the model that usually use in repository.
      */
@@ -412,24 +411,9 @@ declare class ModelDescriptor<T extends Model> {
     };
     readonly cache: Cache<T>;
     /**
-     *  Calculate ID from obj based on Model config.
-     *  If one of the ids is undefined, it returns undefined.
-     * @param obj - any object, usually it's a raw object of model
-     * @returns
-     * @example:
-     *  - id1=1, id2=2 => '1=2'
+     * Return id value from object. Object can have id field with different name.
      */
-    getID(obj: Object): string | undefined;
-    /**
-     * Calculate ID from values based on Model config.
-     */
-    getIDByValues(values: ID[]): string | undefined;
-    /**
-     * Get all original values of ids from object.
-     * @param obj - any object of model, not only T extends Model, it can be a raw object.
-     * @returns
-     */
-    getIds(obj: Object): ID[] | undefined;
+    getID(obj: Object): ID;
     updateCachedObject(rawObj: Object): T | undefined;
 }
 
@@ -455,10 +439,10 @@ declare abstract class Model {
      */
     get modelDescriptor(): ModelDescriptor<Model>;
     /**
-     * ID is string based on join ids.
-     * It's base for using in the lib.
+     * ID returns id value from the object.
+     * Id field can be different from the id field name.
      */
-    get ID(): string | undefined;
+    get ID(): ID;
     /**
      * Save the initial data of the object that was loaded from the server.
      */
@@ -474,13 +458,13 @@ declare abstract class Model {
     destroy(): void;
     get model(): any;
     /**
-     * @returns {Object} - data only from fields (no ids)
+     * @returns {Object} - data only from fields (no id)
      */
-    get rawData(): any;
+    get rawData(): Object;
     /**
-     * @returns {Object} - it is rawData + ids fields
+     * @returns {Object} - it is rawData + id field
      */
-    get rawObj(): any;
+    get rawObj(): Object;
     get only_changed_raw_data(): any;
     get is_changed(): boolean;
     refreshInitData(): void;
@@ -505,8 +489,8 @@ declare abstract class Model {
     static getQueryCacheSync<T extends Model>(props: QueryProps<T>): QueryCacheSync<T>;
     static getQueryStream<T extends Model>(props: QueryProps<T>): QueryStream<T>;
     static getQueryDistinct<T extends Model>(field: string, props: QueryProps<T>): QueryDistinct;
-    static get<T extends Model>(ID: string): T;
-    static findById<T extends Model>(ids: ID[]): Promise<T>;
+    static get<T extends Model>(id: ID): T;
+    static findById<T extends Model>(id: ID): Promise<T>;
     static find<T extends Model>(query: Query<T>): Promise<T>;
 }
 
@@ -525,15 +509,15 @@ declare const models: Map<string, ModelDescriptor<any>>;
 declare function clearModels(): void;
 
 /**
- *
+ * Cache for model objects.
  */
 declare class Cache<M extends Model> {
-    readonly store: Map<string, M>;
+    readonly store: Map<ID, M>;
     constructor();
     /**
      * Get object by ID
      */
-    get(ID: string): M | undefined;
+    get(ID: ID): M | undefined;
     /**
      * Inject object to the cache
      */
@@ -556,21 +540,21 @@ declare function field<T>(typeDescriptor?: TypeDescriptor<T>, observable?: boole
 /**
  * Decorator for foreign fields
  */
-declare function foreign<M extends Model>(foreign_model: any, foreign_ids?: string[]): (cls: any, field_name: string) => void;
+declare function foreign<M extends Model>(foreign_model: any, foreign_id?: string): (cls: any, field_name: string) => void;
 
-declare function one<M extends Model>(remote_model: any, remote_foreign_ids?: string[]): (cls: any, field_name: string) => void;
+declare function one<M extends Model>(remote_model: any, remote_foreign_id?: string): (cls: any, field_name: string) => void;
 
 /**
  * Decorator for many fields
  */
-declare function many<M extends Model>(remote_model: any, remote_foreign_ids?: string[]): (cls: any, field_name: string) => void;
+declare function many<M extends Model>(remote_model: any, remote_foreign_id?: string): (cls: any, field_name: string) => void;
 
 /**
- * Decorator for id fields
+ * Decorator for id field
  * Only id field can register model in models map,
  * because it invoke before a model decorator.
  */
-declare function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, observable?: boolean): (cls: any, fieldName: string) => void;
+declare function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable?: boolean): (cls: any, fieldName: string) => void;
 
 /**
  * ReadOnlyAdapter not allow to create, update or delete objects.
@@ -592,15 +576,14 @@ declare let local_store: Record<string, Record<string, any>>;
 declare class LocalAdapter<M extends Model> implements Adapter<M> {
     readonly store_name: string;
     delay: number;
-    getID(ids: ID[]): string;
     clear(): void;
     init_local_data(data: any[]): void;
     constructor(store_name: string);
     create(raw_data: any): Promise<any>;
-    update(ids: ID[], only_changed_raw_data: any): Promise<any>;
-    delete(ids: ID[]): Promise<void>;
-    action(ids: ID[], name: string, kwargs: Object): Promise<any>;
-    get(ids: ID[], config?: RequestConfig): Promise<any>;
+    update(id: ID, only_changed_raw_data: any): Promise<any>;
+    delete(id: ID): Promise<void>;
+    action(id: ID, name: string, kwargs: Object): Promise<any>;
+    get(id: ID, config?: RequestConfig): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter: Filter): Promise<number>;

@@ -36,11 +36,11 @@ export default abstract class Model {
     }
 
     /**
-     * ID is string based on join ids. 
-     * It's base for using in the lib.
+     * ID returns id value from the object.
+     * Id field can be different from the id field name. 
      */
     @computed({ keepAlive: true })
-    get ID(): string | undefined {
+    get ID(): ID {
         return this.modelDescriptor.getID(this)
     }
 
@@ -59,9 +59,7 @@ export default abstract class Model {
      */
     @action destroy() {
         // trigger in id fields will ejenct the object from cache
-        for (const fieldName in this.modelDescriptor.ids) {
-            this[fieldName] = undefined
-        }
+        this[this.modelDescriptor.id] = undefined
         while(this.disposers.size) {
             this.disposers.forEach((disposer, key) => {
                 disposer()
@@ -75,9 +73,9 @@ export default abstract class Model {
     }
 
     /**
-     * @returns {Object} - data only from fields (no ids)
+     * @returns {Object} - data only from fields (no id)
      */
-    get rawData() : any {
+    get rawData() : Object {
         let rawData: any = {}
         for (const fieldName in this.modelDescriptor.fields) {
             if(this[fieldName] !== undefined) {
@@ -88,13 +86,12 @@ export default abstract class Model {
     }
 
     /**
-     * @returns {Object} - it is rawData + ids fields
+     * @returns {Object} - it is rawData + id field
      */
-    get rawObj() : any {
-        let rawObj: any = this.rawData
-        for (const fieldName in this.modelDescriptor.ids) {
-            rawObj[fieldName] = this[fieldName] 
-        }
+    get rawObj() : Object {
+        const fieldName   = this.modelDescriptor.id
+        const rawObj      = this.rawData
+        rawObj[fieldName] = this[fieldName] 
         return rawObj
     }
 
@@ -139,11 +136,10 @@ export default abstract class Model {
      * TODO: ID is not ready! I'll finish it later. 
      */
     @action updateFromRaw(rawObj) {
-        // update ids if not exist
-        for (const fieldName in this.modelDescriptor.ids) {
-            if (this[fieldName] === null || this[fieldName] === undefined) {
-                this[fieldName] = rawObj[fieldName] 
-            }
+        // update id if not exist
+        const idField = this.modelDescriptor.id
+        if (this[idField] === null || this[idField] === undefined) {
+            this[idField] = rawObj[idField] 
         }
 
         // update the fields if the raw data is exist and it is different
@@ -158,8 +154,7 @@ export default abstract class Model {
             const settings = this.modelDescriptor.relations[relation].settings
             if (settings.foreign_model && rawObj[relation]) {
                 settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation])
-                // TODO: I need to finish composite ids later, with single id it works
-                this[settings.foreign_ids[0]] = rawObj[relation].id
+                this[settings.foreign_id] = rawObj[relation].id
             }
             else if (settings.remote_model && rawObj[relation]) {
                 // many
@@ -185,7 +180,7 @@ export default abstract class Model {
     async update<T extends Model>(): Promise<T> { return await this.modelDescriptor.defaultRepository.update(this) as T }
     async save<T extends Model>(): Promise<T> { return this.ID ? await this.update() : await this.create() as T }
     async delete() { return await this.modelDescriptor.defaultRepository.delete(this) }
-    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.modelDescriptor.getIds(this)) }
+    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.ID) }
 
     // --------------------------------------------------------------------------------------------
     // helper class functions
@@ -212,12 +207,12 @@ export default abstract class Model {
     static getQueryDistinct<T extends Model>(field: string, props: QueryProps<T>): QueryDistinct {
         return new QueryDistinct(field, {...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
     }
-    static get<T extends Model>(ID: string): T {
-        return this.getModelDescriptor().cache.get(ID) as T
+    static get<T extends Model>(id: ID): T {
+        return this.getModelDescriptor().cache.get(id) as T
     }
-    static async findById<T extends Model>(ids: ID[]) : Promise<T> {
+    static async findById<T extends Model>(id: ID) : Promise<T> {
     let repository = this.getModelDescriptor().defaultRepository as Repository<T>
-        return repository.get(ids)
+        return repository.get(id)
     }
     static async find<T extends Model>(query: Query<T>) : Promise<T> {
         let repository = this.getModelDescriptor().defaultRepository as Repository<T>

@@ -2,7 +2,7 @@ import { observe, extendObservable, runInAction, reaction, action } from 'mobx'
 import { Model, models } from '../model'
 
 
-export function one<M extends Model>(remote_model: any, remote_foreign_ids?: string[]) {
+export function one<M extends Model>(remote_model: any, remote_foreign_id?: string) {
     return function (cls: any, field_name: string) {
 
         const modelName = cls.modelName ?? cls.constructor.name
@@ -13,7 +13,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`)
 
-        remote_foreign_ids = remote_foreign_ids ?? [`${modelName.toLowerCase()}_id`]
+        remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`
 
         const remoteModelDescriptor = remote_model.getModelDescriptor()
         const disposer_name = `MO: One - update - ${modelName}.${field_name}` 
@@ -22,8 +22,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
             decorator: (obj: M) => {
                 let foreignObj = undefined
                 for(let [_, cacheObj] of remoteModelDescriptor.cache.store) {
-                    const values = remote_foreign_ids.map(id => cacheObj[id])
-                    const ID = modelDescription.getIDByValues(values)
+                    const ID = cacheObj[remote_foreign_id]
                     if (obj.ID === ID && ID !== undefined) {
                         foreignObj = cacheObj
                         break
@@ -32,7 +31,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
                 extendObservable(obj, { [field_name]: foreignObj })
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_ids } 
+            settings: { remote_model, remote_foreign_id } 
         }
 
         modelDescription.relations[field_name].disposers.push(
@@ -43,8 +42,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
                         remote_obj = change.newValue
                         remote_obj.disposers.set(disposer_name, reaction(
                             () => {
-                                const values = remote_foreign_ids.map(id => remote_obj[id])
-                                const foreignID = modelDescription.getIDByValues(values)
+                                const foreignID = remote_obj[remote_foreign_id]
                                 return { 
                                     id: foreignID, 
                                     obj: modelDescription.cache.get(foreignID) 
@@ -63,8 +61,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_ids?: str
                             remote_obj.disposers.get(disposer_name)()
                             remote_obj.disposers.delete(disposer_name)
                         }
-                        const values = remote_foreign_ids.map(id => remote_obj[id])
-                        const foreignID = modelDescription.getIDByValues(values)
+                        const foreignID = remote_obj[remote_foreign_id]
                         let obj = modelDescription.cache.get(foreignID)
                         if (obj) 
                             runInAction(() => { obj[field_name] = undefined })

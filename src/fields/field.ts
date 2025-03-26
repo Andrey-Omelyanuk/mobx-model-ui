@@ -10,7 +10,7 @@ export function field<T>(typeDescriptor?: TypeDescriptor<T>, observable: boolean
     return (cls: any, fieldName: string) => {
         const modelName = cls.constructor.name
         if (!models.has(modelName))
-            throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`)
+            throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`)
 
         let modelDescription = models.get(modelName)
         modelDescription.fields[fieldName] = {

@@ -1,7 +1,6 @@
 import { runInAction } from 'mobx'
 import { Model, ModelDescriptor } from './model'
 import { ID } from './types'
-import { Cache } from './cache'
 import { Query } from './queries/query'
 import { Filter } from './filters'
 import { Adapter, RequestConfig } from './adapters/adapter'
@@ -19,7 +18,7 @@ export class  Repository<M extends Model> {
      * Create the object. 
      */
     async create(obj: M, config?: RequestConfig) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.rawObj, config) // Id can be defined in the frontend => ids should be passed to the create method if they exist
+        let raw_obj = await this.adapter.create(obj.rawObj, config) // Id can be defined in the frontend => id should be passed to the create method if they exist
         const rawObjID = this.modelDescriptor.getID(raw_obj)
         const cachedObj = this.modelDescriptor.cache.get(rawObjID)
         if (cachedObj) obj = cachedObj
@@ -32,8 +31,7 @@ export class  Repository<M extends Model> {
      * Update the object.
      */
     async update(obj: M, config?: RequestConfig) : Promise<M> {
-        const ids = this.modelDescriptor.getIds(obj)
-        let raw_obj = await this.adapter.update(ids, obj.only_changed_raw_data, config)
+        let raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config)
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
         return obj
@@ -43,8 +41,7 @@ export class  Repository<M extends Model> {
      * Delete the object.
      */
     async delete(obj: M, config?: RequestConfig) : Promise<void> {
-        const ids = this.modelDescriptor.getIds(obj)
-        await this.adapter.delete(ids, config)
+        await this.adapter.delete(obj.ID, config)
         obj.destroy()
     }
 
@@ -52,16 +49,14 @@ export class  Repository<M extends Model> {
      * Run action for the object.
      */
     async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
-        const ids = this.modelDescriptor.getIds(obj)
-        return await this.adapter.action(ids, name, kwargs, config)
+        return await this.adapter.action(obj.ID, name, kwargs, config)
     }
 
     /**
-     * Returns ONE object by ids.
+     * Returns ONE object by id.
      */
-    async get(ids: ID[], config?: RequestConfig): Promise<M> {
-        debugger
-        let raw_obj = await this.adapter.get(ids, config)
+    async get(id: ID, config?: RequestConfig): Promise<M> {
+        let raw_obj = await this.adapter.get(id, config)
         return this.modelDescriptor.updateCachedObject(raw_obj)
     }
 

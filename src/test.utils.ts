@@ -67,7 +67,7 @@ TestAdapter.prototype.getDistinct   = jest.fn(TestAdapter.prototype.getDistinct)
 export class  TestRepository<M extends Model> extends Repository<M> {
     constructor(model: any, adapter: any) { super(model, adapter) }
 
-    async get(ids: ID[], config?: RequestConfig): Promise<M> { return super.get(ids) }
+    async get(id: ID, config?: RequestConfig): Promise<M> { return super.get(id) }
     async create(obj: M, config?: RequestConfig) : Promise<M> { return super.create(obj) }
     async update(obj: M, config?: RequestConfig) : Promise<M> { return super.update(obj) }
     async delete(obj: M, config?: RequestConfig) : Promise<void> { return super.delete(obj) }

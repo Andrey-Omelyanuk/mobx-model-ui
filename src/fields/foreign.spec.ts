@@ -16,14 +16,14 @@ describe('Field: foreign', () => {
             @model class B extends Model {
                 @id(NUMBER())           id: number
                 @field(NUMBER())      a_id: number
-                @foreign(A, ['a_id']) a   : A 
+                @foreign(A, 'a_id') a   : A 
             }
             expect(B.getModelDescriptor().relations['a']).toEqual({
                 decorator: expect.any(Function),
                 disposers: [],
                 settings: {
                     foreign_model: A,
-                    foreign_ids: ['a_id']
+                    foreign_id: 'a_id'
                 }
             })
         })
@@ -42,7 +42,7 @@ describe('Field: foreign', () => {
                 disposers: [],
                 settings: {
                     foreign_model: A,
-                    foreign_ids: ['a_id']
+                    foreign_id: 'a_id'
                 }
             })
         })
@@ -64,7 +64,7 @@ describe('Field: foreign', () => {
                 disposers: [],
                 settings: {
                     foreign_model: B,
-                    foreign_ids: ['b_id']
+                    foreign_id: 'b_id'
                 }
             })
             expect(B.getModelDescriptor().relations['a']).toEqual({
@@ -72,7 +72,7 @@ describe('Field: foreign', () => {
                 disposers: [],
                 settings: {
                     foreign_model: A,
-                    foreign_ids: ['a_id']
+                    foreign_id: 'a_id'
                 }
             })
         })

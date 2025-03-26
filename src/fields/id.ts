@@ -1,15 +1,14 @@
 import { extendObservable, intercept, observe } from 'mobx'
-import { NumberDescriptor } from '../types/number'
-import { TypeDescriptor } from '../types'
+import { ID, TypeDescriptor, NumberDescriptor  } from '../types'
 import { Model, ModelDescriptor, models } from '../model'
 
 
 /**
- * Decorator for id fields
+ * Decorator for id field
  * Only id field can register model in models map,
  * because it invoke before a model decorator.
  */
-export function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, observable: boolean = true) {
+export function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable: boolean = true) {
     return (cls: any, fieldName: string) => {
         const modelName = cls.modelName ?? cls.constructor.name
         let modelDescription = models.get(modelName)
@@ -20,12 +19,13 @@ export function id<M extends Model, F>(typeDescriptor?: TypeDescriptor<F>, obser
             models.set(modelName, modelDescription)
         }
 
-        if (modelDescription.ids[fieldName])
-            throw new Error(`Id field "${fieldName}" already registered in model "${modelDescription.cls.name}"`)
+        if (modelDescription.id)
+            throw new Error(`Id field already registered in model "${modelName}"`)
     
         const type = typeDescriptor ? typeDescriptor : new NumberDescriptor()
 
-        modelDescription.ids[fieldName] = {
+        modelDescription.id = fieldName
+        modelDescription.idFieldDescriptors = {
             decorator: (obj: M) => {
                 if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })
                 obj.disposers.set('before changes',

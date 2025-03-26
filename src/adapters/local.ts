@@ -20,10 +20,6 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
     readonly    store_name  : string
                 delay       : number  // delays for simulate real usage, use it only for tests
 
-    getID(ids: ID[]): string {
-        return ids.join('-')
-    }
-
     clear() {
         local_store[this.store_name] = {}
     }
@@ -55,30 +51,27 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
         return raw_data
     }
 
-    async update (ids: ID[], only_changed_raw_data: any): Promise<any> {
+    async update (id: ID, only_changed_raw_data: any): Promise<any> {
         if (this.delay) await timeout(this.delay) 
-        const obj_id = ids.join('-')
-        let raw_obj = local_store[this.store_name][obj_id] 
+        let raw_obj = local_store[this.store_name][id] 
         for(let field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field]
         }
         return raw_obj 
     }
 
-    async delete (ids: ID[]): Promise<void> {
+    async delete (id: ID): Promise<void> {
         if (this.delay) await timeout(this.delay) 
-        const obj_id = ids.join('-')
-        delete local_store[this.store_name][obj_id]
+        delete local_store[this.store_name][id]
     }
 
-    async action (ids: ID[], name: string, kwargs: Object) : Promise<any> {
+    async action (id: ID, name: string, kwargs: Object) : Promise<any> {
         throw(`Not implemented`)
     }
 
-    async get(ids: ID[], config?: RequestConfig) : Promise<any> {
+    async get(id: ID, config?: RequestConfig) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
-        const ID = this.getID(ids)
-        return local_store[this.store_name][ID]
+        return local_store[this.store_name][id]
     }
 
     async find(query: Query<M>) : Promise<any> {

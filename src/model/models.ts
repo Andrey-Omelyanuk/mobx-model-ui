@@ -9,9 +9,7 @@ export default models
 
 export function clearModels() {
     for(let [modelName, modelDescriptor] of models) {
-        for(let fieldName in modelDescriptor.ids) {
-            modelDescriptor.ids[fieldName].disposers.forEach(disposer => disposer())
-        }
+        modelDescriptor.idFieldDescriptors.disposers.forEach(disposer => disposer())
         for(let fieldName in modelDescriptor.fields) {
             modelDescriptor.fields[fieldName].disposers.forEach(disposer => disposer())
         }

@@ -1,4 +1,3 @@
-import { ID } from '../types'
 import { Model } from '../model'
 import { Adapter } from './adapter'
 

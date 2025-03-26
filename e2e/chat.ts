@@ -37,8 +37,8 @@ describe('e2e: Chat.', () => {
         @foreign(Channel) channel     : Channel
         @foreign(User)    user        : User
     }
-    many(Message, ['user_id']   )(User,    'messages') 
-    many(Message, ['channel_id'])(Channel, 'messages') 
+    many(Message, 'user_id'   )(User,    'messages') 
+    many(Message, 'channel_id')(Channel, 'messages') 
 
     it('...', async ()=> {
         let channelA = new Channel(); await channelA.save()

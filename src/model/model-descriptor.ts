@@ -29,7 +29,8 @@ export class ModelDescriptor<T extends Model> {
     /**
      * Id fields
      */
-    ids: {[field_name: string]: ModelFieldDescriptor<T, any>} = {}
+    id: string
+    idFieldDescriptors: ModelFieldDescriptor<T, ID>
     /**
      * Fields is a map of all fields in the model that usually use in repository.
      */ 
@@ -43,50 +44,10 @@ export class ModelDescriptor<T extends Model> {
     readonly cache: Cache<T> = new Cache<T>()
 
     /**
-     *  Calculate ID from obj based on Model config. 
-     *  If one of the ids is undefined, it returns undefined.
-     * @param obj - any object, usually it's a raw object of model
-     * @returns 
-     * @example:
-     *  - id1=1, id2=2 => '1=2' 
+     * Return id value from object. Object can have id field with different name.
      */
-    getID(obj: Object): string | undefined {
-        let ids = [] 
-        for (const fieldName in this.ids) {
-            const id = this.ids[fieldName].type.toString(obj[fieldName])
-            if (id === undefined) return undefined
-            ids.push(id)
-        }
-        return ids.join('=')
-    }
-    
-    /**
-     * Calculate ID from values based on Model config.
-     */
-    getIDByValues(values: ID[]): string | undefined {
-        const ids = []
-        const configs = Object.values(this.ids)
-        for (let i = 0; i < values.length; i++) {
-            const value = configs[i].type.toString(values[i])
-            if (value === undefined) return undefined
-            ids.push(value)
-        }
-        return ids.join('=')
-    }
-
-    /**
-     * Get all original values of ids from object.
-     * @param obj - any object of model, not only T extends Model, it can be a raw object.
-     * @returns 
-     */
-    getIds(obj: Object): ID[] | undefined {
-        const ids = [] 
-        for (const fieldName in this.ids) {
-            const id = obj[fieldName] 
-            if (id === undefined) return undefined
-            ids.push(id)
-        }
-        return ids
+    getID(obj: Object): ID {
+        return obj[this.id] 
     }
 
     updateCachedObject(rawObj: Object) : T | undefined {

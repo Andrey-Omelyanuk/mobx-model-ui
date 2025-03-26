@@ -61,7 +61,7 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
 };
 
 /**
- *
+ * Cache for model objects.
  */
 class Cache {
     constructor() {
@@ -151,7 +151,7 @@ class Repository {
      * Create the object.
      */
     async create(obj, config) {
-        let raw_obj = await this.adapter.create(obj.rawObj, config); // Id can be defined in the frontend => ids should be passed to the create method if they exist
+        let raw_obj = await this.adapter.create(obj.rawObj, config); // Id can be defined in the frontend => id should be passed to the create method if they exist
         const rawObjID = this.modelDescriptor.getID(raw_obj);
         const cachedObj = this.modelDescriptor.cache.get(rawObjID);
         if (cachedObj)
@@ -164,8 +164,7 @@ class Repository {
      * Update the object.
      */
     async update(obj, config) {
-        const ids = this.modelDescriptor.getIds(obj);
-        let raw_obj = await this.adapter.update(ids, obj.only_changed_raw_data, config);
+        let raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config);
         obj.updateFromRaw(raw_obj);
         obj.refreshInitData();
         return obj;
@@ -174,23 +173,20 @@ class Repository {
      * Delete the object.
      */
     async delete(obj, config) {
-        const ids = this.modelDescriptor.getIds(obj);
-        await this.adapter.delete(ids, config);
+        await this.adapter.delete(obj.ID, config);
         obj.destroy();
     }
     /**
      * Run action for the object.
      */
     async action(obj, name, kwargs, config) {
-        const ids = this.modelDescriptor.getIds(obj);
-        return await this.adapter.action(ids, name, kwargs, config);
+        return await this.adapter.action(obj.ID, name, kwargs, config);
     }
     /**
-     * Returns ONE object by ids.
+     * Returns ONE object by id.
      */
-    async get(ids, config) {
-        debugger;
-        let raw_obj = await this.adapter.get(ids, config);
+    async get(id, config) {
+        let raw_obj = await this.adapter.get(id, config);
         return this.modelDescriptor.updateCachedObject(raw_obj);
     }
     /**
@@ -1257,9 +1253,7 @@ class QueryDistinct extends Query {
 const models = new Map();
 function clearModels() {
     for (let [modelName, modelDescriptor] of models) {
-        for (let fieldName in modelDescriptor.ids) {
-            modelDescriptor.ids[fieldName].disposers.forEach(disposer => disposer());
-        }
+        modelDescriptor.idFieldDescriptors.disposers.forEach(disposer => disposer());
         for (let fieldName in modelDescriptor.fields) {
             modelDescriptor.fields[fieldName].disposers.forEach(disposer => disposer());
         }
@@ -1313,8 +1307,8 @@ class Model {
         return models.get(this.modelName);
     }
     /**
-     * ID is string based on join ids.
-     * It's base for using in the lib.
+     * ID returns id value from the object.
+     * Id field can be different from the id field name.
      */
     get ID() {
         return this.modelDescriptor.getID(this);
@@ -1325,9 +1319,7 @@ class Model {
      */
     destroy() {
         // trigger in id fields will ejenct the object from cache
-        for (const fieldName in this.modelDescriptor.ids) {
-            this[fieldName] = undefined;
-        }
+        this[this.modelDescriptor.id] = undefined;
         while (this.disposers.size) {
             this.disposers.forEach((disposer, key) => {
                 disposer();
@@ -1339,7 +1331,7 @@ class Model {
         return this.constructor.__proto__;
     }
     /**
-     * @returns {Object} - data only from fields (no ids)
+     * @returns {Object} - data only from fields (no id)
      */
     get rawData() {
         let rawData = {};
@@ -1351,13 +1343,12 @@ class Model {
         return rawData;
     }
     /**
-     * @returns {Object} - it is rawData + ids fields
+     * @returns {Object} - it is rawData + id field
      */
     get rawObj() {
-        let rawObj = this.rawData;
-        for (const fieldName in this.modelDescriptor.ids) {
-            rawObj[fieldName] = this[fieldName];
-        }
+        const fieldName = this.modelDescriptor.id;
+        const rawObj = this.rawData;
+        rawObj[fieldName] = this[fieldName];
         return rawObj;
     }
     get only_changed_raw_data() {
@@ -1398,11 +1389,10 @@ class Model {
      * TODO: ID is not ready! I'll finish it later.
      */
     updateFromRaw(rawObj) {
-        // update ids if not exist
-        for (const fieldName in this.modelDescriptor.ids) {
-            if (this[fieldName] === null || this[fieldName] === undefined) {
-                this[fieldName] = rawObj[fieldName];
-            }
+        // update id if not exist
+        const idField = this.modelDescriptor.id;
+        if (this[idField] === null || this[idField] === undefined) {
+            this[idField] = rawObj[idField];
         }
         // update the fields if the raw data is exist and it is different
         for (let fieldName in this.modelDescriptor.fields) {
@@ -1415,8 +1405,7 @@ class Model {
             const settings = this.modelDescriptor.relations[relation].settings;
             if (settings.foreign_model && rawObj[relation]) {
                 settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation]);
-                // TODO: I need to finish composite ids later, with single id it works
-                this[settings.foreign_ids[0]] = rawObj[relation].id;
+                this[settings.foreign_id] = rawObj[relation].id;
             }
             else if (settings.remote_model && rawObj[relation]) {
                 // many
@@ -1440,7 +1429,7 @@ class Model {
     async update() { return await this.modelDescriptor.defaultRepository.update(this); }
     async save() { return this.ID ? await this.update() : await this.create(); }
     async delete() { return await this.modelDescriptor.defaultRepository.delete(this); }
-    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.modelDescriptor.getIds(this)); }
+    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.ID); }
     // --------------------------------------------------------------------------------------------
     // helper class functions
     // --------------------------------------------------------------------------------------------
@@ -1465,12 +1454,12 @@ class Model {
     static getQueryDistinct(field, props) {
         return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
     }
-    static get(ID) {
-        return this.getModelDescriptor().cache.get(ID);
+    static get(id) {
+        return this.getModelDescriptor().cache.get(id);
     }
-    static async findById(ids) {
+    static async findById(id) {
         let repository = this.getModelDescriptor().defaultRepository;
-        return repository.get(ids);
+        return repository.get(id);
     }
     static async find(query) {
         let repository = this.getModelDescriptor().defaultRepository;
@@ -1479,7 +1468,7 @@ class Model {
 }
 __decorate([
     computed({ keepAlive: true }),
-    __metadata("design:type", String),
+    __metadata("design:type", Object),
     __metadata("design:paramtypes", [])
 ], Model.prototype, "ID", null);
 __decorate([
@@ -1523,7 +1512,7 @@ function model(constructor) {
     // id fields should register the model into models
     const modelDescriptor = models.get(modelName);
     if (!modelDescriptor)
-        throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`);
+        throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`);
     // the field decorators run first, then the model decorator
     // id decorator creates the model descriptor and registers it in models 
     // so, we cannot catch the case when we try to declare a model with the same name 
@@ -1538,10 +1527,9 @@ function model(constructor) {
         makeObservable(obj);
         const descriptor = obj.modelDescriptor;
         // apply id decorators
-        if (Object.keys(descriptor.ids).length === 0)
+        if (descriptor.id === undefined)
             throw new Error(`Model "${modelName}" should have id field decorator!`);
-        for (const fieldName in descriptor.ids)
-            descriptor.ids[fieldName].decorator(obj, fieldName);
+        descriptor.idFieldDescriptors.decorator(obj, descriptor.id);
         // apply field decorators 
         for (const fieldName in descriptor.fields)
             descriptor.fields[fieldName].decorator(obj, fieldName);
@@ -1619,11 +1607,17 @@ class ModelDescriptor {
         /**
          * Id fields
          */
-        Object.defineProperty(this, "ids", {
+        Object.defineProperty(this, "id", {
             enumerable: true,
             configurable: true,
             writable: true,
-            value: {}
+            value: void 0
+        });
+        Object.defineProperty(this, "idFieldDescriptors", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
         });
         /**
          * Fields is a map of all fields in the model that usually use in repository.
@@ -1652,51 +1646,10 @@ class ModelDescriptor {
         });
     }
     /**
-     *  Calculate ID from obj based on Model config.
-     *  If one of the ids is undefined, it returns undefined.
-     * @param obj - any object, usually it's a raw object of model
-     * @returns
-     * @example:
-     *  - id1=1, id2=2 => '1=2'
+     * Return id value from object. Object can have id field with different name.
      */
     getID(obj) {
-        let ids = [];
-        for (const fieldName in this.ids) {
-            const id = this.ids[fieldName].type.toString(obj[fieldName]);
-            if (id === undefined)
-                return undefined;
-            ids.push(id);
-        }
-        return ids.join('=');
-    }
-    /**
-     * Calculate ID from values based on Model config.
-     */
-    getIDByValues(values) {
-        const ids = [];
-        const configs = Object.values(this.ids);
-        for (let i = 0; i < values.length; i++) {
-            const value = configs[i].type.toString(values[i]);
-            if (value === undefined)
-                return undefined;
-            ids.push(value);
-        }
-        return ids.join('=');
-    }
-    /**
-     * Get all original values of ids from object.
-     * @param obj - any object of model, not only T extends Model, it can be a raw object.
-     * @returns
-     */
-    getIds(obj) {
-        const ids = [];
-        for (const fieldName in this.ids) {
-            const id = obj[fieldName];
-            if (id === undefined)
-                return undefined;
-            ids.push(id);
-        }
-        return ids;
+        return obj[this.id];
     }
     updateCachedObject(rawObj) {
         const rawObjID = this.getID(rawObj);
@@ -1717,7 +1670,7 @@ function field(typeDescriptor, observable = true) {
     return (cls, fieldName) => {
         const modelName = cls.constructor.name;
         if (!models.has(modelName))
-            throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`);
+            throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`);
         let modelDescription = models.get(modelName);
         modelDescription.fields[fieldName] = {
             decorator: (obj) => {
@@ -1734,7 +1687,7 @@ function field(typeDescriptor, observable = true) {
 /**
  * Decorator for foreign fields
  */
-function foreign(foreign_model, foreign_ids) {
+function foreign(foreign_model, foreign_id) {
     return function (cls, field_name) {
         var _a;
         const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
@@ -1744,7 +1697,7 @@ function foreign(foreign_model, foreign_ids) {
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         // if it is empty then try auto detect it (it works only with single id) 
-        foreign_ids = foreign_ids !== null && foreign_ids !== void 0 ? foreign_ids : [`${field_name}_id`];
+        foreign_id = foreign_id !== null && foreign_id !== void 0 ? foreign_id : `${field_name}_id`;
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 // make observable and set default value
@@ -1753,9 +1706,7 @@ function foreign(foreign_model, foreign_ids) {
                 obj.disposers.set(`foreign ${field_name}`, reaction(
                 // watch on foreign cache for foreign object
                 () => {
-                    const values = foreign_ids.map(id => obj[id]);
-                    const foreignModelDescriptor = foreign_model.getModelDescriptor();
-                    const foreignID = foreignModelDescriptor.getIDByValues(values);
+                    const foreignID = obj[foreign_id];
                     // console.warn('foreign', foreign_ids, values, `fID '${foreignID}'`) 
                     if (foreignID === undefined)
                         return undefined;
@@ -1773,12 +1724,12 @@ function foreign(foreign_model, foreign_ids) {
                 action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true }));
             },
             disposers: [],
-            settings: { foreign_model, foreign_ids }
+            settings: { foreign_model, foreign_id }
         };
     };
 }
 
-function one(remote_model, remote_foreign_ids) {
+function one(remote_model, remote_foreign_id) {
     return function (cls, field_name) {
         var _a;
         const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
@@ -1787,15 +1738,14 @@ function one(remote_model, remote_foreign_ids) {
         const modelDescription = models.get(modelName);
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
-        remote_foreign_ids = remote_foreign_ids !== null && remote_foreign_ids !== void 0 ? remote_foreign_ids : [`${modelName.toLowerCase()}_id`];
+        remote_foreign_id = remote_foreign_id !== null && remote_foreign_id !== void 0 ? remote_foreign_id : `${modelName.toLowerCase()}_id`;
         const remoteModelDescriptor = remote_model.getModelDescriptor();
         const disposer_name = `MO: One - update - ${modelName}.${field_name}`;
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 let foreignObj = undefined;
                 for (let [_, cacheObj] of remoteModelDescriptor.cache.store) {
-                    const values = remote_foreign_ids.map(id => cacheObj[id]);
-                    const ID = modelDescription.getIDByValues(values);
+                    const ID = cacheObj[remote_foreign_id];
                     if (obj.ID === ID && ID !== undefined) {
                         foreignObj = cacheObj;
                         break;
@@ -1804,7 +1754,7 @@ function one(remote_model, remote_foreign_ids) {
                 extendObservable(obj, { [field_name]: foreignObj });
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_ids }
+            settings: { remote_model, remote_foreign_id }
         };
         modelDescription.relations[field_name].disposers.push(observe(remoteModelDescriptor.cache.store, (change) => {
             let remote_obj;
@@ -1812,8 +1762,7 @@ function one(remote_model, remote_foreign_ids) {
                 case 'add':
                     remote_obj = change.newValue;
                     remote_obj.disposers.set(disposer_name, reaction(() => {
-                        const values = remote_foreign_ids.map(id => remote_obj[id]);
-                        const foreignID = modelDescription.getIDByValues(values);
+                        const foreignID = remote_obj[remote_foreign_id];
                         return {
                             id: foreignID,
                             obj: modelDescription.cache.get(foreignID)
@@ -1831,8 +1780,7 @@ function one(remote_model, remote_foreign_ids) {
                         remote_obj.disposers.get(disposer_name)();
                         remote_obj.disposers.delete(disposer_name);
                     }
-                    const values = remote_foreign_ids.map(id => remote_obj[id]);
-                    const foreignID = modelDescription.getIDByValues(values);
+                    const foreignID = remote_obj[remote_foreign_id];
                     let obj = modelDescription.cache.get(foreignID);
                     if (obj)
                         runInAction(() => { obj[field_name] = undefined; });
@@ -1845,7 +1793,7 @@ function one(remote_model, remote_foreign_ids) {
 /**
  * Decorator for many fields
  */
-function many(remote_model, remote_foreign_ids) {
+function many(remote_model, remote_foreign_id) {
     return function (cls, field_name) {
         var _a;
         const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
@@ -1855,13 +1803,13 @@ function many(remote_model, remote_foreign_ids) {
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_ids = remote_foreign_ids !== null && remote_foreign_ids !== void 0 ? remote_foreign_ids : [`${modelName.toLowerCase()}_id`];
+        remote_foreign_id = remote_foreign_id !== null && remote_foreign_id !== void 0 ? remote_foreign_id : `${modelName.toLowerCase()}_id`;
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 extendObservable(obj, { [field_name]: [] });
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_ids }
+            settings: { remote_model, remote_foreign_id }
         };
         const remoteModelDescriptor = remote_model.getModelDescriptor();
         const disposer_name = `MO: Many - update - ${modelName}.${field_name}`;
@@ -1872,9 +1820,7 @@ function many(remote_model, remote_foreign_ids) {
                 case 'add':
                     remote_obj = remote_change.newValue;
                     remote_obj.disposers.set(disposer_name, reaction(() => {
-                        const values = remote_foreign_ids.map(id => remote_obj[id]);
-                        const foreignID = modelDescription.getIDByValues(values);
-                        return modelDescription.cache.get(foreignID);
+                        return modelDescription.cache.get(remote_obj[remote_foreign_id]);
                     }, action(disposer_name, (_new, _old) => {
                         if (_old) {
                             const i = _old[field_name].indexOf(remote_obj);
@@ -1894,9 +1840,7 @@ function many(remote_model, remote_foreign_ids) {
                         remote_obj.disposers.get(disposer_name)();
                         remote_obj.disposers.delete(disposer_name);
                     }
-                    const values = remote_foreign_ids.map(id => remote_obj[id]);
-                    const foreignID = modelDescription.getIDByValues(values);
-                    let obj = modelDescription.cache.get(foreignID);
+                    let obj = modelDescription.cache.get(remote_obj[remote_foreign_id]);
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj);
                         if (i > -1)
@@ -1909,7 +1853,7 @@ function many(remote_model, remote_foreign_ids) {
 }
 
 /**
- * Decorator for id fields
+ * Decorator for id field
  * Only id field can register model in models map,
  * because it invoke before a model decorator.
  */
@@ -1924,10 +1868,11 @@ function id(typeDescriptor, observable = true) {
             modelDescription = new ModelDescriptor();
             models.set(modelName, modelDescription);
         }
-        if (modelDescription.ids[fieldName])
-            throw new Error(`Id field "${fieldName}" already registered in model "${modelDescription.cls.name}"`);
+        if (modelDescription.id)
+            throw new Error(`Id field already registered in model "${modelName}"`);
         const type = typeDescriptor ? typeDescriptor : new NumberDescriptor();
-        modelDescription.ids[fieldName] = {
+        modelDescription.id = fieldName;
+        modelDescription.idFieldDescriptors = {
             decorator: (obj) => {
                 if (observable)
                     extendObservable(obj, { [fieldName]: obj[fieldName] });
@@ -2141,9 +2086,6 @@ let local_store = {};
  * You can use this adapter for mock data or for unit test
  */
 class LocalAdapter {
-    getID(ids) {
-        return ids.join('-');
-    }
     clear() {
         local_store[this.store_name] = {};
     }
@@ -2183,30 +2125,27 @@ class LocalAdapter {
         local_store[this.store_name][raw_data.id] = raw_data;
         return raw_data;
     }
-    async update(ids, only_changed_raw_data) {
+    async update(id, only_changed_raw_data) {
         if (this.delay)
             await timeout(this.delay);
-        const obj_id = ids.join('-');
-        let raw_obj = local_store[this.store_name][obj_id];
+        let raw_obj = local_store[this.store_name][id];
         for (let field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field];
         }
         return raw_obj;
     }
-    async delete(ids) {
+    async delete(id) {
         if (this.delay)
             await timeout(this.delay);
-        const obj_id = ids.join('-');
-        delete local_store[this.store_name][obj_id];
+        delete local_store[this.store_name][id];
     }
-    async action(ids, name, kwargs) {
+    async action(id, name, kwargs) {
         throw (`Not implemented`);
     }
-    async get(ids, config) {
+    async get(id, config) {
         if (this.delay)
             await timeout(this.delay);
-        const ID = this.getID(ids);
-        return local_store[this.store_name][ID];
+        return local_store[this.store_name][id];
     }
     async find(query) {
         if (this.delay)

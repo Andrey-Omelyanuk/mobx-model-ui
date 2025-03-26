@@ -17,7 +17,7 @@ export default function model(constructor) {
     // id fields should register the model into models
     const modelDescriptor = models.get(modelName)
     if (!modelDescriptor)
-        throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any ids?`)
+        throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`)
 
     // the field decorators run first, then the model decorator
     // id decorator creates the model descriptor and registers it in models 
@@ -34,10 +34,10 @@ export default function model(constructor) {
 
         const descriptor = obj.modelDescriptor
         // apply id decorators
-        if (Object.keys(descriptor.ids).length === 0) 
+        if (descriptor.id === undefined) 
             throw new Error(`Model "${modelName}" should have id field decorator!`)
-        for(const fieldName in descriptor.ids)
-            descriptor.ids[fieldName].decorator(obj, fieldName)
+
+        descriptor.idFieldDescriptors.decorator(obj, descriptor.id)
         // apply field decorators 
         for(const fieldName in descriptor.fields)
             descriptor.fields[fieldName].decorator(obj, fieldName)

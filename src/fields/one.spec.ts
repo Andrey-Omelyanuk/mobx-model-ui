@@ -21,14 +21,14 @@ describe('Field: One', () => {
                 @id   (NUMBER())   id : number
                 @field(NUMBER()) a_id : number
             }
-            one(B, ['a_id'])(A, 'b')
+            one(B, 'a_id')(A, 'b')
             expect(A.getModelDescriptor().relations['b']).toEqual({
                 decorator: expect.any(Function),
                 // array with one function inside
                 disposers: [expect.any(Function)],
                 settings: {
                     remote_model: B,
-                    remote_foreign_ids: ['a_id']
+                    remote_foreign_id: 'a_id'
                 }
             })
         })
@@ -42,7 +42,7 @@ describe('Field: One', () => {
                 @id   (NUMBER())   id : number
                 @field(NUMBER()) a_id : number
             }
-            one(B, ['a_id'])(A, 'b')
+            one(B, 'a_id')(A, 'b')
             one(B)(A, 'b')
             expect(A.getModelDescriptor().relations['b']).toEqual({
                 decorator: expect.any(Function),
@@ -50,7 +50,7 @@ describe('Field: One', () => {
                 disposers: [expect.any(Function)],
                 settings: {
                     remote_model: B,
-                    remote_foreign_ids: ['a_id']
+                    remote_foreign_id: 'a_id'
                 }
             })
         })
@@ -74,7 +74,7 @@ describe('Field: One', () => {
                 disposers: [expect.any(Function)],
                 settings: {
                     remote_model: B,
-                    remote_foreign_ids: ['a_id']
+                    remote_foreign_id: 'a_id'
                 }
             })
             expect(B.getModelDescriptor().relations['a_one']).toEqual({
@@ -83,7 +83,7 @@ describe('Field: One', () => {
                 disposers: [expect.any(Function)],
                 settings: {
                     remote_model: A,
-                    remote_foreign_ids: ['b_id']
+                    remote_foreign_id: 'b_id'
                 }
             })
         })
@@ -101,7 +101,7 @@ describe('Field: One', () => {
                 @id   (NUMBER())  id   : number
                 @field(NUMBER())  a_id : ID
             }
-            one(Bx, ['a_id'])(Ax, 'b')  // auto detect does not work here, because try to find ax_id instead of a_id
+            one(Bx, 'a_id')(Ax, 'b')  // auto detect does not work here, because try to find ax_id instead of a_id
             A = Ax, B = Bx
         })
 
@@ -168,7 +168,7 @@ describe('Field: One', () => {
         it('set one: obj to null', async () => {
             let a = new A({id: 1})
             let b = new B({id: 2, a_id: 1})
-            runInAction(() => b.a_id = null )   ; expect(a.b   ).toBe(undefined)
+            runInAction(() => b.a_id = null )   ; expect(a.b   ).toBe(null)
                                                   expect(b.a_id).toBe(null)
         })
     })

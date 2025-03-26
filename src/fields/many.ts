@@ -4,7 +4,7 @@ import { Model, models } from '../model'
 /**
  * Decorator for many fields
  */
-export function many<M extends Model>(remote_model: any, remote_foreign_ids?: string[]) {
+export function many<M extends Model>(remote_model: any, remote_foreign_id?: string) {
     return function (cls: any, field_name: string) {
         const modelName = cls.modelName ?? cls.constructor.name
         if (!modelName)
@@ -15,14 +15,14 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`)
 
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_ids = remote_foreign_ids ?? [`${modelName.toLowerCase()}_id`]
+        remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`
 
         modelDescription.relations[field_name] = {
             decorator: (obj: M) => {
                 extendObservable(obj, { [field_name]: [] })
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_ids } 
+            settings: { remote_model, remote_foreign_id } 
         }
 
         const remoteModelDescriptor = remote_model.getModelDescriptor()
@@ -39,9 +39,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
                         remote_obj = remote_change.newValue
                         remote_obj.disposers.set(disposer_name , reaction(
                             () => {
-                                const values = remote_foreign_ids.map(id => remote_obj[id])
-                                const foreignID = modelDescription.getIDByValues(values)
-                                return modelDescription.cache.get(foreignID)
+                                return modelDescription.cache.get(remote_obj[remote_foreign_id])
                             },
                             action(disposer_name, (_new, _old) => {
                                 if (_old) {
@@ -64,9 +62,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_ids?: st
                             remote_obj.disposers.get(disposer_name)()
                             remote_obj.disposers.delete(disposer_name)
                         }
-                        const values = remote_foreign_ids.map(id => remote_obj[id])
-                        const foreignID = modelDescription.getIDByValues(values)
-                        let obj = modelDescription.cache.get(foreignID)
+                        let obj = modelDescription.cache.get(remote_obj[remote_foreign_id])
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj)
                             if (i > -1)

@@ -1,10 +1,9 @@
 import { Query } from '../queries'
 import { Filter } from '../filters'
-import { Repository } from '../repository'
 import { model, Model } from '../model'
-import { ReadOnlyAdapter } from './read-only'
-import { ID, NUMBER } from '../types'
+import { NUMBER } from '../types'
 import { id } from '../fields/id'
+import { ReadOnlyAdapter } from './read-only'
 
 
 class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {

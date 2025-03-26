@@ -37,6 +37,6 @@ describe('Model Decorator', () => {
     it('Error: Decorate model with no id', async () => {
         expect(() => {
             @model class A extends Model {}
-        }).toThrow(new Error('Model "A" should be registered in models. Did you forget to declare any ids?'))
+        }).toThrow(new Error('Model "A" should be registered in models. Did you forget to declare any id?'))
     })
 })

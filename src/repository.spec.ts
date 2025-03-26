@@ -94,7 +94,7 @@ describe('Repository', () => {
         expect(adapter.delete).toHaveBeenCalledTimes(0)
         expect(local_store['test']['1']).toEqual({id: 1, b: 'test'})
 
-        const response = await repository.get([1])
+        const response = await repository.get(1)
         expect(response).toBe(a)
         expect(adapter.get).toHaveBeenCalledTimes(1)
     })
