@@ -55,6 +55,6 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
 // model decorator
 export function constant (constant: any[]) {
     return (cls: any) => {
-        cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant)
+        cls.defaultRepository.adapter = new ConstantAdapter(constant)
     }
 }

@@ -5,7 +5,7 @@ import { QueryPage } from './query-page'
 describe('QueryPage', () => {
 
     @local() @model class A extends Model { @id(NUMBER()) id: number }
-    const repository = A.getModelDescriptor().defaultRepository as Repository<A>
+    const repository = A.defaultRepository as Repository<A>
     let query: QueryPage<A>
 
     beforeEach(async () => {

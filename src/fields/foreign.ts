@@ -27,13 +27,10 @@ export function foreign<M extends Model>(foreign_model: any, foreign_id?: string
                     // watch on foreign cache for foreign object
                     () => {
                         const foreignID = obj[foreign_id] 
-                        // console.warn('foreign', foreign_ids, values, `fID '${foreignID}'`) 
                         if (foreignID === undefined) return undefined
                         if (foreignID === '') return undefined
                         if (foreignID === null) return null  // foreign object can be null
                         if (foreignID === 'null') return null  // foreign object can be null
-                        // console.warn('foreign', foreignID, foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID))
-                        // console.warn(foreign_model.getModelDescriptor().defaultRepository.cache.store)
                         return foreign_model.getModelDescriptor().cache.get(foreignID)
                     },
                     // update foreign field

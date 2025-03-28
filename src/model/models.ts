@@ -1,3 +1,5 @@
+import { Repository } from '../repository'
+import Model from './model'
 import { ModelDescriptor } from './model-descriptor'
 
 /**
@@ -6,6 +8,8 @@ import { ModelDescriptor } from './model-descriptor'
  */
 const models = new Map<string, ModelDescriptor<any>>()
 export default models
+
+
 
 export function clearModels() {
     for(let [modelName, modelDescriptor] of models) {
@@ -19,3 +23,4 @@ export function clearModels() {
     }
     models.clear()
 }
+

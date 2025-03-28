@@ -17,8 +17,8 @@ jest.useFakeTimers()
 describe('Query', () => {
     @local() @model class A extends Model { @id(NUMBER()) id: number }
     @local() @model class B extends Model { @id(NUMBER()) id: number }
-    const repositoryA = A.getModelDescriptor().defaultRepository as Repository<A>
-    const repositoryB = B.getModelDescriptor().defaultRepository as Repository<B>
+    const repositoryA = A.defaultRepository as Repository<A>
+    const repositoryB = B.defaultRepository as Repository<B>
 
     afterEach(async () => {
         A.getModelDescriptor().cache.clear()

@@ -975,7 +975,7 @@ class Query {
         catch (e) {
             // ignore the cancelation of the request
             if (e.name !== 'AbortError' && e.message !== 'canceled') {
-                console.error(e);
+                // console.error(e)
                 runInAction(() => this.error = e.message);
             }
         }
@@ -1275,6 +1275,9 @@ function clearModels() {
 }
 
 class Model {
+    getDefaultRepository() {
+        return this.modelDescriptor.cls.defaultRepository;
+    }
     /**
      * @returns {ModelDescriptor} - model description
      */
@@ -1435,44 +1438,44 @@ class Model {
     // helper instance functions
     // --------------------------------------------------------------------------------------------
     async action(name, kwargs) { return await this.model.repository.action(this, name, kwargs); }
-    async create() { return await this.modelDescriptor.defaultRepository.create(this); }
-    async update() { return await this.modelDescriptor.defaultRepository.update(this); }
+    async create() { return await this.getDefaultRepository().create(this); }
+    async update() { return await this.getDefaultRepository().update(this); }
     async save() { return this.ID ? await this.update() : await this.create(); }
-    async delete() { return await this.modelDescriptor.defaultRepository.delete(this); }
-    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.ID); }
+    async delete() { return await this.getDefaultRepository().delete(this); }
+    async refresh() { return await this.getDefaultRepository().get(this.ID); }
     // --------------------------------------------------------------------------------------------
     // helper class functions
     // --------------------------------------------------------------------------------------------
     static getQuery(props) {
-        return new Query(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new Query(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static getQueryPage(props) {
-        return new QueryPage(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new QueryPage(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static getQueryRaw(props) {
-        return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static getQueryRawPage(props) {
-        return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static getQueryCacheSync(props) {
-        return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static getQueryStream(props) {
-        return new QueryStream(Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new QueryStream(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static getQueryDistinct(field, props) {
-        return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.getModelDescriptor().defaultRepository }));
+        return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
     }
     static get(id) {
         return this.getModelDescriptor().cache.get(id);
     }
     static async findById(id) {
-        let repository = this.getModelDescriptor().defaultRepository;
+        let repository = this.defaultRepository;
         return repository.get(id);
     }
     static async find(query) {
-        let repository = this.getModelDescriptor().defaultRepository;
+        let repository = this.defaultRepository;
         return repository.find(query);
     }
 }
@@ -1523,6 +1526,8 @@ function model(constructor) {
     const modelDescriptor = models.get(modelName);
     if (!modelDescriptor)
         throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`);
+    // set default repository
+    constructor.defaultRepository = new Repository(modelDescriptor);
     // the field decorators run first, then the model decorator
     // id decorator creates the model descriptor and registers it in models 
     // so, we cannot catch the case when we try to declare a model with the same name 
@@ -1603,16 +1608,6 @@ class ModelDescriptor {
             configurable: true,
             writable: true,
             value: void 0
-        });
-        /**
-         * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
-         * It can be changed later (e.g. in model decorator)
-         */
-        Object.defineProperty(this, "defaultRepository", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: new Repository(this)
         });
         /**
          * Id fields
@@ -1717,7 +1712,6 @@ function foreign(foreign_model, foreign_id) {
                 // watch on foreign cache for foreign object
                 () => {
                     const foreignID = obj[foreign_id];
-                    // console.warn('foreign', foreign_ids, values, `fID '${foreignID}'`) 
                     if (foreignID === undefined)
                         return undefined;
                     if (foreignID === '')
@@ -1726,8 +1720,6 @@ function foreign(foreign_model, foreign_id) {
                         return null; // foreign object can be null
                     if (foreignID === 'null')
                         return null; // foreign object can be null
-                    // console.warn('foreign', foreignID, foreign_model.getModelDescriptor().defaultRepository.cache.get(foreignID))
-                    // console.warn(foreign_model.getModelDescriptor().defaultRepository.cache.store)
                     return foreign_model.getModelDescriptor().cache.get(foreignID);
                 }, 
                 // update foreign field
@@ -2201,7 +2193,7 @@ class LocalAdapter {
 // model decorator
 function local(store_name) {
     return (cls) => {
-        cls.getModelDescriptor().defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName);
+        cls.defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName);
     };
 }
 
@@ -2251,7 +2243,7 @@ class ConstantAdapter extends Adapter {
 // model decorator
 function constant(constant) {
     return (cls) => {
-        cls.getModelDescriptor().defaultRepository.adapter = new ConstantAdapter(constant);
+        cls.defaultRepository.adapter = new ConstantAdapter(constant);
     };
 }
 

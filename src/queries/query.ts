@@ -215,7 +215,7 @@ export class Query <M extends Model> {
         catch (e) {
             // ignore the cancelation of the request
             if (e.name !== 'AbortError' && e.message !== 'canceled') {
-                console.error(e)
+                // console.error(e)
                 runInAction(() => this.error = e.message )
             }
         }

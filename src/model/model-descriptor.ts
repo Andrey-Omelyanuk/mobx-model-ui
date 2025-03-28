@@ -22,11 +22,6 @@ export class ModelDescriptor<T extends Model> {
      */
     cls: new (args) => T
     /**
-     * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
-     * It can be changed later (e.g. in model decorator)
-     */
-    defaultRepository: Repository<T> = new Repository(this)
-    /**
      * Id fields
      */
     id: string

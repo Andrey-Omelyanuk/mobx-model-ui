@@ -5,7 +5,7 @@ import { data_set  } from '../test.utils'
 describe('LocalAdapter', () => {
 
     @local() @model class A extends Model { @id(NUMBER()) id: number }
-    const adapter = A.getModelDescriptor().defaultRepository.adapter as LocalAdapter<A> 
+    const adapter = A.defaultRepository.adapter as LocalAdapter<A> 
 
     afterEach(async () => {
         local_store['A'] = {} // clean the store
@@ -19,7 +19,7 @@ describe('LocalAdapter', () => {
 
         it('decorate the model', async ()=> {
             @local() @model class A2 extends Model { @id(NUMBER()) id: number }
-            expect((A2.getModelDescriptor().defaultRepository.adapter as LocalAdapter<A2>).store_name).toBe('A2')
+            expect((A2.defaultRepository.adapter as LocalAdapter<A2>).store_name).toBe('A2')
         })
     })
 

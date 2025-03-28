@@ -388,11 +388,6 @@ declare class ModelDescriptor<T extends Model> {
      */
     cls: new (args: any) => T;
     /**
-     * Default repository for the model. It used in helper methods like `load`, `getTotalCount`, etc.
-     * It can be changed later (e.g. in model decorator)
-     */
-    defaultRepository: Repository<T>;
-    /**
      * Id fields
      */
     id: string;
@@ -427,6 +422,11 @@ declare abstract class Model {
      */
     static modelName: string;
     readonly modelName: string;
+    /**
+     * Default repository that used in methods like `load`, `getTotalCount`, etc.
+     */
+    static defaultRepository: Repository<Model>;
+    getDefaultRepository<T extends Model>(): Repository<T>;
     /**
      * @returns {ModelDescriptor} - model description
      */

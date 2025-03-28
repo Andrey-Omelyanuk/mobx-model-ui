@@ -18,6 +18,15 @@ export default abstract class Model {
      */
     static   modelName: string
     readonly modelName: string
+
+    /**
+     * Default repository that used in methods like `load`, `getTotalCount`, etc.
+     */
+    static defaultRepository: Repository<Model>
+    getDefaultRepository<T extends Model>(): Repository<T> {
+        return (this.modelDescriptor.cls as any).defaultRepository
+    }
+
     /**
      * @returns {ModelDescriptor} - model description
      */
@@ -176,46 +185,46 @@ export default abstract class Model {
     // --------------------------------------------------------------------------------------------
 
     async action(name: string, kwargs: Object) { return await this.model.repository.action(this, name, kwargs) }
-    async create<T extends Model>(): Promise<T> { return await this.modelDescriptor.defaultRepository.create(this) as T }
-    async update<T extends Model>(): Promise<T> { return await this.modelDescriptor.defaultRepository.update(this) as T }
+    async create<T extends Model>(): Promise<T> { return await this.getDefaultRepository().create(this) as T }
+    async update<T extends Model>(): Promise<T> { return await this.getDefaultRepository().update(this) as T }
     async save<T extends Model>(): Promise<T> { return this.ID ? await this.update() : await this.create() as T }
-    async delete() { return await this.modelDescriptor.defaultRepository.delete(this) }
-    async refresh() { return await this.modelDescriptor.defaultRepository.get(this.ID) }
+    async delete() { return await this.getDefaultRepository().delete(this) }
+    async refresh() { return await this.getDefaultRepository().get(this.ID) }
 
     // --------------------------------------------------------------------------------------------
     // helper class functions
     // --------------------------------------------------------------------------------------------
 
     static getQuery<T extends Model>(props: QueryProps<T>): Query<T> {
-        return new Query<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new Query<T>({...props, repository: this.defaultRepository as Repository<T> })
     }
     static getQueryPage<T extends Model>(props: QueryProps<T>): QueryPage<T> {
-        return new QueryPage<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new QueryPage<T>({...props, repository: this.defaultRepository as Repository<T> })
     }
     static getQueryRaw<T extends Model>(props: QueryProps<T>): QueryRaw<T> {
-        return new QueryRaw<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new QueryRaw<T>({...props, repository: this.defaultRepository as Repository<T> })
     }
     static getQueryRawPage<T extends Model>(props: QueryProps<T>): QueryRawPage<T> {
-        return new QueryRawPage<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new QueryRawPage<T>({...props, repository: this.defaultRepository as Repository<T> })
     }
     static getQueryCacheSync<T extends Model>(props: QueryProps<T>): QueryCacheSync<T> {
-        return new QueryCacheSync<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new QueryCacheSync<T>({...props, repository: this.defaultRepository as Repository<T> })
     }
     static getQueryStream<T extends Model>(props: QueryProps<T>): QueryStream<T> {
-        return new QueryStream<T>({...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new QueryStream<T>({...props, repository: this.defaultRepository as Repository<T> })
     }
     static getQueryDistinct<T extends Model>(field: string, props: QueryProps<T>): QueryDistinct {
-        return new QueryDistinct(field, {...props, repository: this.getModelDescriptor().defaultRepository as Repository<T> })
+        return new QueryDistinct(field, {...props, repository: this.defaultRepository as Repository<T> })
     }
     static get<T extends Model>(id: ID): T {
         return this.getModelDescriptor().cache.get(id) as T
     }
     static async findById<T extends Model>(id: ID) : Promise<T> {
-    let repository = this.getModelDescriptor().defaultRepository as Repository<T>
+    let repository = this.defaultRepository as Repository<T>
         return repository.get(id)
     }
     static async find<T extends Model>(query: Query<T>) : Promise<T> {
-        let repository = this.getModelDescriptor().defaultRepository as Repository<T>
+        let repository = this.defaultRepository as Repository<T>
         return repository.find(query)
     }
 }

@@ -47,6 +47,14 @@ describe('ObjectInput', () => {
         runInAction(() => options.isNeedToUpdate = true)    ; expect(flag).toBe(false)
         runInAction(() => options.isNeedToUpdate = false)   ; expect(flag).toBe(true)
     })
+
+    it('should be JSON-serializable', () => {
+        const options = TestModel.getQuery({ autoupdate: false })
+        const input = new ObjectInput({
+            options,
+        })
+        expect(() => JSON.stringify(input)).not.toThrow()
+    })
     it('isReady: sync url and options.isReady problem ', async () => {
         // Problem:
         //  1. sync url invoke

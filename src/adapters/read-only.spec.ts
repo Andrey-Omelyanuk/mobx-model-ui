@@ -25,7 +25,7 @@ class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {
 
 export function read_only() {
     return (cls: any) => {
-        cls.getModelDescriptor().defaultRepository.adapter = new TestReadOnlyAdapter()
+        cls.defaultRepository.adapter = new TestReadOnlyAdapter()
     }
 }
 

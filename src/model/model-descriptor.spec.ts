@@ -16,12 +16,10 @@ describe('Model Descriptor', () => {
                 @id(NUMBER()) id: number
             }     
             expect(A.getModelDescriptor().cls).toBe(A)
-            expect(A.getModelDescriptor().defaultRepository).toBeDefined()
+            expect(A.defaultRepository).toBeDefined()
 
             let descriptor = new ModelDescriptor()
             expect(descriptor.cls).toBeUndefined()
-            expect(descriptor.defaultRepository).toBeDefined()
-            expect(descriptor.defaultRepository.modelDescriptor).toBe(descriptor)
         })
     })
 

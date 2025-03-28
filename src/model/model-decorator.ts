@@ -1,6 +1,7 @@
 import { makeObservable } from 'mobx'
 import Model from './model'
 import models from './models'
+import { Repository } from '../repository'
 
 
 /**
@@ -18,6 +19,9 @@ export default function model(constructor) {
     const modelDescriptor = models.get(modelName)
     if (!modelDescriptor)
         throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`)
+    
+    // set default repository
+    constructor.defaultRepository = new Repository(modelDescriptor)
 
     // the field decorators run first, then the model decorator
     // id decorator creates the model descriptor and registers it in models 
