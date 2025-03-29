@@ -14,7 +14,8 @@ import { observable, action, makeObservable, runInAction, autorun, reaction, com
 const config = {
     DEFAULT_PAGE_SIZE: 50,
     AUTO_UPDATE_DELAY: 100, // ms
-    NON_FIELD_ERRORS_KEY: 'non_field_errors',
+    FORM_NON_FIELD_ERRORS_KEY: 'non_field_errors',
+    FORM_UNKNOWN_ERROR_MESSAGE: 'Unknown errors. Please contact support.',
     // NOTE: React router manage URL by own way. 
     // change UPDATE_SEARCH_PARAMS and WATCTH_URL_CHANGES in this case
     UPDATE_SEARCH_PARAMS: (search_params) => {
@@ -2312,21 +2313,27 @@ class Form {
         catch (err) {
             runInAction(() => {
                 for (const key in err.message) {
-                    if (key === config.NON_FIELD_ERRORS_KEY) {
+                    if (key === config.FORM_NON_FIELD_ERRORS_KEY) {
                         this.errors = err.message[key];
                     }
                     else {
                         if (this.inputs[key])
                             this.inputs[key].errors = err.message[key];
-                        else
-                            throw err;
+                        else {
+                            // unknown error should be logged 
+                            // and not shown to user
+                            this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE];
+                            console.error(err);
+                        }
                     }
                 }
             });
         }
-        runInAction(() => {
-            this.isLoading = false;
-        });
+        finally {
+            runInAction(() => {
+                this.isLoading = false;
+            });
+        }
     }
     cancel() {
         this.__cancel && this.__cancel();

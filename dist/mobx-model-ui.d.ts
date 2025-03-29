@@ -1,7 +1,8 @@
 declare const config: {
     DEFAULT_PAGE_SIZE: number;
     AUTO_UPDATE_DELAY: number;
-    NON_FIELD_ERRORS_KEY: string;
+    FORM_NON_FIELD_ERRORS_KEY: string;
+    FORM_UNKNOWN_ERROR_MESSAGE: string;
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
     WATCTH_URL_CHANGES: (callback: any) => () => void;
     DEBOUNCE: (func: Function, debounce: number) => any;

@@ -122,7 +122,7 @@ describe('Form', () => {
         it('bad request', (done)=> {
             const submit = jest.fn(async () => {
                 throw { message: {
-                    [config.NON_FIELD_ERRORS_KEY]: ['form error'],
+                    [config.FORM_NON_FIELD_ERRORS_KEY]: ['form error'],
                     a: ['a error'],
                     b: ['b error'],
                     c: ['c error'],

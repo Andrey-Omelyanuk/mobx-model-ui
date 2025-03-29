@@ -1,5 +1,5 @@
 import { autorun, reaction, runInAction } from 'mobx'
-import { model, Model, local, Input, NUMBER, STRING, ObjectForm, id } from '..'
+import { model, Model, local, Input, NUMBER, STRING, ObjectForm, id, config } from '..'
 
 describe('ObjectForm', () => {
 
@@ -47,9 +47,8 @@ describe('ObjectForm', () => {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
         const form = new ObjectForm<A>(new A({}), {a: inputA, X: inputB})
-        await expect(form.submit())
-            .rejects
-            .toThrow('ObjectForm error: object has no field X')
+        await form.submit()
+        form.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
     })
     it('isLoading is observable', (done)=> {
         const form = new ObjectForm<A>(new A({}), {})

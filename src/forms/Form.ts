@@ -46,20 +46,26 @@ export class Form {
         catch (err) {
             runInAction(() => {
                 for (const key in err.message) {
-                    if (key === config.NON_FIELD_ERRORS_KEY) {
+                    if (key === config.FORM_NON_FIELD_ERRORS_KEY) {
                         this.errors = err.message[key]
                     } else {
                         if (this.inputs[key])
                             this.inputs[key].errors = err.message[key]
-                        else 
-                            throw err
+                        else {
+                            // unknown error should be logged 
+                            // and not shown to user
+                            this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
+                            console.error(err)
+                        }
                     }
                 }
             })
         }
-        runInAction(() => {
-            this.isLoading = false
-        })
+        finally {
+            runInAction(() => {
+                this.isLoading = false
+            })
+        }
     }
 
     cancel() {
