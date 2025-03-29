@@ -2292,6 +2292,7 @@
                 writable: true,
                 value: []
             });
+            mobx.makeObservable(this);
         }
         destroy() {
             for (const key in this.inputs) {

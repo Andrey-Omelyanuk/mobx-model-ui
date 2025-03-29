@@ -2285,6 +2285,7 @@ class Form {
             writable: true,
             value: []
         });
+        makeObservable(this);
     }
     destroy() {
         for (const key in this.inputs) {

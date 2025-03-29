@@ -1,3 +1,4 @@
+import { autorun, reaction, runInAction } from 'mobx'
 import { model, Model, local, Input, NUMBER, STRING, ObjectForm, id } from '..'
 
 describe('ObjectForm', () => {
@@ -49,6 +50,16 @@ describe('ObjectForm', () => {
         await expect(form.submit())
             .rejects
             .toThrow('ObjectForm error: object has no field X')
+    })
+    it('isLoading is observable', (done)=> {
+        const form = new ObjectForm<A>(new A({}), {})
+        reaction(
+            () => form.isLoading,
+            (newValue) => {
+                if (newValue) done()
+            }
+        )
+        form.submit()
     })
     it('...', (done)=> {
         const inputA = new Input(STRING())

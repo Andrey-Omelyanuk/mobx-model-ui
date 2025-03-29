@@ -1,4 +1,4 @@
-import { runInAction } from 'mobx'
+import { reaction, runInAction } from 'mobx'
 import { Input, STRING, config } from '..'
 import { Form } from './Form'
 
@@ -160,6 +160,18 @@ describe('Form', () => {
             })
             expect(form).toMatchObject({isReady: false, isLoading: false})
         })
+    })
+
+    it('isLoading is observable', (done)=> {
+        const submit = jest.fn(async () => {})
+        const form = new Form({}, submit, () => {})
+        reaction(
+            () => form.isLoading,
+            (newValue) => {
+                if (newValue) done()
+            }
+        )
+        form.submit()
     })
 
     it('cancel', async ()=> {

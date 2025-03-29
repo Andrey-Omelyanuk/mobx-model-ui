@@ -1,4 +1,4 @@
-import { observable, runInAction } from 'mobx'
+import { makeObservable, observable, runInAction } from 'mobx'
 import { Input } from '../inputs/Input'
 import { config } from '../config'
 
@@ -13,7 +13,9 @@ export class Form {
         readonly inputs   : { [key: string]: Input<any> },
         private __submit  : () => Promise<void>,
         private __cancel ?: () => void
-    ) {}
+    ) {
+        makeObservable(this)
+    }
 
     destroy() {
         for (const key in this.inputs) {
