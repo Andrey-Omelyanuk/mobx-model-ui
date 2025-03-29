@@ -27,4 +27,6 @@ export abstract class Adapter <M extends Model> {
     abstract getDistinct    (filter: Filter, field: string, config?: RequestConfig): Promise<any[]>
 
     abstract getURLSearchParams(query: Query<M>): URLSearchParams
+
+    delay: number  // delays for simulate real usage, use it only for tests
 }

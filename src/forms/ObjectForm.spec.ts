@@ -50,17 +50,17 @@ describe('ObjectForm', () => {
             .rejects
             .toThrow('ObjectForm error: object has no field X')
     })
-    // it('...', (done)=> {
-    //     const inputA = new Input(STRING())
-    //     const inputB = new Input(NUMBER()) 
-    //     const onSubmitted = (obj: A) => {
-    //         expect(obj.a).toBe('a')
-    //         expect(obj.b).toBe(1)
-    //         done()
-    //     }
-    //     const form = new ObjectForm<A>(new A(), {a: inputA, b: inputB}, onSubmitted)
-    //     inputA.set('a')
-    //     inputB.set(1)
-    //     form.submit()
-    // })
+    it('...', (done)=> {
+        const inputA = new Input(STRING())
+        const inputB = new Input(NUMBER()) 
+        const onSubmitted = (obj: A) => {
+            expect(obj.a).toBe('a')
+            expect(obj.b).toBe(1)
+            done()
+        }
+        const form = new ObjectForm<A>(new A(), {a: inputA, b: inputB}, onSubmitted)
+        inputA.set('a')
+        inputB.set(1)
+        form.submit()
+    })
 })

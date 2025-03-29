@@ -147,19 +147,19 @@ describe('Form', () => {
             expect(form.isLoading).toBe(true)
         })
 
-        // it('run submit when the form is not ready yet', (done)=> {
-        //     // nothing should happen
-        //     const submit = jest.fn(async () => {})
-        //     const form = new Form({a: new StringInput()}, submit, () => {} )
-        //     runInAction(() => form.inputs.a.isNeedToCheckValue = false)
-        //     expect(form).toMatchObject({isReady: false, isLoading: false})
-        //     form.submit().then(() => {
-        //         expect(form).toMatchObject({isReady: false, isLoading: false})
-        //         expect(submit).toHaveBeenCalledTimes(0)
-        //         done()
-        //     })
-        //     expect(form).toMatchObject({isReady: false, isLoading: false})
-        // })
+        it('run submit when the form is not ready yet', (done)=> {
+            // nothing should happen
+            const submit = jest.fn(async () => {})
+            const form = new Form({a: new Input(STRING())}, submit, () => {} )
+            runInAction(() => form.inputs.a.isNeedToUpdate = true)
+            expect(form).toMatchObject({isReady: false, isLoading: false})
+            form.submit().then(() => {
+                expect(form).toMatchObject({isReady: false, isLoading: false})
+                expect(submit).toHaveBeenCalledTimes(0)
+                done()
+            })
+            expect(form).toMatchObject({isReady: false, isLoading: false})
+        })
     })
 
     it('cancel', async ()=> {

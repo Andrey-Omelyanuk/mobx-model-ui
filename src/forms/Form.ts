@@ -1,4 +1,4 @@
-import { observable } from 'mobx'
+import { observable, runInAction } from 'mobx'
 import { Input } from '../inputs/Input'
 import { config } from '../config'
 
@@ -10,9 +10,9 @@ export class Form {
     @observable errors      : string[] = []
 
     constructor(
-        readonly inputs: { [key: string]: Input<any> },
-        private __submit: () => Promise<void>,
-        private __cancel: () => void
+        readonly inputs   : { [key: string]: Input<any> },
+        private __submit  : () => Promise<void>,
+        private __cancel ?: () => void
     ) {}
 
     destroy() {
@@ -33,28 +33,34 @@ export class Form {
     async submit() {
         if (!this.isReady) return  // just ignore
 
-        this.isLoading = true
-        this.errors = []
+        runInAction(() => {
+            this.isLoading = true
+            this.errors = []
+        })
 
         try {
             await this.__submit()
         }
         catch (err) {
-            for (const key in err.message) {
-                if (key === config.NON_FIELD_ERRORS_KEY) {
-                    this.errors = err.message[key]
-                } else {
-                    if (this.inputs[key])
-                        this.inputs[key].errors = err.message[key]
-                    else 
-                        throw err
+            runInAction(() => {
+                for (const key in err.message) {
+                    if (key === config.NON_FIELD_ERRORS_KEY) {
+                        this.errors = err.message[key]
+                    } else {
+                        if (this.inputs[key])
+                            this.inputs[key].errors = err.message[key]
+                        else 
+                            throw err
+                    }
                 }
-            }
+            })
         }
-        this.isLoading = false
+        runInAction(() => {
+            this.isLoading = false
+        })
     }
 
     cancel() {
-        this.__cancel()
+        this.__cancel && this.__cancel()
     }
 }

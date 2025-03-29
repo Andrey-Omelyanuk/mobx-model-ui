@@ -98,9 +98,9 @@ export default abstract class Model {
      * @returns {Object} - it is rawData + id field
      */
     get rawObj() : Object {
-        const fieldName   = this.modelDescriptor.id
-        const rawObj      = this.rawData
-        rawObj[fieldName] = this[fieldName] 
+        const idFieldName   = this.modelDescriptor.id
+        const rawObj        = this.rawData
+        rawObj[idFieldName] = this[idFieldName] 
         return rawObj
     }
 

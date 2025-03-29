@@ -1366,9 +1366,9 @@
          * @returns {Object} - it is rawData + id field
          */
         get rawObj() {
-            const fieldName = this.modelDescriptor.id;
+            const idFieldName = this.modelDescriptor.id;
             const rawObj = this.rawData;
-            rawObj[fieldName] = this[fieldName];
+            rawObj[idFieldName] = this[idFieldName];
             return rawObj;
         }
         get only_changed_raw_data() {
@@ -2075,6 +2075,14 @@
      * Adapter is a class that provides a way to interact with the server or other data source.
      */
     class Adapter {
+        constructor() {
+            Object.defineProperty(this, "delay", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            }); // delays for simulate real usage, use it only for tests
+        }
     }
 
     /**
@@ -2094,7 +2102,7 @@
      * LocalAdapter connects to the local storage.
      * You can use this adapter for mock data or for unit test
      */
-    class LocalAdapter {
+    class LocalAdapter extends Adapter {
         clear() {
             local_store[this.store_name] = {};
         }
@@ -2106,18 +2114,13 @@
             local_store[this.store_name] = objs;
         }
         constructor(store_name) {
+            super();
             Object.defineProperty(this, "store_name", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
                 value: void 0
             });
-            Object.defineProperty(this, "delay", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // delays for simulate real usage, use it only for tests
             this.store_name = store_name;
             local_store[this.store_name] = {};
         }
@@ -2305,28 +2308,34 @@
         async submit() {
             if (!this.isReady)
                 return; // just ignore
-            this.isLoading = true;
-            this.errors = [];
+            mobx.runInAction(() => {
+                this.isLoading = true;
+                this.errors = [];
+            });
             try {
                 await this.__submit();
             }
             catch (err) {
-                for (const key in err.message) {
-                    if (key === config.NON_FIELD_ERRORS_KEY) {
-                        this.errors = err.message[key];
+                mobx.runInAction(() => {
+                    for (const key in err.message) {
+                        if (key === config.NON_FIELD_ERRORS_KEY) {
+                            this.errors = err.message[key];
+                        }
+                        else {
+                            if (this.inputs[key])
+                                this.inputs[key].errors = err.message[key];
+                            else
+                                throw err;
+                        }
                     }
-                    else {
-                        if (this.inputs[key])
-                            this.inputs[key].errors = err.message[key];
-                        else
-                            throw err;
-                    }
-                }
+                });
             }
-            this.isLoading = false;
+            mobx.runInAction(() => {
+                this.isLoading = false;
+            });
         }
         cancel() {
-            this.__cancel();
+            this.__cancel && this.__cancel();
         }
     }
     __decorate([
@@ -2347,10 +2356,12 @@
                     if (!fieldsNames.includes(fieldName))
                         throw new Error(`ObjectForm error: object has no field ${fieldName}`);
                 // move all values from inputs to obj
-                for (let fieldName of Object.keys(inputs))
-                    this.obj[fieldName] = inputs[fieldName].value;
+                mobx.runInAction(() => {
+                    for (let fieldName of Object.keys(inputs))
+                        this.obj[fieldName] = inputs[fieldName].value;
+                });
                 await this.obj.save();
-                onDone && onDone();
+                onDone && onDone(obj);
             }, onDone);
             Object.defineProperty(this, "obj", {
                 enumerable: true,

@@ -15,10 +15,9 @@ export let local_store: Record<string, Record<string, any>> = {}
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
  */
-export class LocalAdapter<M extends Model> implements Adapter<M> {
+export class LocalAdapter<M extends Model> extends Adapter<M> {
 
-    readonly    store_name  : string
-                delay       : number  // delays for simulate real usage, use it only for tests
+    readonly store_name  : string
 
     clear() {
         local_store[this.store_name] = {}
@@ -33,6 +32,7 @@ export class LocalAdapter<M extends Model> implements Adapter<M> {
     }
 
     constructor(store_name: string) {
+        super()
         this.store_name = store_name
         local_store[this.store_name] = {}
     }

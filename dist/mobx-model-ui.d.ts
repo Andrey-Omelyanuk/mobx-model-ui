@@ -203,6 +203,7 @@ declare abstract class Adapter<M extends Model> {
     abstract getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
     abstract getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
     abstract getURLSearchParams(query: Query<M>): URLSearchParams;
+    delay: number;
 }
 
 /**
@@ -574,9 +575,8 @@ declare let local_store: Record<string, Record<string, any>>;
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
  */
-declare class LocalAdapter<M extends Model> implements Adapter<M> {
+declare class LocalAdapter<M extends Model> extends Adapter<M> {
     readonly store_name: string;
-    delay: number;
     clear(): void;
     init_local_data(data: any[]): void;
     constructor(store_name: string);
@@ -617,12 +617,12 @@ declare class Form {
         [key: string]: Input<any>;
     };
     private __submit;
-    private __cancel;
+    private __cancel?;
     isLoading: boolean;
     errors: string[];
     constructor(inputs: {
         [key: string]: Input<any>;
-    }, __submit: () => Promise<void>, __cancel: () => void);
+    }, __submit: () => Promise<void>, __cancel?: () => void);
     destroy(): void;
     get isReady(): boolean;
     get isError(): boolean;
@@ -634,7 +634,7 @@ declare class ObjectForm<M extends Model> extends Form {
     obj: M;
     constructor(obj: M, inputs: {
         [key: string]: Input<any>;
-    }, onDone?: () => void);
+    }, onDone?: (obj?: M) => void);
 }
 
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
