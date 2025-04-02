@@ -2407,6 +2407,9 @@
         __metadata("design:type", Array)
     ], Form.prototype, "errors", void 0);
 
+    /**
+     * Form to save (create/update) an object.
+     */
     class ObjectForm extends Form {
         constructor(obj, inputs, onDone) {
             super(inputs, async () => {
@@ -2418,8 +2421,48 @@
                 // move all values from inputs to obj
                 for (let fieldName of Object.keys(inputs))
                     this.obj[fieldName] = inputs[fieldName].value;
-                await this.obj.save();
-                onDone && onDone();
+                const response = await this.obj.save();
+                onDone && onDone(response);
+            }, onDone);
+            Object.defineProperty(this, "obj", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: obj
+            });
+        }
+    }
+
+    /**
+     * Form to make an action of object.
+     */
+    class ActionObjectForm extends Form {
+        constructor(obj, action, inputs, onDone) {
+            super(inputs, async () => {
+                // move all values from inputs to kwargs of action
+                const kwargs = {};
+                for (let fieldName of Object.keys(inputs))
+                    kwargs[fieldName] = inputs[fieldName].value;
+                const response = await this.obj.action(action, kwargs);
+                onDone && onDone(response);
+            }, onDone);
+            Object.defineProperty(this, "obj", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: obj
+            });
+        }
+    }
+
+    /**
+     * Form to delete an object.
+     */
+    class DeleteObjectForm extends Form {
+        constructor(obj, onDone) {
+            super({}, async () => {
+                const response = await this.obj.delete();
+                onDone && onDone(response);
             }, onDone);
             Object.defineProperty(this, "obj", {
                 enumerable: true,
@@ -2434,6 +2477,7 @@
     exports.AND_Filter = AND_Filter;
     exports.ARRAY = ARRAY;
     exports.ASC = ASC;
+    exports.ActionObjectForm = ActionObjectForm;
     exports.Adapter = Adapter;
     exports.ArrayDescriptor = ArrayDescriptor;
     exports.BOOLEAN = BOOLEAN;
@@ -2447,6 +2491,7 @@
     exports.DISPOSER_AUTOUPDATE = DISPOSER_AUTOUPDATE;
     exports.DateDescriptor = DateDescriptor;
     exports.DateTimeDescriptor = DateTimeDescriptor;
+    exports.DeleteObjectForm = DeleteObjectForm;
     exports.EQ = EQ;
     exports.EQV = EQV;
     exports.Filter = Filter;

@@ -2,12 +2,14 @@ import { Model } from '../model'
 import { Input } from '../inputs/Input' 
 import { Form } from './Form'
 
-
+/**
+ * Form to save (create/update) an object.
+ */
 export class ObjectForm<M extends Model> extends Form {
     constructor(
         public  obj     : M,
                 inputs  : {[key: string]: Input<any> },
-                onDone ?: () => void
+                onDone ?: (response?) => void
     ) {
         super(
             inputs,
@@ -21,8 +23,8 @@ export class ObjectForm<M extends Model> extends Form {
                 for (let fieldName of Object.keys(inputs))
                     this.obj[fieldName] = inputs[fieldName].value
 
-                await this.obj.save() as M
-                onDone && onDone()
+                const response = await this.obj.save()
+                onDone && onDone(response)
             },
             onDone
         )
