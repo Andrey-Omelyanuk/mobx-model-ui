@@ -2361,8 +2361,8 @@ class ObjectForm extends Form {
                 for (let fieldName of Object.keys(inputs))
                     this.obj[fieldName] = inputs[fieldName].value;
             });
-            await this.obj.save();
-            onDone && onDone(obj);
+            const response = await this.obj.save();
+            onDone && onDone(response);
         }, onDone);
         Object.defineProperty(this, "obj", {
             enumerable: true,
@@ -2373,5 +2373,45 @@ class ObjectForm extends Form {
     }
 }
 
-export { AND, AND_Filter, ARRAY, ASC, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+/**
+ * Form to make an action of object.
+ */
+class ActionObjectForm extends Form {
+    constructor(obj, action, inputs, onDone) {
+        super(inputs, async () => {
+            // move all values from inputs to kwargs of action
+            const kwargs = {};
+            for (let fieldName of Object.keys(inputs))
+                kwargs[fieldName] = inputs[fieldName].value;
+            const response = await this.obj.action(action, kwargs);
+            onDone && onDone(response);
+        }, onDone);
+        Object.defineProperty(this, "obj", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: obj
+        });
+    }
+}
+
+/**
+ * Form to delete an object.
+ */
+class DeleteObjectForm extends Form {
+    constructor(obj, onDone) {
+        super({}, async () => {
+            const response = await this.obj.delete();
+            onDone && onDone(response);
+        }, onDone);
+        Object.defineProperty(this, "obj", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: obj
+        });
+    }
+}
+
+export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map
