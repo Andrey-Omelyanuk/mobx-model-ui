@@ -2357,9 +2357,17 @@ class ObjectForm extends Form {
                 if (!fieldsNames.includes(fieldName))
                     throw new Error(`ObjectForm error: object has no field ${fieldName}`);
             // move all values from inputs to obj
+            const modelDescriptor = this.obj.modelDescriptor;
             runInAction(() => {
-                for (let fieldName of Object.keys(inputs))
-                    this.obj[fieldName] = inputs[fieldName].value;
+                for (let fieldName of Object.keys(inputs)) {
+                    // correct fieldName if it is foreign obj to foreign id
+                    if (modelDescriptor.fields[fieldName]) {
+                        const idFieldName = modelDescriptor.fields[fieldName].settings.foreign_id;
+                        this.obj[idFieldName] = inputs[fieldName].value;
+                    }
+                    else
+                        this.obj[fieldName] = inputs[fieldName].value;
+                }
             });
             const response = await this.obj.save();
             onDone && onDone(response);
