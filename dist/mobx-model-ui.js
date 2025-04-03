@@ -2383,7 +2383,7 @@
                 mobx.runInAction(() => {
                     for (let fieldName of Object.keys(inputs)) {
                         // correct fieldName if it is foreign obj to foreign id
-                        if (modelDescriptor.fields[fieldName]) {
+                        if (modelDescriptor.relations[fieldName]) {
                             const idFieldName = modelDescriptor.fields[fieldName].settings.foreign_id;
                             this.obj[idFieldName] = inputs[fieldName].value;
                         }
