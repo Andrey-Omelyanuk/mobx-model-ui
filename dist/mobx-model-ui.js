@@ -2356,8 +2356,23 @@
     ], Form.prototype, "errors", void 0);
 
     class ObjectForm extends Form {
+        constructor(obj, inputs, submit, cancel) {
+            super(inputs, submit, cancel);
+            Object.defineProperty(this, "obj", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: obj
+            });
+        }
+    }
+
+    /**
+     * Form to save (create/update) an object.
+     */
+    class SaveObjectForm extends ObjectForm {
         constructor(obj, inputs, onDone) {
-            super(inputs, async () => {
+            super(obj, inputs, async () => {
                 const fieldsNames = Object.keys(this.obj);
                 // check if all fields from inputs are in obj
                 for (let fieldName of Object.keys(this.inputs))
@@ -2379,21 +2394,15 @@
                 const response = await this.obj.save();
                 onDone && onDone(response);
             }, onDone);
-            Object.defineProperty(this, "obj", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: obj
-            });
         }
     }
 
     /**
      * Form to make an action of object.
      */
-    class ActionObjectForm extends Form {
-        constructor(obj, action, inputs, onDone) {
-            super(inputs, async () => {
+    class ActionObjectForm extends ObjectForm {
+        constructor(action, obj, inputs, onDone) {
+            super(obj, inputs, async () => {
                 // move all values from inputs to kwargs of action
                 const kwargs = {};
                 for (let fieldName of Object.keys(inputs))
@@ -2401,21 +2410,15 @@
                 const response = await this.obj.action(action, kwargs);
                 onDone && onDone(response);
             }, onDone);
-            Object.defineProperty(this, "obj", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: obj
-            });
         }
     }
 
     /**
      * Form to delete an object.
      */
-    class DeleteObjectForm extends Form {
+    class DeleteObjectForm extends ObjectForm {
         constructor(obj, onDone) {
-            super({}, async () => {
+            super(obj, {}, async () => {
                 const response = await this.obj.delete();
                 onDone && onDone(response);
             }, onDone);
@@ -2480,6 +2483,7 @@
     exports.ReadOnlyAdapter = ReadOnlyAdapter;
     exports.Repository = Repository;
     exports.STRING = STRING;
+    exports.SaveObjectForm = SaveObjectForm;
     exports.SingleFilter = SingleFilter;
     exports.StringDescriptor = StringDescriptor;
     exports.TypeDescriptor = TypeDescriptor;

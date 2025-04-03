@@ -1,41 +1,15 @@
 import { Model } from '../model'
 import { Input } from '../inputs/Input' 
 import { Form } from './Form'
-import { runInAction } from 'mobx'
 
 
 export class ObjectForm<M extends Model> extends Form {
     constructor(
         public  obj     : M,
                 inputs  : {[key: string]: Input<any> },
-                onDone ?: (response?) => void
+                submit  : () => Promise<void>,
+                cancel ?: (response?) => void
     ) {
-        super(
-            inputs,
-            async () => {
-                const fieldsNames = Object.keys(this.obj)
-                // check if all fields from inputs are in obj
-                for (let fieldName of Object.keys(this.inputs))
-                    if (!fieldsNames.includes(fieldName))
-                        throw new Error(`ObjectForm error: object has no field ${fieldName}`)
-                // move all values from inputs to obj
-                const modelDescriptor = this.obj.modelDescriptor
-                runInAction(()=> {
-                    for (let fieldName of Object.keys(inputs)) {
-                        // correct fieldName if it is foreign obj to foreign id
-                        if (modelDescriptor.fields[fieldName]) {
-                            const idFieldName = modelDescriptor.fields[fieldName].settings.foreign_id
-                            this.obj[idFieldName] = inputs[fieldName].value
-                        }
-                        else 
-                            this.obj[fieldName] = inputs[fieldName].value
-                    }
-                })
-
-                const response = await this.obj.save()
-                onDone && onDone(response)
-            },
-            onDone
-        )
+        super(inputs, submit, cancel)
     }
 }

@@ -1,18 +1,19 @@
 import { Model } from '../model'
 import { Input } from '../inputs/Input' 
-import { Form } from './Form'
+import { ObjectForm } from './ObjectForm'
 
 /**
  * Form to make an action of object.
  */
-export class ActionObjectForm<M extends Model> extends Form {
+export class ActionObjectForm<M extends Model> extends ObjectForm<M> {
     constructor(
-        public  obj     : M,
-                action  : string,
-                inputs  : {[key: string]: Input<any> },
-                onDone ?: (response?) => void
+        action: string,
+        obj     : M,
+        inputs  : {[key: string]: Input<any> },
+        onDone ?: (response?) => void
     ) {
         super(
+            obj,
             inputs,
             async () => {
                 // move all values from inputs to kwargs of action

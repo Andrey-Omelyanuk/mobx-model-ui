@@ -1,4 +1,5 @@
 export * from './Form'
 export * from './ObjectForm'
+export * from './SaveObjectForm'
 export * from './ActionObjectForm'
 export * from './DeleteObjectForm'

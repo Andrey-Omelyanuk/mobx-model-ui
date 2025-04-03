@@ -1,7 +1,7 @@
-import { autorun, reaction, runInAction } from 'mobx'
-import { model, Model, local, Input, NUMBER, STRING, ObjectForm, id, config } from '..'
+import { reaction } from 'mobx'
+import { model, Model, local, Input, NUMBER, STRING, id, config, SaveObjectForm } from '..'
 
-describe('ObjectForm', () => {
+describe('SaveObjectForm', () => {
 
     @local()
     @model class A extends Model {
@@ -19,7 +19,7 @@ describe('ObjectForm', () => {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
-        const form = new ObjectForm(new A(), inputs)
+        const form = new SaveObjectForm(new A(), inputs)
         expect(form.inputs).toBe(inputs)
     })
 
@@ -31,7 +31,7 @@ describe('ObjectForm', () => {
             expect(form.obj.b).toBe(1)
             done()
         }
-        const form = new ObjectForm<A>(new A(), {a: inputA, b: inputB}, onDone)
+        const form = new SaveObjectForm<A>(new A(), {a: inputA, b: inputB}, onDone)
         inputA.set('a')
         inputB.set(1)
         form.submit()
@@ -39,19 +39,19 @@ describe('ObjectForm', () => {
 
     it('cancel', (done)=> {
         const onDone= () => { done() }
-        const form = new ObjectForm<A>(new A(), {}, onDone)
+        const form = new SaveObjectForm<A>(new A(), {}, onDone)
         form.cancel()
     })
 
     it('submit without match fields between form and object', async ()=> {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
-        const form = new ObjectForm<A>(new A({}), {a: inputA, X: inputB})
+        const form = new SaveObjectForm<A>(new A({}), {a: inputA, X: inputB})
         await form.submit()
         form.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
     })
     it('isLoading is observable', (done)=> {
-        const form = new ObjectForm<A>(new A({}), {})
+        const form = new SaveObjectForm<A>(new A({}), {})
         reaction(
             () => form.isLoading,
             (newValue) => {
@@ -68,7 +68,7 @@ describe('ObjectForm', () => {
             expect(obj.b).toBe(1)
             done()
         }
-        const form = new ObjectForm<A>(new A(), {a: inputA, b: inputB}, onSubmitted)
+        const form = new SaveObjectForm<A>(new A(), {a: inputA, b: inputB}, onSubmitted)
         inputA.set('a')
         inputB.set(1)
         form.submit()

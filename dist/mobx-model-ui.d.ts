@@ -635,15 +635,23 @@ declare class ObjectForm<M extends Model> extends Form {
     obj: M;
     constructor(obj: M, inputs: {
         [key: string]: Input<any>;
+    }, submit: () => Promise<void>, cancel?: (response?: any) => void);
+}
+
+/**
+ * Form to save (create/update) an object.
+ */
+declare class SaveObjectForm<M extends Model> extends ObjectForm<M> {
+    constructor(obj: M, inputs: {
+        [key: string]: Input<any>;
     }, onDone?: (response?: any) => void);
 }
 
 /**
  * Form to make an action of object.
  */
-declare class ActionObjectForm<M extends Model> extends Form {
-    obj: M;
-    constructor(obj: M, action: string, inputs: {
+declare class ActionObjectForm<M extends Model> extends ObjectForm<M> {
+    constructor(action: string, obj: M, inputs: {
         [key: string]: Input<any>;
     }, onDone?: (response?: any) => void);
 }
@@ -651,7 +659,7 @@ declare class ActionObjectForm<M extends Model> extends Form {
 /**
  * Form to delete an object.
  */
-declare class DeleteObjectForm<M extends Model> extends Form {
+declare class DeleteObjectForm<M extends Model> extends ObjectForm<M> {
     obj: M;
     constructor(obj: M, onDone?: (response?: any) => void);
 }
@@ -660,4 +668,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
