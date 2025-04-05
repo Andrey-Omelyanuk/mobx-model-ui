@@ -2377,7 +2377,7 @@ class SaveObjectForm extends ObjectForm {
                 for (let fieldName of Object.keys(inputs)) {
                     // correct fieldName if it is foreign obj to foreign id
                     if (modelDescriptor.relations[fieldName]) {
-                        const idFieldName = modelDescriptor.fields[fieldName].settings.foreign_id;
+                        const idFieldName = modelDescriptor.relations[fieldName].settings.foreign_id;
                         this.obj[idFieldName] = inputs[fieldName].value;
                     }
                     else
