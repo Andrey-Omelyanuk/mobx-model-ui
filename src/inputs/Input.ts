@@ -1,5 +1,5 @@
 import { action, makeObservable, observable, runInAction } from 'mobx'
-import { syncLocalStorageHandler, syncURLHandler } from './handlers'
+import { syncCookieHandler, syncLocalStorageHandler, syncURLHandler } from './handlers'
 import { config } from '../config'
 import { TypeDescriptor } from '../types'
 
@@ -11,6 +11,7 @@ export interface InputConstructorArgs<T> {
     debounce            ?: number
     syncURL             ?: string
     syncLocalStorage    ?: string
+    syncCookie          ?: string
 }
 
 export class Input<T> {
@@ -24,6 +25,7 @@ export class Input<T> {
                 readonly debounce            : number
                 readonly syncURL            ?: string
                 readonly syncLocalStorage   ?: string
+                readonly syncCookie         ?: string
                          __disposers = [] 
     
     // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
@@ -39,6 +41,7 @@ export class Input<T> {
         this.debounce           = args?.debounce
         this.syncURL            = args?.syncURL
         this.syncLocalStorage   = args?.syncLocalStorage
+        this.syncCookie         = args?.syncCookie
         makeObservable(this)
         if (this.debounce) {
             this.stopDebouncing = config.DEBOUNCE(
@@ -49,6 +52,7 @@ export class Input<T> {
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
         this.syncLocalStorage   && syncLocalStorageHandler(this.syncLocalStorage, this)
+        this.syncCookie         && syncCookieHandler(this.syncCookie, this)
         this.syncURL            && syncURLHandler(this.syncURL, this)
     }
 

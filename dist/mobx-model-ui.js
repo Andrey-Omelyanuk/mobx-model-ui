@@ -34,7 +34,8 @@
         },
         DEBOUNCE: (func, debounce) => {
             return ___default["default"].debounce(func, debounce);
-        }
+        },
+        COOKIE_DOMAIN: 'localhost' // Change this to your domain if needed.
     };
 
     /******************************************************************************
@@ -306,6 +307,20 @@
         }));
     };
 
+    const syncCookieHandler = (paramName, input) => {
+        const cookie = document.cookie.split(';').find(row => row.trim().startsWith(`${paramName}=`));
+        if (cookie) {
+            input.setFromString(cookie.split('=')[1]);
+        }
+        // watch for Input changes and update cookie
+        input.__disposers.push(mobx.reaction(() => input.toString(), (value) => {
+            if (value === undefined)
+                document.cookie = `${paramName}=; path=/; domain=${config.COOKIE_DOMAIN}`;
+            else
+                document.cookie = `${paramName}=${value}; path=/; domain=${config.COOKIE_DOMAIN}`;
+        }, { fireImmediately: true }));
+    };
+
     class Input {
         // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
         // it's look like a bug in the TypeScript
@@ -370,6 +385,12 @@
                 writable: true,
                 value: void 0
             });
+            Object.defineProperty(this, "syncCookie", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             Object.defineProperty(this, "__disposers", {
                 enumerable: true,
                 configurable: true,
@@ -392,6 +413,7 @@
             this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
             this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
             this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
+            this.syncCookie = args === null || args === void 0 ? void 0 : args.syncCookie;
             mobx.makeObservable(this);
             if (this.debounce) {
                 this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => this.isDebouncing = false), this.debounce);
@@ -399,6 +421,7 @@
             // the order is important, because syncURL has more priority under syncLocalStorage
             // i.e. init from syncURL can overwrite value from syncLocalStorage
             this.syncLocalStorage && syncLocalStorageHandler(this.syncLocalStorage, this);
+            this.syncCookie && syncCookieHandler(this.syncCookie, this);
             this.syncURL && syncURLHandler(this.syncURL, this);
         }
         destroy() {
@@ -2500,6 +2523,7 @@
     exports.model = model;
     exports.models = models;
     exports.one = one;
+    exports.syncCookieHandler = syncCookieHandler;
     exports.syncLocalStorageHandler = syncLocalStorageHandler;
     exports.syncURLHandler = syncURLHandler;
     exports.timeout = timeout;

@@ -6,6 +6,7 @@ declare const config: {
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
     WATCTH_URL_CHANGES: (callback: any) => () => void;
     DEBOUNCE: (func: Function, debounce: number) => any;
+    COOKIE_DOMAIN: string;
 };
 
 interface TypeDescriptorProps {
@@ -130,6 +131,7 @@ interface InputConstructorArgs<T> {
     debounce?: number;
     syncURL?: string;
     syncLocalStorage?: string;
+    syncCookie?: string;
 }
 declare class Input<T> {
     type: TypeDescriptor<T>;
@@ -142,6 +144,7 @@ declare class Input<T> {
     readonly debounce: number;
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
+    readonly syncCookie?: string;
     __disposers: any[];
     constructor(type: TypeDescriptor<T>, args?: InputConstructorArgs<any>);
     destroy(): void;
@@ -269,6 +272,8 @@ declare function autoResetId(input: ObjectInput<any>): void;
 declare const syncURLHandler: (paramName: string, input: Input<any>) => void;
 
 declare const syncLocalStorageHandler: (paramName: string, input: Input<any>) => void;
+
+declare const syncCookieHandler: (paramName: string, input: Input<any>) => void;
 
 declare const DISPOSER_AUTOUPDATE = "__autoupdate";
 interface QueryProps<M extends Model> {
@@ -668,4 +673,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

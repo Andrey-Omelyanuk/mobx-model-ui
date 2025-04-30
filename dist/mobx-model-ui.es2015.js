@@ -27,7 +27,8 @@ const config = {
     },
     DEBOUNCE: (func, debounce) => {
         return _.debounce(func, debounce);
-    }
+    },
+    COOKIE_DOMAIN: 'localhost' // Change this to your domain if needed.
 };
 
 /******************************************************************************
@@ -299,6 +300,20 @@ const syncLocalStorageHandler = (paramName, input) => {
     }));
 };
 
+const syncCookieHandler = (paramName, input) => {
+    const cookie = document.cookie.split(';').find(row => row.trim().startsWith(`${paramName}=`));
+    if (cookie) {
+        input.setFromString(cookie.split('=')[1]);
+    }
+    // watch for Input changes and update cookie
+    input.__disposers.push(reaction(() => input.toString(), (value) => {
+        if (value === undefined)
+            document.cookie = `${paramName}=; path=/; domain=${config.COOKIE_DOMAIN}`;
+        else
+            document.cookie = `${paramName}=${value}; path=/; domain=${config.COOKIE_DOMAIN}`;
+    }, { fireImmediately: true }));
+};
+
 class Input {
     // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
     // it's look like a bug in the TypeScript
@@ -363,6 +378,12 @@ class Input {
             writable: true,
             value: void 0
         });
+        Object.defineProperty(this, "syncCookie", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: void 0
+        });
         Object.defineProperty(this, "__disposers", {
             enumerable: true,
             configurable: true,
@@ -385,6 +406,7 @@ class Input {
         this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
         this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
         this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
+        this.syncCookie = args === null || args === void 0 ? void 0 : args.syncCookie;
         makeObservable(this);
         if (this.debounce) {
             this.stopDebouncing = config.DEBOUNCE(() => runInAction(() => this.isDebouncing = false), this.debounce);
@@ -392,6 +414,7 @@ class Input {
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
         this.syncLocalStorage && syncLocalStorageHandler(this.syncLocalStorage, this);
+        this.syncCookie && syncCookieHandler(this.syncCookie, this);
         this.syncURL && syncURLHandler(this.syncURL, this);
     }
     destroy() {
@@ -2424,5 +2447,5 @@ class DeleteObjectForm extends ObjectForm {
     }
 }
 
-export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map

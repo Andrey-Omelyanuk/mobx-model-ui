@@ -20,5 +20,7 @@ export const config = {
 
     DEBOUNCE: (func: Function, debounce: number) => {
         return _.debounce(func, debounce)
-    }
+    },
+
+    COOKIE_DOMAIN: 'localhost' // Change this to your domain if needed.
 }
