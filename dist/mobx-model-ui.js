@@ -437,6 +437,9 @@
                 this.isDebouncing = true;
                 this.stopDebouncing(); // will stop debouncing after debounce
             }
+            else {
+                this.validate();
+            }
         }
         get isReady() {
             if (this.isDisabled)

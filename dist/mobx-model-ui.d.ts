@@ -267,11 +267,11 @@ declare class Repository<M extends Model> {
 }
 
 interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
-    options?: Query<M>;
+    options: Query<M>;
     autoReset?: (input: ObjectInput<M>) => void;
 }
 declare class ObjectInput<M extends Model> extends Input<ID> {
-    readonly options?: Query<M>;
+    readonly options: Query<M>;
     constructor(type: TypeDescriptor<ID>, args?: ObjectInputConstructorArgs<M>);
     get obj(): M | undefined;
     get isReady(): boolean;
