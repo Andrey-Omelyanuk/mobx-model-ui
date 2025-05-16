@@ -221,7 +221,7 @@ export default abstract class Model implements Destroyable {
         return this.getModelDescriptor().cache.get(id) as T
     }
     static async findById<T extends Model>(id: ID) : Promise<T> {
-    let repository = this.defaultRepository as Repository<T>
+        let repository = this.defaultRepository as Repository<T>
         return repository.get(id)
     }
     static async find<T extends Model>(query: Query<T>) : Promise<T> {
