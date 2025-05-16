@@ -9,20 +9,21 @@ declare const config: {
     COOKIE_DOMAIN: string;
 };
 
-interface TypeDescriptorProps {
-    null?: boolean;
-    required?: boolean;
-}
 /**
- *  Base class for the type descriptor
- * It is used to define the field of the model
- * It is used to convert the value to the string and back
+ * Interface for objects that can be destroyed.
  */
+interface Destroyable {
+    destroy(): void;
+}
+
+interface TypeDescriptorProps {
+    required?: boolean;
+    null?: boolean;
+}
 declare abstract class TypeDescriptor<T> {
-    /**
-     * Configuration of the descriptor
-     */
-    config: any;
+    required: boolean;
+    null: boolean;
+    constructor(props?: TypeDescriptorProps);
     /**
      * Convert value to the string
      */
@@ -35,14 +36,17 @@ declare abstract class TypeDescriptor<T> {
      * Check if the value is valid
      * If not, throw an error
      */
-    abstract validate(value: T): void;
+    validate(value: T): void;
     abstract default(): T;
 }
 
 interface StringDescriptorProps extends TypeDescriptorProps {
+    minLength?: number;
     maxLength?: number;
 }
 declare class StringDescriptor extends TypeDescriptor<string> {
+    minLength: number;
+    maxLength: number;
     constructor(props?: StringDescriptorProps);
     toString(value: string): string;
     fromString(value: string): string;
@@ -56,6 +60,8 @@ interface NumberDescriptorProps extends TypeDescriptorProps {
     max?: number;
 }
 declare class NumberDescriptor extends TypeDescriptor<number> {
+    min: number;
+    max: number;
     constructor(props?: NumberDescriptorProps);
     toString(value: number): string;
     fromString(value: string): number;
@@ -70,7 +76,6 @@ declare class BooleanDescriptor extends TypeDescriptor<boolean> {
     constructor(props?: BooleanDescriptorProps);
     toString(value: boolean): string;
     fromString(value: string): boolean;
-    validate(value: boolean): void;
     default(): boolean;
 }
 declare function BOOLEAN(props?: BooleanDescriptorProps): BooleanDescriptor;
@@ -80,9 +85,11 @@ interface DateDescriptorProps extends TypeDescriptorProps {
     max?: Date;
 }
 declare class DateDescriptor extends TypeDescriptor<Date> {
+    min: Date;
+    max: Date;
     constructor(props?: DateDescriptorProps);
     toString(value: Date): string;
-    fromString(value: string): Date;
+    fromString(value: string): Date | null | undefined;
     validate(value: Date): void;
     default(): Date;
 }
@@ -98,6 +105,9 @@ interface ArrayDescriptorProps extends TypeDescriptorProps {
     maxItems?: number;
 }
 declare class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
+    type: TypeDescriptor<T>;
+    minItems: number;
+    maxItems: number;
     constructor(type: TypeDescriptor<T>, props?: ArrayDescriptorProps);
     toString(value: T[]): string;
     fromString(value: string): T[];
@@ -133,7 +143,7 @@ interface InputConstructorArgs<T> {
     syncLocalStorage?: string;
     syncCookie?: string;
 }
-declare class Input<T> {
+declare class Input<T> implements Destroyable {
     type: TypeDescriptor<T>;
     value: T;
     isRequired: boolean;
@@ -151,6 +161,7 @@ declare class Input<T> {
     private stopDebouncing;
     set(value: T): void;
     get isReady(): boolean;
+    validate(): void;
     setFromString(value: string): void;
     toString(): string;
 }
@@ -287,7 +298,7 @@ interface QueryProps<M extends Model> {
     omit?: Input<string[]>;
     autoupdate?: boolean;
 }
-declare class Query<M extends Model> {
+declare class Query<M extends Model> implements Destroyable {
     readonly repository: Repository<M>;
     readonly filter: Filter;
     readonly orderBy: Input<[string, boolean][]>;
@@ -420,7 +431,7 @@ declare class ModelDescriptor<T extends Model> {
     updateCachedObject(rawObj: Object): T | undefined;
 }
 
-declare abstract class Model {
+declare abstract class Model implements Destroyable {
     /**
      * Static version initializes in the id decorator.
      * Instance version initializes in the constructor that declare in model decorator.
@@ -618,7 +629,7 @@ declare function constant(constant: any[]): (cls: any) => void;
 /**
  * Form class
  */
-declare class Form {
+declare class Form implements Destroyable {
     readonly inputs: {
         [key: string]: Input<any>;
     };
@@ -673,4 +684,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, Destroyable, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

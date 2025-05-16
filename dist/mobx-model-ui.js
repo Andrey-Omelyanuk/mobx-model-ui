@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.0.3
+   * mobx-model-ui.js v0.1.1
    * Released under the MIT license.
    */
 
@@ -416,7 +416,10 @@
             this.syncCookie = args === null || args === void 0 ? void 0 : args.syncCookie;
             mobx.makeObservable(this);
             if (this.debounce) {
-                this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => this.isDebouncing = false), this.debounce);
+                this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => {
+                    this.validate();
+                    this.isDebouncing = false;
+                }), this.debounce);
             }
             // the order is important, because syncURL has more priority under syncLocalStorage
             // i.e. init from syncURL can overwrite value from syncLocalStorage
@@ -442,6 +445,16 @@
                 || this.isDebouncing
                 || this.isNeedToUpdate
                 || this.isRequired && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length)));
+        }
+        validate() {
+            this.errors = [];
+            try {
+                this.type.validate(this.value);
+                this.errors = [];
+            }
+            catch (e) {
+                this.errors = [e.message];
+            }
         }
         setFromString(value) {
             this.set(this.type.fromString(value));
@@ -480,30 +493,60 @@
         __metadata("design:paramtypes", [Object]),
         __metadata("design:returntype", void 0)
     ], Input.prototype, "set", null);
+    __decorate([
+        mobx.action,
+        __metadata("design:type", Function),
+        __metadata("design:paramtypes", []),
+        __metadata("design:returntype", void 0)
+    ], Input.prototype, "validate", null);
 
-    /**
-     *  Base class for the type descriptor
-     * It is used to define the field of the model
-     * It is used to convert the value to the string and back
-     */
     class TypeDescriptor {
-        constructor() {
-            /**
-             * Configuration of the descriptor
-             */
-            Object.defineProperty(this, "config", {
+        constructor(props) {
+            var _a, _b;
+            Object.defineProperty(this, "required", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
                 value: void 0
-            });
+            }); // allow undefined value
+            Object.defineProperty(this, "null", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            }); // allow null value
+            this.null = (_a = props === null || props === void 0 ? void 0 : props.null) !== null && _a !== void 0 ? _a : false;
+            this.required = (_b = props === null || props === void 0 ? void 0 : props.required) !== null && _b !== void 0 ? _b : true;
+        }
+        /**
+         * Check if the value is valid
+         * If not, throw an error
+         */
+        validate(value) {
+            if ((value === undefined && this.required)
+                || (value === null && !this.null))
+                throw new Error('Field is required');
         }
     }
 
     class StringDescriptor extends TypeDescriptor {
         constructor(props) {
-            super();
-            this.config = props ? props : { maxLength: 255 };
+            var _a, _b;
+            super(props);
+            Object.defineProperty(this, "minLength", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "maxLength", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.minLength = (_a = props === null || props === void 0 ? void 0 : props.minLength) !== null && _a !== void 0 ? _a : 0;
+            this.maxLength = (_b = props === null || props === void 0 ? void 0 : props.maxLength) !== null && _b !== void 0 ? _b : 255;
         }
         toString(value) {
             if (value === undefined)
@@ -522,12 +565,13 @@
             return value;
         }
         validate(value) {
-            if (value === null && !this.config.null)
+            super.validate(value);
+            if (value === '' && this.required)
                 throw new Error('Field is required');
-            if (value === '' && this.config.required)
-                throw new Error('Field is required');
-            if (this.config.maxLength && value.length > this.config.maxLength)
-                throw new Error('String is too long');
+            if (this.minLength && value.length < this.minLength)
+                throw new Error(`String must be at least ${this.minLength} characters long`);
+            if (this.maxLength && value.length > this.maxLength)
+                throw new Error(`String must be no more than ${this.maxLength} characters long`);
         }
         default() {
             return '';
@@ -539,8 +583,22 @@
 
     class NumberDescriptor extends TypeDescriptor {
         constructor(props) {
-            super();
-            this.config = props ? props : {};
+            var _a, _b;
+            super(props);
+            Object.defineProperty(this, "min", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "max", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.min = (_a = props === null || props === void 0 ? void 0 : props.min) !== null && _a !== void 0 ? _a : -Infinity;
+            this.max = (_b = props === null || props === void 0 ? void 0 : props.max) !== null && _b !== void 0 ? _b : Infinity;
         }
         toString(value) {
             if (value === undefined)
@@ -562,12 +620,11 @@
             return result;
         }
         validate(value) {
-            if (value === null && !this.config.null)
-                throw new Error('Field is required');
-            if (this.config.min && value < this.config.min)
-                throw new Error('Number is too small');
-            if (this.config.max && value > this.config.max)
-                throw new Error('Number is too big');
+            super.validate(value);
+            if (this.min && value < this.min)
+                throw new Error('Number should be greater than or equal to ' + this.min);
+            if (this.max && value > this.max)
+                throw new Error('Number should be less than or equal to ' + this.max);
         }
         default() {
             return undefined;
@@ -579,19 +636,25 @@
 
     class BooleanDescriptor extends TypeDescriptor {
         constructor(props) {
-            super();
-            this.config = props;
+            super(props);
         }
         toString(value) {
-            return value.toString();
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            if (value === false)
+                return 'false';
+            return 'true';
         }
         fromString(value) {
-            return value === 'true';
-        }
-        validate(value) {
-            var _a;
-            if (((_a = this.config) === null || _a === void 0 ? void 0 : _a.required) && value === undefined)
-                throw new Error('Field is required');
+            if (value === 'false' || value === '0')
+                return false;
+            if (value === 'null' || value === null)
+                return null;
+            if (value === undefined)
+                return undefined;
+            return !!value;
         }
         default() {
             return false;
@@ -603,20 +666,43 @@
 
     class DateDescriptor extends TypeDescriptor {
         constructor(props) {
-            super();
-            this.config = props;
+            var _a, _b;
+            super(props);
+            Object.defineProperty(this, "min", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "max", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.min = (_a = props === null || props === void 0 ? void 0 : props.min) !== null && _a !== void 0 ? _a : new Date(0);
+            this.max = (_b = props === null || props === void 0 ? void 0 : props.max) !== null && _b !== void 0 ? _b : new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000); // + 100 years
         }
         toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
             return value.toISOString();
         }
         fromString(value) {
+            if (value === null || value === 'null')
+                return null;
+            if (value === undefined)
+                return undefined;
             return new Date(value);
         }
         validate(value) {
-            if (this.config.min && value < this.config.min)
-                throw new Error('Date is too early');
-            if (this.config.max && value > this.config.max)
-                throw new Error('Date is too late');
+            super.validate(value);
+            if (this.min && value < this.min)
+                throw new Error('Date should be later than ' + this.min.toISOString());
+            if (this.max && value > this.max)
+                throw new Error('Date should be earlier than ' + this.max.toISOString());
         }
         default() {
             return new Date();
@@ -637,28 +723,49 @@
 
     class ArrayDescriptor extends TypeDescriptor {
         constructor(type, props) {
-            super();
-            this.config = props ? props : {};
-            this.config.type = type;
+            var _a, _b;
+            super(props);
+            Object.defineProperty(this, "type", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "minItems", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "maxItems", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.type = type;
+            this.minItems = (_a = props === null || props === void 0 ? void 0 : props.minItems) !== null && _a !== void 0 ? _a : 0;
+            this.maxItems = (_b = props === null || props === void 0 ? void 0 : props.maxItems) !== null && _b !== void 0 ? _b : Infinity;
         }
         toString(value) {
             if (!value)
                 return undefined;
             if (!value.length)
                 return undefined;
-            return value.map(item => this.config.type.toString(item)).join(',');
+            return value.map(item => this.type.toString(item)).join(',');
         }
         fromString(value) {
             if (!value)
                 return [];
-            return value.split(',').map(item => this.config.type.fromString(item));
+            return value.split(',').map(item => this.type.fromString(item));
         }
         validate(value) {
-            if (this.config.minItems && value.length < this.config.minItems)
-                throw new Error('Array is too short');
-            if (this.config.maxItems && value.length > this.config.maxItems)
-                throw new Error('Array is too long');
-            value.forEach(item => this.config.type.validate(item));
+            super.validate(value);
+            if (this.minItems && value.length < this.minItems)
+                throw new Error('Items count is less than minimum allowed');
+            if (this.maxItems && value.length > this.maxItems)
+                throw new Error('Items count is more than maximum allowed');
+            value.forEach(item => this.type.validate(item));
         }
         default() {
             return [];
