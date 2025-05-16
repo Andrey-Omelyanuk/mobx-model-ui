@@ -500,6 +500,61 @@
         __metadata("design:returntype", void 0)
     ], Input.prototype, "validate", null);
 
+    class ObjectInput extends Input {
+        constructor(type, args) {
+            super(type, args);
+            Object.defineProperty(this, "options", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.options = args.options;
+            if (this.options) {
+                this.__disposers.push(mobx.reaction(() => this.options.isReady, (isReady, previousValue) => {
+                    if (isReady && !previousValue) {
+                        mobx.runInAction(() => this.isNeedToUpdate = true);
+                        (args === null || args === void 0 ? void 0 : args.autoReset) && args.autoReset(this);
+                    }
+                }));
+            }
+            else if (args === null || args === void 0 ? void 0 : args.autoReset) {
+                console.warn('autoReset function should be used only with options');
+            }
+        }
+        get obj() {
+            if (!this.options) {
+                console.warn('ObjectInput cannot return an object if options are not provided');
+                return undefined;
+            }
+            return this.options.repository.modelDescriptor.cache.get(this.value);
+        }
+        get isReady() {
+            // options should be checked first
+            // because without options it doesn't make sense to check value 
+            return this.options ? this.options.isReady && super.isReady : super.isReady;
+        }
+        destroy() {
+            var _a;
+            super.destroy();
+            (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
+        }
+    }
+
+    function autoResetId(input) {
+        var _a;
+        // if value still in options, do nothing
+        for (const item of input.options.items) {
+            if (item.ID === input.value) {
+                // have to set value to trigger reaction
+                input.set(input.value);
+                return;
+            }
+        }
+        // otherwise set first available id or undefined
+        input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.ID);
+    }
+
     class TypeDescriptor {
         constructor(props) {
             var _a, _b;
@@ -802,61 +857,6 @@
     }
     function ORDER_BY() {
         return new OrderByDescriptor();
-    }
-
-    class ObjectInput extends Input {
-        constructor(args) {
-            super(STRING(), args);
-            Object.defineProperty(this, "options", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.options = args.options;
-            if (this.options) {
-                this.__disposers.push(mobx.reaction(() => this.options.isReady, (isReady, previousValue) => {
-                    if (isReady && !previousValue) {
-                        mobx.runInAction(() => this.isNeedToUpdate = true);
-                        (args === null || args === void 0 ? void 0 : args.autoReset) && args.autoReset(this);
-                    }
-                }));
-            }
-            else if (args === null || args === void 0 ? void 0 : args.autoReset) {
-                console.warn('autoReset function should be used only with options');
-            }
-        }
-        get obj() {
-            if (!this.options) {
-                console.warn('ObjectInput cannot return an object if options are not provided');
-                return undefined;
-            }
-            return this.options.repository.modelDescriptor.cache.get(this.value);
-        }
-        get isReady() {
-            // options should be checked first
-            // because without options it doesn't make sense to check value 
-            return this.options ? this.options.isReady && super.isReady : super.isReady;
-        }
-        destroy() {
-            var _a;
-            super.destroy();
-            (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
-        }
-    }
-
-    function autoResetId(input) {
-        var _a;
-        // if value still in options, do nothing
-        for (const item of input.options.items) {
-            if (item.ID === input.value) {
-                // have to set value to trigger reaction
-                input.set(input.value);
-                return;
-            }
-        }
-        // otherwise set first available id or undefined
-        input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.ID);
     }
 
     const DISPOSER_AUTOUPDATE = '__autoupdate';
