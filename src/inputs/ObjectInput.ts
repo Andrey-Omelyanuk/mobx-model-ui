@@ -6,12 +6,12 @@ import { ID, STRING, TypeDescriptor } from '../types'
 
 
 export interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
-    options   ?: Query<M>
+    options    : Query<M>
     autoReset ?: (input: ObjectInput<M>) => void
 }
 
 export class ObjectInput<M extends Model> extends Input<ID> {
-    readonly options?: Query<M>
+    readonly options: Query<M>
 
     constructor (type: TypeDescriptor<ID>, args?: ObjectInputConstructorArgs<M>) {
         super(type, args)

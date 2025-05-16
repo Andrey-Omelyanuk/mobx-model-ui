@@ -74,6 +74,9 @@ export class Input<T> implements Destroyable {
             this.isDebouncing = true 
             this.stopDebouncing()       // will stop debouncing after debounce
         }
+        else {
+            this.validate()
+        }
     }
 
     get isReady () {
