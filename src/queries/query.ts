@@ -6,6 +6,7 @@ import { waitIsFalse } from '../utils'
 import { Input } from '../inputs'
 import { config } from '../config'
 import { ARRAY, NUMBER, STRING, ORDER_BY } from '../types'
+import { Destroyable } from '../object'
 
 
 export const DISPOSER_AUTOUPDATE = '__autoupdate'
@@ -46,7 +47,7 @@ export interface QueryProps<M extends Model> {
 
 */
 
-export class Query <M extends Model> {
+export class Query <M extends Model> implements Destroyable {
 
     readonly repository: Repository<M>
     readonly filter    : Filter

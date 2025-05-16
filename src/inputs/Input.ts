@@ -2,6 +2,7 @@ import { action, makeObservable, observable, runInAction } from 'mobx'
 import { syncCookieHandler, syncLocalStorageHandler, syncURLHandler } from './handlers'
 import { config } from '../config'
 import { TypeDescriptor } from '../types'
+import { Destroyable } from '../object'
 
 
 export interface InputConstructorArgs<T> {
@@ -14,7 +15,7 @@ export interface InputConstructorArgs<T> {
     syncCookie          ?: string
 }
 
-export class Input<T> {
+export class Input<T> implements Destroyable {
     type: TypeDescriptor<T>
     @observable          value               : T
     @observable          isRequired          : boolean

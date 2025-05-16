@@ -1,4 +1,5 @@
 export * from './config'
+export * from './object'
 export * from './cache'
 export * from './repository'
 export * from './model'

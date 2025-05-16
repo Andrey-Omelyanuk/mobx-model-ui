@@ -1,11 +1,12 @@
 import { makeObservable, observable, runInAction } from 'mobx'
 import { Input } from '../inputs/Input'
 import { config } from '../config'
+import { Destroyable } from '../object'
 
 /**
  * Form class
  */
-export class Form {
+export class Form implements Destroyable {
     @observable isLoading   : boolean = false
     @observable errors      : string[] = []
 

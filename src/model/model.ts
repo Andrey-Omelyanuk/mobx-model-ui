@@ -5,11 +5,12 @@ import {
 } from '../queries'
 import { Repository } from '../repository'
 import { ID } from '../types'
+import { Destroyable } from '../object'
 import models from './models'
 import { ModelDescriptor } from './model-descriptor'
 
 
-export default abstract class Model {
+export default abstract class Model implements Destroyable {
     /**
      * Static version initializes in the id decorator.
      * Instance version initializes in the constructor that declare in model decorator.
