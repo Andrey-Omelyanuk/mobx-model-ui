@@ -2,7 +2,7 @@ import { reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
 import { Input, InputConstructorArgs } from './Input'
-import { STRING, TypeDescriptor } from '../types'
+import { ID, STRING, TypeDescriptor } from '../types'
 
 
 export interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
@@ -10,11 +10,11 @@ export interface ObjectInputConstructorArgs<M extends Model> extends InputConstr
     autoReset ?: (input: ObjectInput<M>) => void
 }
 
-export class ObjectInput<M extends Model> extends Input<string> {
+export class ObjectInput<M extends Model> extends Input<ID> {
     readonly options?: Query<M>
 
-    constructor (args?: ObjectInputConstructorArgs<M>) {
-        super(STRING(), args)
+    constructor (type: TypeDescriptor<ID>, args?: ObjectInputConstructorArgs<M>) {
+        super(type, args)
         this.options = args.options
         if (this.options) {
             this.__disposers.push(reaction(
