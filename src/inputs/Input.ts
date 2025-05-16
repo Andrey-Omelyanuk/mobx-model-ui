@@ -46,7 +46,10 @@ export class Input<T> implements Destroyable {
         makeObservable(this)
         if (this.debounce) {
             this.stopDebouncing = config.DEBOUNCE(
-                () => runInAction(() => this.isDebouncing = false),
+                () => runInAction(() => {
+                    this.validate()
+                    this.isDebouncing = false
+                }),
                 this.debounce
             )
         }
@@ -81,6 +84,16 @@ export class Input<T> implements Destroyable {
             ||  this.isNeedToUpdate
             ||  this.isRequired && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length))
         )
+    }
+
+    @action validate () {
+        this.errors = []
+        try {
+            this.type.validate(this.value)
+            this.errors = []
+        } catch (e) {
+            this.errors = [e.message]
+        }
     }
 
     setFromString(value: string) {

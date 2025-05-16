@@ -20,6 +20,9 @@ build:
 	docker build -t $(PROJECT_NAME) .
 dev:
 	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn dev"
+# alias for dev
+run: dev
+
 # chrome://inspect/#devices
 debug:
 	docker run --rm -it -p 9229:9229 -v .:/app $(PROJECT_NAME) \

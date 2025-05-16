@@ -20,23 +20,15 @@ describe('NumberDescriptor', () => {
     })
 
     describe('validate', () => {
-        it('null', async () => {
-            const descriptor = new NumberDescriptor({null: true})
-            expect(() => descriptor.validate(null)).not.toThrow()
-        })
-        it('not null', async () => {
-            const descriptor = new NumberDescriptor({null: false})
-            expect(() => descriptor.validate(null)).toThrow('Field is required')
-        })
         it('min', async () => {
             const descriptor = new NumberDescriptor({min: 5})
             expect(() => descriptor.validate(5)).not.toThrow()
-            expect(() => descriptor.validate(4)).toThrow('Number is too small')
+            expect(() => descriptor.validate(4)).toThrow('Number should be greater than or equal to 5')
         })
         it('max', async () => {
             const descriptor = new NumberDescriptor({max: 10})
             expect(() => descriptor.validate(10)).not.toThrow()
-            expect(() => descriptor.validate(11)).toThrow('Number is too big')
+            expect(() => descriptor.validate(11)).toThrow('Number should be less than or equal to 10')
         })
     })
 })

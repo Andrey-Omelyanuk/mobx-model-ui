@@ -7,26 +7,31 @@ export interface ArrayDescriptorProps extends TypeDescriptorProps {
 }
 
 export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
+    type    : TypeDescriptor<T>
+    minItems: number
+    maxItems: number
     constructor(type: TypeDescriptor<T>, props?: ArrayDescriptorProps) {
-        super()
-        this.config = props ? props : {}
-        this.config.type = type
+        super(props)
+        this.type     = type
+        this.minItems = props?.minItems ?? 0
+        this.maxItems = props?.maxItems ?? Infinity
     }
     toString(value: T[]): string {
         if (!value) return undefined
         if (!value.length) return undefined
-        return value.map(item => this.config.type.toString(item)).join(',')
+        return value.map(item => this.type.toString(item)).join(',')
     }
     fromString(value: string): T[] {
         if (!value) return []
-        return value.split(',').map(item => this.config.type.fromString(item))
+        return value.split(',').map(item => this.type.fromString(item))
     }
     validate(value: T[]) {
-        if (this.config.minItems && value.length < this.config.minItems)
-            throw new Error('Array is too short')
-        if (this.config.maxItems && value.length > this.config.maxItems)
-            throw new Error('Array is too long')
-        value.forEach(item => this.config.type.validate(item))
+        super.validate(value)
+        if (this.minItems && value.length < this.minItems)
+            throw new Error('Items count is less than minimum allowed')
+        if (this.maxItems && value.length > this.maxItems)
+            throw new Error('Items count is more than maximum allowed')
+        value.forEach(item => this.type.validate(item))
     }
     default(): T[] {
         return []

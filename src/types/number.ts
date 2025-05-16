@@ -1,16 +1,18 @@
 import { TypeDescriptor, TypeDescriptorProps } from './type'
 
-
 export interface NumberDescriptorProps extends TypeDescriptorProps {
     min?: number
     max?: number
 }
 
-
 export class NumberDescriptor extends TypeDescriptor<number> {
+    min: number
+    max: number
+
     constructor(props?: NumberDescriptorProps) {
-        super()
-        this.config = props ? props : {}
+        super(props)
+        this.min = props?.min ?? -Infinity
+        this.max = props?.max ?? Infinity
     }
 
     toString(value: number): string {
@@ -29,19 +31,17 @@ export class NumberDescriptor extends TypeDescriptor<number> {
     }
 
     validate(value: number) {
-        if (value === null && !this.config.null)
-            throw new Error('Field is required')
-        if (this.config.min && value < this.config.min)
-            throw new Error('Number is too small')
-        if (this.config.max && value > this.config.max)
-            throw new Error('Number is too big')
+        super.validate(value)
+        if (this.min && value < this.min)
+            throw new Error('Number should be greater than or equal to ' + this.min) 
+        if (this.max && value > this.max)
+            throw new Error('Number should be less than or equal to ' + this.max)
     }
     default(): number {
         return undefined
     }
 }
 
-
-export function NUMBER(props?: NumberDescriptorProps) {
+export function NUMBER(props?: NumberDescriptorProps) : NumberDescriptor {
     return new NumberDescriptor(props)
 }

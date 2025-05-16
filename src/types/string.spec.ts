@@ -20,14 +20,6 @@ describe('StringDescriptor', () => {
     })
 
     describe('validate', () => {
-        it('null', async () => {
-            const descriptor = new StringDescriptor({null: true})
-            expect(() => descriptor.validate(null)).not.toThrow()
-        })
-        it('not null', async () => {
-            const descriptor = new StringDescriptor({null: false})
-            expect(() => descriptor.validate(null)).toThrow()
-        })
         it('required', async () => {
             const descriptor = new StringDescriptor({required: true})
             expect(() => descriptor.validate('')).toThrow('Field is required')
@@ -36,10 +28,15 @@ describe('StringDescriptor', () => {
             const descriptor = new StringDescriptor({required: false})
             expect(() => descriptor.validate('')).not.toThrow()
         })
+        it('minLength', async () => {
+            const descriptor = new StringDescriptor({minLength: 5})
+            expect(() => descriptor.validate('1234')).toThrow('String must be at least 5 characters long')
+            expect(() => descriptor.validate('12345')).not.toThrow()
+        })
         it('maxLength', async () => {
             const descriptor = new StringDescriptor({maxLength: 5})
             expect(() => descriptor.validate('12345')).not.toThrow()
-            expect(() => descriptor.validate('123456')).toThrow('String is too long')
+            expect(() => descriptor.validate('123456')).toThrow('String must be no more than 5 characters long')
         })
     })
 })

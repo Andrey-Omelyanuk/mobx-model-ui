@@ -2,14 +2,18 @@ import { TypeDescriptor, TypeDescriptorProps } from './type'
 
 
 export interface StringDescriptorProps extends TypeDescriptorProps {
+    minLength?: number
     maxLength?: number
 }
 
 
 export class StringDescriptor extends TypeDescriptor<string> {
+    minLength: number
+    maxLength: number
     constructor(props?: StringDescriptorProps) {
-        super()
-        this.config = props ? props : { maxLength: 255 }
+        super(props)
+        this.minLength = props?.minLength ?? 0
+        this.maxLength = props?.maxLength ?? 255
     }
 
     toString(value: string): string {
@@ -26,12 +30,13 @@ export class StringDescriptor extends TypeDescriptor<string> {
     }
 
     validate(value: string) {
-        if (value === null && !this.config.null)
+        super.validate(value)
+        if (value === '' && this.required)
             throw new Error('Field is required')
-        if (value === '' && this.config.required)
-            throw new Error('Field is required')
-        if (this.config.maxLength && value.length > this.config.maxLength)
-            throw new Error('String is too long')
+        if (this.minLength && value.length < this.minLength)
+            throw new Error(`String must be at least ${this.minLength} characters long`)
+        if (this.maxLength && value.length > this.maxLength)
+            throw new Error(`String must be no more than ${this.maxLength} characters long`)
     }
     default(): string {
         return ''

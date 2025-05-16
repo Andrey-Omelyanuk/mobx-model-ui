@@ -30,18 +30,6 @@ describe('ArrayDescriptor', () => {
             () => { expect(descOrder.fromString('a,-b')).toEqual([['a', ASC], ['b', DESC]]) })
     })
 
-    describe('constructor', () => {
-
-        it('default', () => {
-            const desc = new ArrayDescriptor(new StringDescriptor())
-            expect(desc.config).toEqual({ type: new StringDescriptor() })
-        })
-        it('props', () => {
-            const desc = new ArrayDescriptor(new StringDescriptor(), { minItems: 1, maxItems: 10 })
-            expect(desc.config).toEqual({ type: new StringDescriptor(), minItems: 1, maxItems: 10 })
-        })
-    })
-
     // TODO: test validate
     describe('validate', () => {
         it('null', async () => {

@@ -2,25 +2,25 @@ import { TypeDescriptor, TypeDescriptorProps } from './type'
 
 export interface BooleanDescriptorProps extends TypeDescriptorProps {}
 
-
 export class BooleanDescriptor extends TypeDescriptor<boolean> {
     constructor(props?: BooleanDescriptorProps) {
-        super()
-        this.config = props
+        super(props)
     }
 
     toString(value: boolean): string {
-        return value.toString()
+        if (value === undefined) return undefined
+        if (value === null) return 'null'
+        if (value === false) return 'false'
+        return 'true' 
     }
 
     fromString(value: string): boolean {
-        return value === 'true'
+        if (value === 'false' || value === '0') return false
+        if (value === 'null' || value === null) return null
+        if (value === undefined) return undefined
+        return !!value
     }
 
-    validate(value: boolean): void {
-        if (this.config?.required && value === undefined)
-            throw new Error('Field is required')
-    }
     default(): boolean {
         return false
     }
