@@ -266,7 +266,7 @@ declare class Repository<M extends Model> {
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
 }
 
-interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
+interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<ID> {
     options: Query<M>;
     autoReset?: (input: ObjectInput<M>) => void;
 }

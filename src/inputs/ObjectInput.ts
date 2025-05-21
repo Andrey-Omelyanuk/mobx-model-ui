@@ -5,7 +5,7 @@ import { Input, InputConstructorArgs } from './Input'
 import { ID, STRING, TypeDescriptor } from '../types'
 
 
-export interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<string> {
+export interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<ID> {
     options    : Query<M>
     autoReset ?: (input: ObjectInput<M>) => void
 }
