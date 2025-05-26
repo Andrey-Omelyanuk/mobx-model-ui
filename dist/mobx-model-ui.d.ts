@@ -264,6 +264,13 @@ declare class Repository<M extends Model> {
      * Returns distinct values for the field.
      */
     getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]>;
+    getQuery(props: QueryProps<M>): Query<M>;
+    getQueryPage(props: QueryProps<M>): QueryPage<M>;
+    getQueryRaw(props: QueryProps<M>): QueryRaw<M>;
+    getQueryRawPage(props: QueryProps<M>): QueryRawPage<M>;
+    getQueryCacheSync(props: QueryProps<M>): QueryCacheSync<M>;
+    getQueryStream(props: QueryProps<M>): QueryStream<M>;
+    getQueryDistinct(field: string, props: QueryProps<M>): QueryDistinct;
 }
 
 interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<ID> {

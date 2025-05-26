@@ -1,7 +1,7 @@
 import { runInAction } from 'mobx'
 import { Model, ModelDescriptor } from './model'
 import { ID } from './types'
-import { Query } from './queries/query'
+import { Query, QueryProps, QueryPage, QueryRaw, QueryRawPage, QueryCacheSync, QueryStream, QueryDistinct } from './queries'
 import { Filter } from './filters'
 import { Adapter, RequestConfig } from './adapters/adapter'
 
@@ -94,4 +94,12 @@ export class  Repository<M extends Model> {
     async getDistinct(filter: Filter, field: string, config?: RequestConfig): Promise<any[]> {
         return await this.adapter.getDistinct(filter, field, config)
     }
+
+    getQuery         (props: QueryProps<M>): Query         <M> { return new Query         ({...props, repository: this }) }
+    getQueryPage     (props: QueryProps<M>): QueryPage     <M> { return new QueryPage     ({...props, repository: this }) }
+    getQueryRaw      (props: QueryProps<M>): QueryRaw      <M> { return new QueryRaw      ({...props, repository: this }) }
+    getQueryRawPage  (props: QueryProps<M>): QueryRawPage  <M> { return new QueryRawPage  ({...props, repository: this }) }
+    getQueryCacheSync(props: QueryProps<M>): QueryCacheSync<M> { return new QueryCacheSync({...props, repository: this }) }
+    getQueryStream   (props: QueryProps<M>): QueryStream   <M> { return new QueryStream   ({...props, repository: this }) }
+    getQueryDistinct (field: string, props: QueryProps<M>): QueryDistinct { return new QueryDistinct(field, {...props, repository: this }) }
 }
