@@ -2,12 +2,12 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.1.1
+   * mobx-model-ui.js v0.2.4
    * Released under the MIT license.
    */
 
 import _ from 'lodash';
-import { observable, action, makeObservable, runInAction, autorun, reaction, computed, observe, extendObservable, intercept } from 'mobx';
+import { observable, action, makeObservable, autorun, reaction, runInAction, computed, observe, extendObservable, intercept } from 'mobx';
 
 // TODO: remove dependency of lodash 
 // Global config of Mobx-ORM
@@ -130,100 +130,6 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], Cache.prototype, "clear", null);
-
-/**
- * Repository class is responsible for CRUD operations on the model.
- */
-class Repository {
-    constructor(modelDescriptor, adapter) {
-        Object.defineProperty(this, "modelDescriptor", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: modelDescriptor
-        });
-        Object.defineProperty(this, "adapter", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: adapter
-        });
-    }
-    /**
-     * Create the object.
-     */
-    async create(obj, config) {
-        let raw_obj = await this.adapter.create(obj.rawObj, config); // Id can be defined in the frontend => id should be passed to the create method if they exist
-        const rawObjID = this.modelDescriptor.getID(raw_obj);
-        const cachedObj = this.modelDescriptor.cache.get(rawObjID);
-        if (cachedObj)
-            obj = cachedObj;
-        obj.updateFromRaw(raw_obj);
-        obj.refreshInitData();
-        return obj;
-    }
-    /**
-     * Update the object.
-     */
-    async update(obj, config) {
-        let raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config);
-        obj.updateFromRaw(raw_obj);
-        obj.refreshInitData();
-        return obj;
-    }
-    /**
-     * Delete the object.
-     */
-    async delete(obj, config) {
-        await this.adapter.delete(obj.ID, config);
-        obj.destroy();
-    }
-    /**
-     * Run action for the object.
-     */
-    async action(obj, name, kwargs, config) {
-        return await this.adapter.action(obj.ID, name, kwargs, config);
-    }
-    /**
-     * Returns ONE object by id.
-     */
-    async get(id, config) {
-        let raw_obj = await this.adapter.get(id, config);
-        return this.modelDescriptor.updateCachedObject(raw_obj);
-    }
-    /**
-     * Returns ONE object by query.
-     */
-    async find(query, config) {
-        let raw_obj = await this.adapter.find(query, config);
-        return this.modelDescriptor.updateCachedObject(raw_obj);
-    }
-    /**
-     * Returns MANY objects by query.
-     */
-    async load(query, config) {
-        let raw_objs = await this.adapter.load(query, config);
-        let objs = [];
-        runInAction(() => {
-            for (const raw_obj of raw_objs) {
-                objs.push(this.modelDescriptor.updateCachedObject(raw_obj));
-            }
-        });
-        return objs;
-    }
-    /**
-     * Returns total count of objects.
-     */
-    async getTotalCount(filter, config) {
-        return await this.adapter.getTotalCount(filter, config);
-    }
-    /**
-     * Returns distinct values for the field.
-     */
-    async getDistinct(filter, field, config) {
-        return await this.adapter.getDistinct(filter, field, config);
-    }
-}
 
 function waitIsTrue(obj, field) {
     return new Promise((resolve, reject) => {
@@ -1391,6 +1297,107 @@ class QueryDistinct extends Query {
 }
 
 /**
+ * Repository class is responsible for CRUD operations on the model.
+ */
+class Repository {
+    constructor(modelDescriptor, adapter) {
+        Object.defineProperty(this, "modelDescriptor", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: modelDescriptor
+        });
+        Object.defineProperty(this, "adapter", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: adapter
+        });
+    }
+    /**
+     * Create the object.
+     */
+    async create(obj, config) {
+        let raw_obj = await this.adapter.create(obj.rawObj, config); // Id can be defined in the frontend => id should be passed to the create method if they exist
+        const rawObjID = this.modelDescriptor.getID(raw_obj);
+        const cachedObj = this.modelDescriptor.cache.get(rawObjID);
+        if (cachedObj)
+            obj = cachedObj;
+        obj.updateFromRaw(raw_obj);
+        obj.refreshInitData();
+        return obj;
+    }
+    /**
+     * Update the object.
+     */
+    async update(obj, config) {
+        let raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config);
+        obj.updateFromRaw(raw_obj);
+        obj.refreshInitData();
+        return obj;
+    }
+    /**
+     * Delete the object.
+     */
+    async delete(obj, config) {
+        await this.adapter.delete(obj.ID, config);
+        obj.destroy();
+    }
+    /**
+     * Run action for the object.
+     */
+    async action(obj, name, kwargs, config) {
+        return await this.adapter.action(obj.ID, name, kwargs, config);
+    }
+    /**
+     * Returns ONE object by id.
+     */
+    async get(id, config) {
+        let raw_obj = await this.adapter.get(id, config);
+        return this.modelDescriptor.updateCachedObject(raw_obj);
+    }
+    /**
+     * Returns ONE object by query.
+     */
+    async find(query, config) {
+        let raw_obj = await this.adapter.find(query, config);
+        return this.modelDescriptor.updateCachedObject(raw_obj);
+    }
+    /**
+     * Returns MANY objects by query.
+     */
+    async load(query, config) {
+        let raw_objs = await this.adapter.load(query, config);
+        let objs = [];
+        runInAction(() => {
+            for (const raw_obj of raw_objs) {
+                objs.push(this.modelDescriptor.updateCachedObject(raw_obj));
+            }
+        });
+        return objs;
+    }
+    /**
+     * Returns total count of objects.
+     */
+    async getTotalCount(filter, config) {
+        return await this.adapter.getTotalCount(filter, config);
+    }
+    /**
+     * Returns distinct values for the field.
+     */
+    async getDistinct(filter, field, config) {
+        return await this.adapter.getDistinct(filter, field, config);
+    }
+    getQuery(props) { return new Query(Object.assign(Object.assign({}, props), { repository: this })); }
+    getQueryPage(props) { return new QueryPage(Object.assign(Object.assign({}, props), { repository: this })); }
+    getQueryRaw(props) { return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this })); }
+    getQueryRawPage(props) { return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this })); }
+    getQueryCacheSync(props) { return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this })); }
+    getQueryStream(props) { return new QueryStream(Object.assign(Object.assign({}, props), { repository: this })); }
+    getQueryDistinct(field, props) { return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this })); }
+}
+
+/**
  * Is a map of all registered models in the application.
  * It's a singleton.
  */
@@ -1580,37 +1587,23 @@ class Model {
     // --------------------------------------------------------------------------------------------
     // helper class functions
     // --------------------------------------------------------------------------------------------
-    static getQuery(props) {
-        return new Query(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
-    }
-    static getQueryPage(props) {
-        return new QueryPage(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
-    }
-    static getQueryRaw(props) {
-        return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
-    }
-    static getQueryRawPage(props) {
-        return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
-    }
-    static getQueryCacheSync(props) {
-        return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
-    }
-    static getQueryStream(props) {
-        return new QueryStream(Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
-    }
+    static getQuery(props) { return this.defaultRepository.getQuery(props); }
+    static getQueryPage(props) { return this.defaultRepository.getQueryPage(props); }
+    static getQueryRaw(props) { return this.defaultRepository.getQueryRaw(props); }
+    static getQueryRawPage(props) { return this.defaultRepository.getQueryRawPage(props); }
+    static getQueryCacheSync(props) { return this.defaultRepository.getQueryCacheSync(props); }
+    static getQueryStream(props) { return this.defaultRepository.getQueryStream(props); }
     static getQueryDistinct(field, props) {
-        return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this.defaultRepository }));
+        return this.defaultRepository.getQueryDistinct(field, props);
     }
     static get(id) {
         return this.getModelDescriptor().cache.get(id);
     }
     static async findById(id) {
-        let repository = this.defaultRepository;
-        return repository.get(id);
+        return this.defaultRepository.get(id);
     }
     static async find(query) {
-        let repository = this.defaultRepository;
-        return repository.find(query);
+        return this.defaultRepository.find(query);
     }
 }
 __decorate([
