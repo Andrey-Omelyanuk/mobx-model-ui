@@ -1,6 +1,7 @@
 import { runInAction } from 'mobx'
 import { Model } from '../model'
 import { Input } from '../inputs/Input' 
+import { Repository } from '../repository'
 import { ObjectForm } from './ObjectForm'
 
 /**
@@ -11,7 +12,8 @@ export class SaveObjectForm<M extends Model> extends ObjectForm<M> {
     constructor(
         obj     : M,
         inputs  : {[key: string]: Input<any> },
-        onDone ?: (response?) => void
+        onDone ?: (response?) => void,
+        repository ?: Repository<M>
     ) {
         super(
             obj,
@@ -36,7 +38,7 @@ export class SaveObjectForm<M extends Model> extends ObjectForm<M> {
                     }
                 })
 
-                const response = await this.obj.save()
+                const response = await (repository || this.obj.getDefaultRepository()).save(this.obj)
                 onDone && onDone(response)
             },
             onDone
