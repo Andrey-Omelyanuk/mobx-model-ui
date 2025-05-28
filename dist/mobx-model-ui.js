@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.2.5
+   * mobx-model-ui.js v0.2.6
    * Released under the MIT license.
    */
 
@@ -2305,6 +2305,9 @@
             let raw_objs = [];
             if (query.filter) {
                 for (let raw_obj of Object.values(local_store[this.store_name])) {
+                    if (query.filter.isMatch(raw_obj)) {
+                        raw_objs.push(raw_obj);
+                    }
                 }
             }
             else {
@@ -2314,6 +2317,18 @@
             if (query.orderBy.value) {
                 raw_objs = raw_objs.sort((obj_a, obj_b) => {
                     for (let sort_by_field of query.orderBy.value) {
+                        if (sort_by_field[1] === ASC) {
+                            if (obj_a[sort_by_field[0]] < obj_b[sort_by_field[0]])
+                                return -1;
+                            if (obj_a[sort_by_field[0]] > obj_b[sort_by_field[0]])
+                                return 1;
+                        }
+                        else {
+                            if (obj_a[sort_by_field[0]] > obj_b[sort_by_field[0]])
+                                return -1;
+                            if (obj_a[sort_by_field[0]] < obj_b[sort_by_field[0]])
+                                return 1;
+                        }
                     }
                     return 0;
                 });
