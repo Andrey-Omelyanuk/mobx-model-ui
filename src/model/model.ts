@@ -185,7 +185,7 @@ export default abstract class Model implements Destroyable {
     // helper instance functions
     // --------------------------------------------------------------------------------------------
 
-    async action(name: string, kwargs: Object) { return await this.model.repository.action(this, name, kwargs) }
+    async action(name: string, kwargs: Object) { return await this.getDefaultRepository().action(this, name, kwargs) }
     async create<T extends Model>(): Promise<T> { return await this.getDefaultRepository().create(this) as T }
     async update<T extends Model>(): Promise<T> { return await this.getDefaultRepository().update(this) as T }
     async save<T extends Model>(): Promise<T> { return this.ID ? await this.update() : await this.create() as T }
