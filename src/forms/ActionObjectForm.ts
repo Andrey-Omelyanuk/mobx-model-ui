@@ -1,6 +1,7 @@
 import { Model } from '../model'
 import { Input } from '../inputs/Input' 
 import { ObjectForm } from './ObjectForm'
+import { Repository } from '..'
 
 /**
  * Form to make an action of object.
@@ -10,7 +11,8 @@ export class ActionObjectForm<M extends Model> extends ObjectForm<M> {
         action: string,
         obj     : M,
         inputs  : {[key: string]: Input<any> },
-        onDone ?: (response?) => void
+        onDone ?: (response?) => void,
+        repository ?: Repository<M>
     ) {
         super(
             obj,
@@ -20,7 +22,7 @@ export class ActionObjectForm<M extends Model> extends ObjectForm<M> {
                 const kwargs: any = {}
                 for (let fieldName of Object.keys(inputs))
                     kwargs[fieldName] = inputs[fieldName].value
-                const response = await this.obj.action(action, kwargs)
+                const response = await (repository || this.obj.getDefaultRepository()).action(this.obj, action, kwargs)
                 onDone && onDone(response)
             },
             onDone

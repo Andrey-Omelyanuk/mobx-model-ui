@@ -1,3 +1,4 @@
+import { Repository } from '..'
 import { Model } from '../model'
 import { ObjectForm } from './ObjectForm'
 
@@ -8,13 +9,14 @@ import { ObjectForm } from './ObjectForm'
 export class DeleteObjectForm<M extends Model> extends ObjectForm<M> {
     constructor(
         public  obj     : M,
-                onDone ?: (response?) => void
+                onDone ?: (response?) => void,
+                repository ?: Repository<M>
     ) {
         super(
             obj,
             {},
             async () => {
-                const response = await this.obj.delete()
+                const response = await (repository || this.obj.getDefaultRepository()).delete(this.obj)
                 onDone && onDone(response)
             },
             onDone

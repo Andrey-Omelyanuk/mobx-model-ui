@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.2.4
+   * mobx-model-ui.js v0.2.6
    * Released under the MIT license.
    */
 
@@ -1344,6 +1344,13 @@
             return obj;
         }
         /**
+         * Save the object.
+         * If the object has ID, it will be updated, otherwise it will be created.
+         */
+        async save(obj, config) {
+            return obj.ID ? await this.update(obj, config) : await this.create(obj, config);
+        }
+        /**
          * Delete the object.
          */
         async delete(obj, config) {
@@ -1588,7 +1595,7 @@
         async action(name, kwargs) { return await this.model.repository.action(this, name, kwargs); }
         async create() { return await this.getDefaultRepository().create(this); }
         async update() { return await this.getDefaultRepository().update(this); }
-        async save() { return this.ID ? await this.update() : await this.create(); }
+        async save() { return await this.getDefaultRepository().save(this); }
         async delete() { return await this.getDefaultRepository().delete(this); }
         async refresh() { return await this.getDefaultRepository().get(this.ID); }
         // --------------------------------------------------------------------------------------------
@@ -2298,6 +2305,9 @@
             let raw_objs = [];
             if (query.filter) {
                 for (let raw_obj of Object.values(local_store[this.store_name])) {
+                    if (query.filter.isMatch(raw_obj)) {
+                        raw_objs.push(raw_obj);
+                    }
                 }
             }
             else {
@@ -2307,6 +2317,18 @@
             if (query.orderBy.value) {
                 raw_objs = raw_objs.sort((obj_a, obj_b) => {
                     for (let sort_by_field of query.orderBy.value) {
+                        if (sort_by_field[1] === ASC) {
+                            if (obj_a[sort_by_field[0]] < obj_b[sort_by_field[0]])
+                                return -1;
+                            if (obj_a[sort_by_field[0]] > obj_b[sort_by_field[0]])
+                                return 1;
+                        }
+                        else {
+                            if (obj_a[sort_by_field[0]] > obj_b[sort_by_field[0]])
+                                return -1;
+                            if (obj_a[sort_by_field[0]] < obj_b[sort_by_field[0]])
+                                return 1;
+                        }
                     }
                     return 0;
                 });
@@ -2497,7 +2519,7 @@
      * Form to save (create/update) an object.
      */
     class SaveObjectForm extends ObjectForm {
-        constructor(obj, inputs, onDone) {
+        constructor(obj, inputs, onDone, repository) {
             super(obj, inputs, async () => {
                 const fieldsNames = Object.keys(this.obj);
                 // check if all fields from inputs are in obj
@@ -2517,7 +2539,7 @@
                             this.obj[fieldName] = inputs[fieldName].value;
                     }
                 });
-                const response = await this.obj.save();
+                const response = await (repository || this.obj.getDefaultRepository()).save(this.obj);
                 onDone && onDone(response);
             }, onDone);
         }
@@ -2527,13 +2549,13 @@
      * Form to make an action of object.
      */
     class ActionObjectForm extends ObjectForm {
-        constructor(action, obj, inputs, onDone) {
+        constructor(action, obj, inputs, onDone, repository) {
             super(obj, inputs, async () => {
                 // move all values from inputs to kwargs of action
                 const kwargs = {};
                 for (let fieldName of Object.keys(inputs))
                     kwargs[fieldName] = inputs[fieldName].value;
-                const response = await this.obj.action(action, kwargs);
+                const response = await (repository || this.obj.getDefaultRepository()).action(this.obj, action, kwargs);
                 onDone && onDone(response);
             }, onDone);
         }
@@ -2543,9 +2565,9 @@
      * Form to delete an object.
      */
     class DeleteObjectForm extends ObjectForm {
-        constructor(obj, onDone) {
+        constructor(obj, onDone, repository) {
             super(obj, {}, async () => {
-                const response = await this.obj.delete();
+                const response = await (repository || this.obj.getDefaultRepository()).delete(this.obj);
                 onDone && onDone(response);
             }, onDone);
             Object.defineProperty(this, "obj", {

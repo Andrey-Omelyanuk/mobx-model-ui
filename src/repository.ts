@@ -38,6 +38,14 @@ export class  Repository<M extends Model> {
     }
 
     /**
+     * Save the object.
+     * If the object has ID, it will be updated, otherwise it will be created.
+     */
+    async save(obj: M, config?: RequestConfig) : Promise<M> {
+        return obj.ID ? await this.update(obj, config) : await this.create(obj, config)
+    }
+
+    /**
      * Delete the object.
      */
     async delete(obj: M, config?: RequestConfig) : Promise<void> {

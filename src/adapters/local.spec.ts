@@ -1,5 +1,5 @@
-import { model, Model, LocalAdapter, local, local_store, id, NUMBER } from '../'
-import { data_set  } from '../test.utils' 
+import { model, Model, LocalAdapter, local, local_store, id, NUMBER, AND, Input, STRING, BOOLEAN, EQ } from '../'
+import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e  } from '../test.utils' 
 
 
 describe('LocalAdapter', () => {
@@ -78,10 +78,41 @@ describe('LocalAdapter', () => {
     it('find', async ()=> {
     })
 
-    it('load', async ()=> {
-        adapter.init_local_data(data_set)
-        let objs = await adapter.load(A.getQuery({}))
-        expect(objs).toEqual(data_set)
+    describe('load', () => {
+
+        it('without filter', async ()=> {
+            adapter.init_local_data(data_set)
+            let objs = await adapter.load(A.getQuery({}))
+            expect(objs).toEqual(data_set)
+        })
+
+        it('with filter', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Input(NUMBER(), {value: 2})
+            const inputB = new Input(STRING(), {value: 'a'})
+            const inputC = new Input(BOOLEAN(), {value: false})
+
+            let objs = await adapter.load(A.getQuery({filter: EQ('a', inputA)}))
+            expect(objs).toEqual([obj_c, obj_d])
+
+            objs = await adapter.load(A.getQuery({filter: EQ('b', inputB)}))
+            expect(objs).toEqual([obj_a, obj_e])
+
+            objs = await adapter.load(A.getQuery({filter: EQ('c', inputC)}))
+            expect(objs).toEqual([obj_b, obj_c])
+
+            objs = await adapter.load(A.getQuery({filter: AND(EQ('a', inputA), EQ('c', inputC))}))
+            expect(objs).toEqual([obj_c])
+
+            objs = await adapter.load(A.getQuery({filter: AND(EQ('a', inputA), EQ('b', inputB), EQ('c', inputC))}))
+            expect(objs).toEqual([])
+        })
+
+        // it('with orderBy', async ()=> {
+        //     adapter.init_local_data(data_set)
+        //     let objs = await adapter.load(A.getQuery({orderBy: [{a: ASC}]}))
+        //     expect(objs).toEqual(data_set)
+        // })
     })
 
     it('getTotalCount', async ()=> {

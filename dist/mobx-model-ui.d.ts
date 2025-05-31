@@ -237,6 +237,11 @@ declare class Repository<M extends Model> {
      */
     update(obj: M, config?: RequestConfig): Promise<M>;
     /**
+     * Save the object.
+     * If the object has ID, it will be updated, otherwise it will be created.
+     */
+    save(obj: M, config?: RequestConfig): Promise<M>;
+    /**
      * Delete the object.
      */
     delete(obj: M, config?: RequestConfig): Promise<void>;
@@ -667,7 +672,7 @@ declare class ObjectForm<M extends Model> extends Form {
 declare class SaveObjectForm<M extends Model> extends ObjectForm<M> {
     constructor(obj: M, inputs: {
         [key: string]: Input<any>;
-    }, onDone?: (response?: any) => void);
+    }, onDone?: (response?: any) => void, repository?: Repository<M>);
 }
 
 /**
@@ -676,7 +681,7 @@ declare class SaveObjectForm<M extends Model> extends ObjectForm<M> {
 declare class ActionObjectForm<M extends Model> extends ObjectForm<M> {
     constructor(action: string, obj: M, inputs: {
         [key: string]: Input<any>;
-    }, onDone?: (response?: any) => void);
+    }, onDone?: (response?: any) => void, repository?: Repository<M>);
 }
 
 /**
@@ -684,7 +689,7 @@ declare class ActionObjectForm<M extends Model> extends ObjectForm<M> {
  */
 declare class DeleteObjectForm<M extends Model> extends ObjectForm<M> {
     obj: M;
-    constructor(obj: M, onDone?: (response?: any) => void);
+    constructor(obj: M, onDone?: (response?: any) => void, repository?: Repository<M>);
 }
 
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;

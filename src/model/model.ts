@@ -188,7 +188,7 @@ export default abstract class Model implements Destroyable {
     async action(name: string, kwargs: Object) { return await this.getDefaultRepository().action(this, name, kwargs) }
     async create<T extends Model>(): Promise<T> { return await this.getDefaultRepository().create(this) as T }
     async update<T extends Model>(): Promise<T> { return await this.getDefaultRepository().update(this) as T }
-    async save<T extends Model>(): Promise<T> { return this.ID ? await this.update() : await this.create() as T }
+    async save<T extends Model>(): Promise<T> { return await this.getDefaultRepository().save(this) as T }
     async delete() { return await this.getDefaultRepository().delete(this) }
     async refresh() { return await this.getDefaultRepository().get(this.ID) }
 
