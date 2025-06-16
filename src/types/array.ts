@@ -27,9 +27,9 @@ export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
     }
     validate(value: T[]) {
         super.validate(value)
-        if (this.minItems && value.length < this.minItems)
+        if (this.minItems && value?.length < this.minItems)
             throw new Error('Items count is less than minimum allowed')
-        if (this.maxItems && value.length > this.maxItems)
+        if (this.maxItems && value?.length > this.maxItems)
             throw new Error('Items count is more than maximum allowed')
         value.forEach(item => this.type.validate(item))
     }

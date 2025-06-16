@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.2.7
+   * mobx-model-ui.js v0.2.8
    * Released under the MIT license.
    */
 
@@ -521,9 +521,9 @@
             super.validate(value);
             if (value === '' && this.required)
                 throw new Error('Field is required');
-            if (this.minLength && value.length < this.minLength)
+            if (this.minLength && (value === null || value === void 0 ? void 0 : value.length) < this.minLength)
                 throw new Error(`String must be at least ${this.minLength} characters long`);
-            if (this.maxLength && value.length > this.maxLength)
+            if (this.maxLength && (value === null || value === void 0 ? void 0 : value.length) > this.maxLength)
                 throw new Error(`String must be no more than ${this.maxLength} characters long`);
         }
         default() {
@@ -714,9 +714,9 @@
         }
         validate(value) {
             super.validate(value);
-            if (this.minItems && value.length < this.minItems)
+            if (this.minItems && (value === null || value === void 0 ? void 0 : value.length) < this.minItems)
                 throw new Error('Items count is less than minimum allowed');
-            if (this.maxItems && value.length > this.maxItems)
+            if (this.maxItems && (value === null || value === void 0 ? void 0 : value.length) > this.maxItems)
                 throw new Error('Items count is more than maximum allowed');
             value.forEach(item => this.type.validate(item));
         }
@@ -1581,7 +1581,7 @@
         // --------------------------------------------------------------------------------------------
         // helper instance functions
         // --------------------------------------------------------------------------------------------
-        async action(name, kwargs) { return await this.model.repository.action(this, name, kwargs); }
+        async action(name, kwargs) { return await this.getDefaultRepository().action(this, name, kwargs); }
         async create() { return await this.getDefaultRepository().create(this); }
         async update() { return await this.getDefaultRepository().update(this); }
         async save() { return await this.getDefaultRepository().save(this); }

@@ -33,9 +33,9 @@ export class StringDescriptor extends TypeDescriptor<string> {
         super.validate(value)
         if (value === '' && this.required)
             throw new Error('Field is required')
-        if (this.minLength && value.length < this.minLength)
+        if (this.minLength && value?.length < this.minLength)
             throw new Error(`String must be at least ${this.minLength} characters long`)
-        if (this.maxLength && value.length > this.maxLength)
+        if (this.maxLength && value?.length > this.maxLength)
             throw new Error(`String must be no more than ${this.maxLength} characters long`)
     }
     default(): string {
