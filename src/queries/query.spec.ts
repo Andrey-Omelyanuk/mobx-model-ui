@@ -228,9 +228,8 @@ describe('Query', () => {
             @constant(bData) @model class B extends Model {}
 
             const aQuery = A.getQuery({ autoupdate: true })
-            const aInput = new ObjectInput(NUMBER(), {
+            const aInput = new ObjectInput(NUMBER({required: true}), {
                 syncURL     : 'a-test',
-                required    :true,
                 options     : aQuery,
                 autoReset   : autoResetId
             })
@@ -239,9 +238,8 @@ describe('Query', () => {
                 filter: EQ('a_id', aInput),
                 autoupdate: true
             }) 
-            const bInput = new ObjectInput(NUMBER(), {
+            const bInput = new ObjectInput(NUMBER({required: true}), {
                 syncURL     : 'b-test',
-                required    :true,
                 options     : bQuery,
                 autoReset   : autoResetId
             })

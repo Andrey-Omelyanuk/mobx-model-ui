@@ -17,7 +17,6 @@ describe('Input', () => {
             const input = new Input(STRING())
             expect(input).toMatchObject({
                 value           : '',
-                isRequired      : false,
                 isDisabled      : false,
                 isDebouncing    : false,
                 debounce        : undefined,
@@ -30,7 +29,6 @@ describe('Input', () => {
         it('full args', async () => {
             const input = new Input(STRING(), {
                 value           : 'test',
-                required        : true,
                 disabled        : true,
                 debounce        : 100,
                 syncURL         : nameValue,
@@ -38,7 +36,6 @@ describe('Input', () => {
             })
             expect(input).toMatchObject({
                 value           : 'test',
-                isRequired      : true,
                 isDisabled      : true,
                 isDebouncing    : false,
                 debounce        : 100,

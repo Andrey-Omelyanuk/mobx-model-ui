@@ -7,7 +7,6 @@ import { Destroyable } from '../object'
 
 export interface InputConstructorArgs<T> {
     value               ?: T
-    required            ?: boolean
     disabled            ?: boolean
     debounce            ?: number
     syncURL             ?: string
@@ -18,7 +17,6 @@ export interface InputConstructorArgs<T> {
 export class Input<T> implements Destroyable {
     type: TypeDescriptor<T>
     @observable          value               : T
-    @observable          isRequired          : boolean
     @observable          isDisabled          : boolean
     @observable          isDebouncing        : boolean          //  
     @observable          isNeedToUpdate      : boolean          //  
@@ -35,7 +33,6 @@ export class Input<T> implements Destroyable {
         // init all observables before use it in reaction
         this.type               = type
         this.value              = args && args.value !== undefined ? args.value : type.default()
-        this.isRequired         = !!args?.required
         this.isDisabled         = !!args?.disabled
         this.isDebouncing       = false 
         this.isNeedToUpdate     = false 
@@ -85,7 +82,7 @@ export class Input<T> implements Destroyable {
         return !(this.errors.length
             ||  this.isDebouncing
             ||  this.isNeedToUpdate
-            ||  this.isRequired && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length))
+            ||  this.type.required && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length))
         )
     }
 

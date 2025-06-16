@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.2.6
+   * mobx-model-ui.js v0.2.7
    * Released under the MIT license.
    */
 
@@ -236,12 +236,6 @@ class Input {
             writable: true,
             value: void 0
         });
-        Object.defineProperty(this, "isRequired", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: void 0
-        });
         Object.defineProperty(this, "isDisabled", {
             enumerable: true,
             configurable: true,
@@ -305,7 +299,6 @@ class Input {
         // init all observables before use it in reaction
         this.type = type;
         this.value = args && args.value !== undefined ? args.value : type.default();
-        this.isRequired = !!(args === null || args === void 0 ? void 0 : args.required);
         this.isDisabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
         this.isDebouncing = false;
         this.isNeedToUpdate = false;
@@ -346,7 +339,7 @@ class Input {
         return !(this.errors.length
             || this.isDebouncing
             || this.isNeedToUpdate
-            || this.isRequired && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length)));
+            || this.type.required && (this.value === undefined || this.value === '' || (Array.isArray(this.value) && !this.value.length)));
     }
     validate() {
         this.errors = [];
@@ -369,10 +362,6 @@ __decorate([
     observable,
     __metadata("design:type", Object)
 ], Input.prototype, "value", void 0);
-__decorate([
-    observable,
-    __metadata("design:type", Boolean)
-], Input.prototype, "isRequired", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
@@ -473,7 +462,7 @@ class TypeDescriptor {
             value: void 0
         }); // allow null value
         this.null = (_a = props === null || props === void 0 ? void 0 : props.null) !== null && _a !== void 0 ? _a : false;
-        this.required = (_b = props === null || props === void 0 ? void 0 : props.required) !== null && _b !== void 0 ? _b : true;
+        this.required = (_b = props === null || props === void 0 ? void 0 : props.required) !== null && _b !== void 0 ? _b : false;
     }
     /**
      * Check if the value is valid

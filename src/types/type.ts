@@ -9,7 +9,7 @@ export abstract class TypeDescriptor<T> {
     
     constructor(props?: TypeDescriptorProps) {
         this.null     = props?.null     ?? false
-        this.required = props?.required ?? true
+        this.required = props?.required ?? false 
     }
     /**
      * Convert value to the string

@@ -136,7 +136,6 @@ declare abstract class Filter {
 
 interface InputConstructorArgs<T> {
     value?: T;
-    required?: boolean;
     disabled?: boolean;
     debounce?: number;
     syncURL?: string;
@@ -146,7 +145,6 @@ interface InputConstructorArgs<T> {
 declare class Input<T> implements Destroyable {
     type: TypeDescriptor<T>;
     value: T;
-    isRequired: boolean;
     isDisabled: boolean;
     isDebouncing: boolean;
     isNeedToUpdate: boolean;
