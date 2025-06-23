@@ -1,5 +1,5 @@
 import { Model } from '../model'
-import { Adapter } from './adapter'
+import { Adapter, RequestConfig } from './adapter'
 
 
 export class ConstantAdapter<M extends Model> extends Adapter<M> {
@@ -29,6 +29,10 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
 
     async get (): Promise<any> {
         throw new Error('ConstantAdapter.get should not be used.')
+    }
+
+    async modelAction (name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+        throw new Error('ConstantAdapter.modelAction should not be used.')
     }
 
     async find (): Promise<any> {

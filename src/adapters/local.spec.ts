@@ -59,13 +59,6 @@ describe('LocalAdapter', () => {
         expect(local_store['A']).toEqual({})
     })
 
-    it('action', (done) => {
-        adapter.action(1, 'action', {}).catch((e) => {
-            expect(e).toBe('Not implemented')
-            done()
-        })
-    })
-
     it('get', async ()=> {
         local_store['A'] = {
             '1': {id: 1, a: 1},

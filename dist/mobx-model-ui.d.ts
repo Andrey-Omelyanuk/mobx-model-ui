@@ -211,6 +211,7 @@ declare abstract class Adapter<M extends Model> {
     abstract delete(id: ID, config?: RequestConfig): Promise<void>;
     abstract action(id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     abstract get(id: ID, config?: RequestConfig): Promise<any>;
+    abstract modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     abstract find(query: Query<M>, config?: RequestConfig): Promise<any>;
     abstract load(query: Query<M>, config?: RequestConfig): Promise<any[]>;
     abstract getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
@@ -247,6 +248,10 @@ declare class Repository<M extends Model> {
      * Run action for the object.
      */
     action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    /**
+     * Run action for the model.
+     */
+    modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     /**
      * Returns ONE object by id.
      */
@@ -612,6 +617,7 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     delete(id: ID): Promise<void>;
     action(id: ID, name: string, kwargs: Object): Promise<any>;
     get(id: ID, config?: RequestConfig): Promise<any>;
+    modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter: Filter): Promise<number>;
@@ -628,6 +634,7 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     update(): Promise<any>;
     delete(): Promise<void>;
     get(): Promise<any>;
+    modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     find(): Promise<any>;
     load(): Promise<any[]>;
     getTotalCount(): Promise<number>;
@@ -637,61 +644,87 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
 declare function constant(constant: any[]): (cls: any) => void;
 
 /**
- * Form class
+ * Base abstract class for all forms.
+ *
+ * Form is an object that contains inputs and methods to work with them.
+ * Also it controls loading state and errors.
+ *
  */
-declare class Form implements Destroyable {
+declare abstract class Form implements Destroyable {
+    isLoading: boolean;
+    errors: string[];
     readonly inputs: {
         [key: string]: Input<any>;
     };
-    private __submit;
-    private __cancel?;
-    isLoading: boolean;
-    errors: string[];
+    readonly onSuccess?: (this: Form, response?: any) => void;
+    readonly onCancel?: (this: Form) => void;
     constructor(inputs: {
         [key: string]: Input<any>;
-    }, __submit: () => Promise<void>, __cancel?: () => void);
+    }, onSuccess?: (this: Form, response?: any) => void, onCancel?: (this: Form) => void);
     destroy(): void;
     get isReady(): boolean;
     get isError(): boolean;
+    abstract apply(): Promise<any>;
     submit(): Promise<void>;
     cancel(): void;
+    /**
+     * Convert inputs to simple key-value object.
+     */
+    getKeyValueInputs(): any;
 }
 
-declare class ObjectForm<M extends Model> extends Form {
+/**
+ * Form to run an action in the repository.
+ * If repository is defined then model is ignored.
+ * Use it for forms with complex data that saved in multiple models.
+ */
+declare class ActionForm<M extends Model> extends Form {
+    protected action: string;
+    protected repository: Repository<M>;
+    constructor(repository: Repository<M>, action: string, inputs: {
+        [key: string]: Input<any>;
+    }, onSubmit?: (response?: any) => void, onCancel?: () => void);
+    apply(): Promise<any>;
+}
+
+/**
+ * Abstract class for forms that are used to work with an object.
+ */
+declare abstract class ObjectForm<M extends Model> extends Form {
     obj: M;
+    protected repository?: Repository<M>;
     constructor(obj: M, inputs: {
         [key: string]: Input<any>;
-    }, submit: () => Promise<void>, cancel?: (response?: any) => void);
+    }, onSuccess?: (response?: any) => void, onCancel?: () => void, repository?: Repository<M>);
 }
 
 /**
  * Form to save (create/update) an object.
  */
 declare class SaveObjectForm<M extends Model> extends ObjectForm<M> {
-    constructor(obj: M, inputs: {
-        [key: string]: Input<any>;
-    }, onDone?: (response?: any) => void, repository?: Repository<M>);
+    apply(): Promise<M>;
 }
 
 /**
  * Form to make an action of object.
  */
 declare class ActionObjectForm<M extends Model> extends ObjectForm<M> {
+    protected action: string;
     constructor(action: string, obj: M, inputs: {
         [key: string]: Input<any>;
-    }, onDone?: (response?: any) => void, repository?: Repository<M>);
+    }, onSuccess?: (response?: any) => void, onCancel?: () => void, repository?: Repository<M>);
+    apply(): Promise<any>;
 }
 
 /**
  * Form to delete an object.
  */
 declare class DeleteObjectForm<M extends Model> extends ObjectForm<M> {
-    obj: M;
-    constructor(obj: M, onDone?: (response?: any) => void, repository?: Repository<M>);
+    apply(): Promise<void>;
 }
 
 declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, Destroyable, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, Destroyable, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

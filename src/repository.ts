@@ -61,6 +61,13 @@ export class  Repository<M extends Model> {
     }
 
     /**
+     * Run action for the model.
+     */
+    async modelAction(name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+        return await this.adapter.modelAction(name, kwargs, config)
+    }
+
+    /**
      * Returns ONE object by id.
      */
     async get(id: ID, config?: RequestConfig): Promise<M> {

@@ -15,6 +15,8 @@ class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {
     async get    (obj_id: any): Promise<any> { return 'get' }
     async action (obj_id: any, name: string, kwargs: Object) : Promise<any> { return 'action' }
 
+    async modelAction(action: string, kwargs: Object): Promise<any> { return 'modelAction' }
+
     async find(query: Query<M>): Promise<any> { return 'find' }
     async load(query: Query<M>): Promise<any[]> { return [] }
 

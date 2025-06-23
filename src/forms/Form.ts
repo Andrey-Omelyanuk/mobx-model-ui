@@ -1,21 +1,30 @@
 import { makeObservable, observable, runInAction } from 'mobx'
-import { Input } from '../inputs/Input'
-import { config } from '../config'
-import { Destroyable } from '../object'
+import { Input, config, Destroyable } from '..'
 
 /**
- * Form class
+ * Base abstract class for all forms.
+ * 
+ * Form is an object that contains inputs and methods to work with them.
+ * Also it controls loading state and errors.
+ * 
  */
-export class Form implements Destroyable {
+export abstract class Form implements Destroyable {
     @observable isLoading   : boolean = false
     @observable errors      : string[] = []
 
+    readonly inputs    : { [key: string]: Input<any> }
+    readonly onSuccess?: (this: Form, response?: any) => void
+    readonly onCancel ?: (this: Form) => void
+
     constructor(
-        readonly inputs   : { [key: string]: Input<any> },
-        private __submit  : () => Promise<void>,
-        private __cancel ?: () => void
+        inputs   : { [key: string]: Input<any> },
+        onSuccess?: (this: Form, response?: any) => void,
+        onCancel ?: (this: Form) => void
     ) {
         makeObservable(this)
+        this.inputs = inputs
+        this.onSuccess = onSuccess
+        this.onCancel = onCancel
     }
 
     destroy() {
@@ -33,8 +42,13 @@ export class Form implements Destroyable {
             || Object.values(this.inputs).some(input => input.errors.length > 0)
     }
 
+    abstract apply(): Promise<any>
+
     async submit() {
-        if (!this.isReady) return  // just ignore
+        if (!this.isReady) {
+            console.error('Form is not ready')
+            return  // just ignore
+        }
 
         runInAction(() => {
             this.isLoading = true
@@ -42,7 +56,8 @@ export class Form implements Destroyable {
         })
 
         try {
-            await this.__submit()
+            const response = await this.apply()
+            this.onSuccess && this.onSuccess(response)
         }
         catch (err) {
             runInAction(() => {
@@ -60,16 +75,28 @@ export class Form implements Destroyable {
                         }
                     }
                 }
+                if (!err.message) {
+                    this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
+                    console.error(err)
+                }
             })
         }
         finally {
-            runInAction(() => {
-                this.isLoading = false
-            })
+            runInAction(() => this.isLoading = false )
         }
     }
 
     cancel() {
-        this.__cancel && this.__cancel()
+        this.onCancel && this.onCancel()
+    }
+
+    /**
+     * Convert inputs to simple key-value object.
+     */
+    getKeyValueInputs() {
+        const inputs: any = {}
+        for (let fieldName of Object.keys(this.inputs))
+            inputs[fieldName] = this.inputs[fieldName].value
+        return inputs
     }
 }

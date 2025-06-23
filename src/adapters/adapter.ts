@@ -19,6 +19,8 @@ export abstract class Adapter <M extends Model> {
     abstract action (id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>
     abstract get    (id: ID,                               config?: RequestConfig): Promise<any>
 
+    abstract modelAction (name: string, kwargs: Object, config?: RequestConfig): Promise<any>
+
     // the find returns first object that match the query or undefined
     abstract find(query: Query<M>, config?: RequestConfig): Promise<any>
     abstract load(query: Query<M>, config?: RequestConfig): Promise<any[]>

@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.2.8
+   * mobx-model-ui.js v0.3.0
    * Released under the MIT license.
    */
 
@@ -1353,6 +1353,12 @@
             return await this.adapter.action(obj.ID, name, kwargs, config);
         }
         /**
+         * Run action for the model.
+         */
+        async modelAction(name, kwargs, config) {
+            return await this.adapter.modelAction(name, kwargs, config);
+        }
+        /**
          * Returns ONE object by id.
          */
         async get(id, config) {
@@ -2275,12 +2281,19 @@
             delete local_store[this.store_name][id];
         }
         async action(id, name, kwargs) {
-            throw (`Not implemented`);
+            console.error('Action method is not implemented for local adapter');
+            // ignore error
+            // throw(`Not implemented`)
         }
         async get(id, config) {
             if (this.delay)
                 await timeout(this.delay);
             return local_store[this.store_name][id];
+        }
+        async modelAction(name, kwargs, config) {
+            console.error('Model action method is not implemented for local adapter');
+            // ignore error
+            // throw(`Not implemented`)
         }
         async find(query) {
             if (this.delay)
@@ -2372,6 +2385,9 @@
         async get() {
             throw new Error('ConstantAdapter.get should not be used.');
         }
+        async modelAction(name, kwargs, config) {
+            throw new Error('ConstantAdapter.modelAction should not be used.');
+        }
         async find() {
             throw new Error('ConstantAdapter.find should not be used.');
         }
@@ -2396,28 +2412,14 @@
     }
 
     /**
-     * Form class
+     * Base abstract class for all forms.
+     *
+     * Form is an object that contains inputs and methods to work with them.
+     * Also it controls loading state and errors.
+     *
      */
     class Form {
-        constructor(inputs, __submit, __cancel) {
-            Object.defineProperty(this, "inputs", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: inputs
-            });
-            Object.defineProperty(this, "__submit", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: __submit
-            });
-            Object.defineProperty(this, "__cancel", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: __cancel
-            });
+        constructor(inputs, onSuccess, onCancel) {
             Object.defineProperty(this, "isLoading", {
                 enumerable: true,
                 configurable: true,
@@ -2430,7 +2432,28 @@
                 writable: true,
                 value: []
             });
+            Object.defineProperty(this, "inputs", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "onSuccess", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "onCancel", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
             mobx.makeObservable(this);
+            this.inputs = inputs;
+            this.onSuccess = onSuccess;
+            this.onCancel = onCancel;
         }
         destroy() {
             for (const key in this.inputs) {
@@ -2445,14 +2468,17 @@
                 || Object.values(this.inputs).some(input => input.errors.length > 0);
         }
         async submit() {
-            if (!this.isReady)
+            if (!this.isReady) {
+                console.error('Form is not ready');
                 return; // just ignore
+            }
             mobx.runInAction(() => {
                 this.isLoading = true;
                 this.errors = [];
             });
             try {
-                await this.__submit();
+                const response = await this.apply();
+                this.onSuccess && this.onSuccess(response);
             }
             catch (err) {
                 mobx.runInAction(() => {
@@ -2471,16 +2497,27 @@
                             }
                         }
                     }
+                    if (!err.message) {
+                        this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE];
+                        console.error(err);
+                    }
                 });
             }
             finally {
-                mobx.runInAction(() => {
-                    this.isLoading = false;
-                });
+                mobx.runInAction(() => this.isLoading = false);
             }
         }
         cancel() {
-            this.__cancel && this.__cancel();
+            this.onCancel && this.onCancel();
+        }
+        /**
+         * Convert inputs to simple key-value object.
+         */
+        getKeyValueInputs() {
+            const inputs = {};
+            for (let fieldName of Object.keys(this.inputs))
+                inputs[fieldName] = this.inputs[fieldName].value;
+            return inputs;
         }
     }
     __decorate([
@@ -2492,15 +2529,54 @@
         __metadata("design:type", Array)
     ], Form.prototype, "errors", void 0);
 
+    /**
+     * Form to run an action in the repository.
+     * If repository is defined then model is ignored.
+     * Use it for forms with complex data that saved in multiple models.
+     */
+    class ActionForm extends Form {
+        constructor(repository, action, inputs, onSubmit, onCancel) {
+            super(inputs, onSubmit, onCancel);
+            Object.defineProperty(this, "action", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "repository", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.repository = repository;
+            this.action = action;
+        }
+        async apply() {
+            return await this.repository.modelAction(this.action, this.getKeyValueInputs());
+        }
+    }
+
+    /**
+     * Abstract class for forms that are used to work with an object.
+     */
     class ObjectForm extends Form {
-        constructor(obj, inputs, submit, cancel) {
-            super(inputs, submit, cancel);
+        constructor(obj, inputs, onSuccess, onCancel, repository) {
+            super(inputs, onSuccess, onCancel);
             Object.defineProperty(this, "obj", {
                 enumerable: true,
                 configurable: true,
                 writable: true,
-                value: obj
+                value: void 0
             });
+            Object.defineProperty(this, "repository", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.obj = obj;
+            this.repository = repository;
         }
     }
 
@@ -2508,29 +2584,26 @@
      * Form to save (create/update) an object.
      */
     class SaveObjectForm extends ObjectForm {
-        constructor(obj, inputs, onDone, repository) {
-            super(obj, inputs, async () => {
-                const fieldsNames = Object.keys(this.obj);
-                // check if all fields from inputs are in obj
-                for (let fieldName of Object.keys(this.inputs))
-                    if (!fieldsNames.includes(fieldName))
-                        throw new Error(`ObjectForm error: object has no field ${fieldName}`);
-                // move all values from inputs to obj
-                const modelDescriptor = this.obj.modelDescriptor;
-                mobx.runInAction(() => {
-                    for (let fieldName of Object.keys(inputs)) {
-                        // correct fieldName if it is foreign obj to foreign id
-                        if (modelDescriptor.relations[fieldName]) {
-                            const idFieldName = modelDescriptor.relations[fieldName].settings.foreign_id;
-                            this.obj[idFieldName] = inputs[fieldName].value;
-                        }
-                        else
-                            this.obj[fieldName] = inputs[fieldName].value;
+        async apply() {
+            const fieldsNames = Object.keys(this.obj);
+            // check if all fields from inputs are in obj
+            for (let fieldName of Object.keys(this.inputs))
+                if (!fieldsNames.includes(fieldName))
+                    throw new Error(`ObjectForm error: object has no field ${fieldName}`);
+            // move all values from inputs to obj
+            const modelDescriptor = this.obj.modelDescriptor;
+            mobx.runInAction(() => {
+                for (let fieldName of Object.keys(this.inputs)) {
+                    // correct fieldName if it is foreign obj to foreign id
+                    if (modelDescriptor.relations[fieldName]) {
+                        const idFieldName = modelDescriptor.relations[fieldName].settings.foreign_id;
+                        this.obj[idFieldName] = this.inputs[fieldName].value;
                     }
-                });
-                const response = await (repository || this.obj.getDefaultRepository()).save(this.obj);
-                onDone && onDone(response);
-            }, onDone);
+                    else
+                        this.obj[fieldName] = this.inputs[fieldName].value;
+                }
+            });
+            return await (this.repository || this.obj.getDefaultRepository()).save(this.obj);
         }
     }
 
@@ -2538,15 +2611,19 @@
      * Form to make an action of object.
      */
     class ActionObjectForm extends ObjectForm {
-        constructor(action, obj, inputs, onDone, repository) {
-            super(obj, inputs, async () => {
-                // move all values from inputs to kwargs of action
-                const kwargs = {};
-                for (let fieldName of Object.keys(inputs))
-                    kwargs[fieldName] = inputs[fieldName].value;
-                const response = await (repository || this.obj.getDefaultRepository()).action(this.obj, action, kwargs);
-                onDone && onDone(response);
-            }, onDone);
+        constructor(action, obj, inputs, onSuccess, onCancel, repository) {
+            super(obj, inputs, onSuccess, onCancel, repository);
+            Object.defineProperty(this, "action", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this.action = action;
+        }
+        async apply() {
+            return await (this.repository || this.obj.getDefaultRepository())
+                .action(this.obj, this.action, this.getKeyValueInputs());
         }
     }
 
@@ -2554,17 +2631,8 @@
      * Form to delete an object.
      */
     class DeleteObjectForm extends ObjectForm {
-        constructor(obj, onDone, repository) {
-            super(obj, {}, async () => {
-                const response = await (repository || this.obj.getDefaultRepository()).delete(this.obj);
-                onDone && onDone(response);
-            }, onDone);
-            Object.defineProperty(this, "obj", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: obj
-            });
+        async apply() {
+            return await (this.repository || this.obj.getDefaultRepository()).delete(this.obj);
         }
     }
 
@@ -2572,6 +2640,7 @@
     exports.AND_Filter = AND_Filter;
     exports.ARRAY = ARRAY;
     exports.ASC = ASC;
+    exports.ActionForm = ActionForm;
     exports.ActionObjectForm = ActionObjectForm;
     exports.Adapter = Adapter;
     exports.ArrayDescriptor = ArrayDescriptor;

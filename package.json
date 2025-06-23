@@ -1,6 +1,6 @@
 {
   "name"        : "mobx-model-ui",
-  "version"     : "0.2.8",
+  "version"     : "0.3.0",
   "description" : "Data models and UI interactions based on MobX",
   "keywords": [
     "mobx", "model", "ui"

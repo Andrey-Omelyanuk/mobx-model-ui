@@ -76,6 +76,7 @@ export class  TestRepository<M extends Model> extends Repository<M> {
     async load(query: Query<M>, config?: RequestConfig):Promise<M[]> { return super.load(query) }
     async getTotalCount  (filter: Filter, config?: RequestConfig): Promise<number> { return super.getTotalCount(filter) }
     async getDistinct    (filter: Filter, field: string, config?: RequestConfig): Promise<any[]> { return super.getDistinct(filter, field) }
+    async modelAction(name: string, kwargs: Object, config?: RequestConfig) : Promise<any> { return super.modelAction(name, kwargs) }
 
     static mockClear() {
         (TestRepository.prototype.create        as jest.Mock).mockClear(); 
@@ -98,3 +99,4 @@ TestRepository.prototype.find          = jest.fn(TestRepository.prototype.find)
 TestRepository.prototype.load          = jest.fn(TestRepository.prototype.load)
 TestRepository.prototype.getTotalCount = jest.fn(TestRepository.prototype.getTotalCount)
 TestRepository.prototype.getDistinct   = jest.fn(TestRepository.prototype.getDistinct)
+TestRepository.prototype.modelAction   = jest.fn(TestRepository.prototype.modelAction)

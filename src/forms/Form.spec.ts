@@ -4,59 +4,42 @@ import { Form } from './Form'
 
 describe('Form', () => {
 
+    class TestForm extends Form {
+        apply() {
+            return Promise.resolve()
+        }
+    }
+
     it('constructor', async ()=> {
-        const submit = async () => {}
-        const cancel = () => {}
+        const onSuccess= () => {}
+        const onCancel = () => {}
         const inputA = new Input(STRING())
         const inputB = new Input(STRING())
-        const form = new Form({a: inputA, b: inputB}, submit, cancel)
+        const form = new TestForm({a: inputA, b: inputB}, onSuccess, onCancel)
 
         expect(form).toMatchObject({
             inputs: {a: inputA, b: inputB},
-            __submit: submit,
-            __cancel: cancel,
+            onSuccess,
+            onCancel,
             isLoading: false,
             errors: [],
         })
     })
 
-    describe('isReady', () => {
-        const form = new Form({ 
-            a: new Input(STRING()),
-            b: new Input(STRING()), 
-            c: new Input(STRING()),
-        }, async () => {}, () => {} )
-
-        // it('all inputs are ready', async ()=> {
-        //     runInAction(() => {
-        //         form.inputs.a.isNeedToCheckValue = true
-        //         form.inputs.b.isNeedToCheckValue = true
-        //         form.inputs.c.isNeedToCheckValue = true
-        //     })
-        //     expect(form.isReady).toBe(true)
-        // })
-
-        // it('only some inputs are ready', async ()=> {
-        //     runInAction(() => {
-        //         form.inputs.a.isNeedToCheckValue = false 
-        //         form.inputs.b.isNeedToCheckValue = true 
-        //         form.inputs.c.isNeedToCheckValue = false 
-        //     })
-        //     expect(form.isReady).toBe(false)
-        // })
-
-        // it('all inputs are not ready', async ()=> {
-        //     runInAction(() => {
-        //         form.inputs.a.isNeedToCheckValue = true 
-        //         form.inputs.b.isNeedToCheckValue = true 
-        //         form.inputs.c.isNeedToCheckValue = true 
-        //     })
-        //     expect(form.isReady).toBe(false)
-        // })
+    it('isReady', () => {
+        const form = new TestForm({ 
+            a: new Input(STRING({required: true})),
+            b: new Input(STRING()),  // by default input is not required
+            c: new Input(STRING({required: true})),
+        })                                                ; expect(form.isReady).toBe(false)
+        runInAction(() => form.inputs.a.value = 'a'      ); expect(form.isReady).toBe(false)
+        runInAction(() => form.inputs.b.value = 'b'      ); expect(form.isReady).toBe(false)
+        runInAction(() => form.inputs.c.value = 'c'      ); expect(form.isReady).toBe(true)
+        runInAction(() => form.inputs.b.value = undefined); expect(form.isReady).toBe(true)  // not required do not affect isReady
     })
 
     describe('isError', () => {
-        const form = new Form({ 
+        const form = new TestForm({ 
             a: new Input(STRING()),
             b: new Input(STRING()), 
             c: new Input(STRING()),
@@ -108,31 +91,32 @@ describe('Form', () => {
             c: new Input(STRING()),
         }
         it('good request', (done)=> {
-            const submit = jest.fn(async () => {})
-            const form = new Form(inputs, submit, () => {} )
+            const onSuccess = jest.fn(async () => {})
+            const form = new TestForm(inputs, onSuccess )
             expect(form.isLoading).toBe(false)
             form.submit().then(() => {
                 expect(form.isLoading).toBe(false)
-                expect(submit).toHaveBeenCalledTimes(1)
+                expect(onSuccess).toHaveBeenCalledTimes(1)
                 done()
             })
             expect(form.isLoading).toBe(true)
         })
 
         it('bad request', (done)=> {
-            const submit = jest.fn(async () => {
-                throw { message: {
-                    [config.FORM_NON_FIELD_ERRORS_KEY]: ['form error'],
-                    a: ['a error'],
-                    b: ['b error'],
-                    c: ['c error'],
+            class BadRequestForm extends Form {
+                async apply() {
+                    throw { message: {
+                        [config.FORM_NON_FIELD_ERRORS_KEY]: ['form error'],
+                        a: ['a error'],
+                        b: ['b error'],
+                        c: ['c error'],
+                        }
                     }
                 }
-            })
-            const form = new Form(inputs, submit, () => {} )
+            }
+            const form = new BadRequestForm(inputs)
             expect(form.isLoading).toBe(false)
             form.submit().then(() => {
-                expect(submit).toHaveBeenCalledTimes(1)
                 expect(form).toMatchObject({
                     isLoading: false,
                     errors: ['form error'],
@@ -147,15 +131,15 @@ describe('Form', () => {
             expect(form.isLoading).toBe(true)
         })
 
-        it('run submit when the form is not ready yet', (done)=> {
+        it('do not submit when the form is not ready yet', (done)=> {
             // nothing should happen
-            const submit = jest.fn(async () => {})
-            const form = new Form({a: new Input(STRING())}, submit, () => {} )
+            const onSuccess = jest.fn(async () => {})
+            const form = new TestForm({a: new Input(STRING())}, onSuccess )
             runInAction(() => form.inputs.a.isNeedToUpdate = true)
             expect(form).toMatchObject({isReady: false, isLoading: false})
             form.submit().then(() => {
                 expect(form).toMatchObject({isReady: false, isLoading: false})
-                expect(submit).toHaveBeenCalledTimes(0)
+                expect(onSuccess).toHaveBeenCalledTimes(0)
                 done()
             })
             expect(form).toMatchObject({isReady: false, isLoading: false})
@@ -163,8 +147,7 @@ describe('Form', () => {
     })
 
     it('isLoading is observable', (done)=> {
-        const submit = jest.fn(async () => {})
-        const form = new Form({}, submit, () => {})
+        const form = new TestForm({})
         reaction(
             () => form.isLoading,
             (newValue) => {
@@ -175,9 +158,9 @@ describe('Form', () => {
     })
 
     it('cancel', async ()=> {
-        const cancel = jest.fn(() => {})
-        const form = new Form({}, async () => {}, cancel)
+        const onCancel = jest.fn(() => {})
+        const form = new TestForm({}, () => {}, onCancel)
         form.cancel()
-        expect(cancel).toHaveBeenCalledTimes(1)
+        expect(onCancel).toHaveBeenCalledTimes(1)
     })
 })

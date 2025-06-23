@@ -1,5 +1,5 @@
 import { reaction } from 'mobx'
-import { model, Model, local, Input, NUMBER, STRING, id, config, SaveObjectForm } from '..'
+import { model, Model, local, Input, NUMBER, STRING, id, config, SaveObjectForm } from '../..'
 
 describe('SaveObjectForm', () => {
 
@@ -38,8 +38,8 @@ describe('SaveObjectForm', () => {
     })
 
     it('cancel', (done)=> {
-        const onDone= () => { done() }
-        const form = new SaveObjectForm<A>(new A(), {}, onDone)
+        const onCancel = () => { done() }
+        const form = new SaveObjectForm<A>(new A(), {}, undefined, onCancel)
         form.cancel()
     })
 
@@ -50,6 +50,7 @@ describe('SaveObjectForm', () => {
         await form.submit()
         form.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
     })
+
     it('isLoading is observable', (done)=> {
         const form = new SaveObjectForm<A>(new A({}), {})
         reaction(
@@ -60,6 +61,7 @@ describe('SaveObjectForm', () => {
         )
         form.submit()
     })
+
     it('...', (done)=> {
         const inputA = new Input(STRING())
         const inputB = new Input(NUMBER()) 
