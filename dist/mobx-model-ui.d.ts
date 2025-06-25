@@ -665,6 +665,7 @@ declare abstract class Form implements Destroyable {
     get isReady(): boolean;
     get isError(): boolean;
     abstract apply(): Promise<any>;
+    errorHandler(err: any): void;
     submit(): Promise<void>;
     cancel(): void;
     /**

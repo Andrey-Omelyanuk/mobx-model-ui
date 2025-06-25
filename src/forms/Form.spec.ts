@@ -105,11 +105,37 @@ describe('Form', () => {
         it('bad request', (done)=> {
             class BadRequestForm extends Form {
                 async apply() {
-                    throw { message: {
-                        [config.FORM_NON_FIELD_ERRORS_KEY]: ['form error'],
-                        a: ['a error'],
-                        b: ['b error'],
-                        c: ['c error'],
+                    throw new Error('test error')
+                }
+            }
+            const form = new BadRequestForm(inputs)
+            expect(form.isLoading).toBe(false)
+            form.submit().then(() => {
+                expect(form).toMatchObject({
+                    isLoading: false,
+                    errors: ['test error'],
+                    inputs: {
+                        a: { errors: [] },
+                        b: { errors: [] },
+                        c: { errors: [] },
+                    }
+                })
+                done()
+            })
+            expect(form.isLoading).toBe(true)
+        })
+
+        it('bad request with response', (done)=> {
+            class BadRequestForm extends Form {
+                async apply() {
+                    throw {
+                        response: {
+                            data: {
+                                [config.FORM_NON_FIELD_ERRORS_KEY]: ['form error'],
+                                a: ['a error'],
+                                b: ['b error'],
+                                c: ['c error']
+                            }
                         }
                     }
                 }

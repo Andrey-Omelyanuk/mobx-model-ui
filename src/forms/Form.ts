@@ -44,6 +44,29 @@ export abstract class Form implements Destroyable {
 
     abstract apply(): Promise<any>
 
+    errorHandler(err: any) {
+        runInAction(() => {
+            if (!err.response?.data) {
+                this.errors = [err.message]
+            }
+            else {
+                for (const key in err.response.data) {
+                    if (key === config.FORM_NON_FIELD_ERRORS_KEY) {
+                        this.errors = err.response.data[key]
+                    } else {
+                        if (this.inputs[key])
+                            this.inputs[key].errors = err.response.data[key]
+                        else {
+                            // unknown error should be logged 
+                            // and not shown to user
+                            this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
+                        }
+                    }
+                }
+            }
+        })
+    }
+
     async submit() {
         if (!this.isReady) {
             console.error('Form is not ready')
@@ -60,26 +83,7 @@ export abstract class Form implements Destroyable {
             this.onSuccess && this.onSuccess(response)
         }
         catch (err) {
-            runInAction(() => {
-                for (const key in err.message) {
-                    if (key === config.FORM_NON_FIELD_ERRORS_KEY) {
-                        this.errors = err.message[key]
-                    } else {
-                        if (this.inputs[key])
-                            this.inputs[key].errors = err.message[key]
-                        else {
-                            // unknown error should be logged 
-                            // and not shown to user
-                            this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
-                            console.error(err)
-                        }
-                    }
-                }
-                if (!err.message) {
-                    this.errors = [config.FORM_UNKNOWN_ERROR_MESSAGE]
-                    console.error(err)
-                }
-            })
+            this.errorHandler(err)
         }
         finally {
             runInAction(() => this.isLoading = false )
