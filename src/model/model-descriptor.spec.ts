@@ -1,5 +1,5 @@
-import { id } from '../fields'
-import { NUMBER } from '../types'
+import { field, id } from '../fields'
+import { NUMBER, STRING } from '../types'
 import { Model, ModelDescriptor, model, models } from '.'
 
 
@@ -38,5 +38,15 @@ describe('Model Descriptor', () => {
         }     
         const a = new A({id: 1})
         expect(A.getModelDescriptor().getID(a)).toBe(1)
+    })
+
+    it('types in model descriptor', () => {
+        @model class A extends Model {
+            @id(NUMBER()) id: number
+            @field(STRING({minLength: 10, maxLength: 20})) name: string
+            @field(NUMBER({required: true})) count: number
+        }     
+        expect(A.getModelDescriptor().fields['name'].type).toEqual(STRING({minLength: 10, maxLength: 20}))
+        expect(A.getModelDescriptor().fields['count'].type).toEqual(NUMBER({required: true}))
     })
 })

@@ -12,8 +12,9 @@ export class StringDescriptor extends TypeDescriptor<string> {
     maxLength: number
     constructor(props?: StringDescriptorProps) {
         super(props)
+        // by default string has no length constraints
         this.minLength = props?.minLength ?? 0
-        this.maxLength = props?.maxLength ?? 255
+        this.maxLength = props?.maxLength ?? null
     }
 
     toString(value: string): string {

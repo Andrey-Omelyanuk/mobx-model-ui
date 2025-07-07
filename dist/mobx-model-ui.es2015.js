@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.3.1
+   * mobx-model-ui.js v0.3.2
    * Released under the MIT license.
    */
 
@@ -491,8 +491,9 @@ class StringDescriptor extends TypeDescriptor {
             writable: true,
             value: void 0
         });
+        // by default string has no length constraints
         this.minLength = (_a = props === null || props === void 0 ? void 0 : props.minLength) !== null && _a !== void 0 ? _a : 0;
-        this.maxLength = (_b = props === null || props === void 0 ? void 0 : props.maxLength) !== null && _b !== void 0 ? _b : 255;
+        this.maxLength = (_b = props === null || props === void 0 ? void 0 : props.maxLength) !== null && _b !== void 0 ? _b : null;
     }
     toString(value) {
         if (value === undefined)
