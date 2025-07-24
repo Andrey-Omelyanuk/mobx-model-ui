@@ -1,4 +1,4 @@
-import { model, Model, LocalAdapter, local, local_store, id, NUMBER, AND, Input, STRING, BOOLEAN, EQ } from '../'
+import { model, Model, LocalAdapter, local, local_store, id, NUMBER, AND, Variable, STRING, BOOLEAN, EQ } from '../'
 import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e  } from '../test.utils' 
 
 
@@ -81,9 +81,9 @@ describe('LocalAdapter', () => {
 
         it('with filter', async ()=> {
             adapter.init_local_data(data_set)
-            const inputA = new Input(NUMBER(), {value: 2})
-            const inputB = new Input(STRING(), {value: 'a'})
-            const inputC = new Input(BOOLEAN(), {value: false})
+            const inputA = new Variable(NUMBER(), {value: 2})
+            const inputB = new Variable(STRING(), {value: 'a'})
+            const inputC = new Variable(BOOLEAN(), {value: false})
 
             let objs = await adapter.load(A.getQuery({filter: EQ('a', inputA)}))
             expect(objs).toEqual([obj_c, obj_d])

@@ -1,9 +1,9 @@
 import { reaction } from 'mobx'
 import { config } from '../../config'
-import { Input } from '../Input'
+import { Variable } from '../Variable'
 
 
-export const syncURLHandler = (paramName: string, input: Input<any>) => {
+export const syncURLHandler = (paramName: string, input: Variable<any>) => {
     const searchParams = new URLSearchParams(window.location.search)
     // init from URL Search Params
     if (searchParams.has(paramName)) {

@@ -1,9 +1,9 @@
 import { reaction } from 'mobx'
-import { Input } from '../Input'
+import { Variable } from '../Variable'
 import { config } from '../../config'
 
 
-export const syncCookieHandler = (paramName: string, input: Input<any>) => {
+export const syncCookieHandler = (paramName: string, input: Variable<any>) => {
     const cookie = document.cookie.split(';').find(row => row.trim().startsWith(`${paramName}=`)) 
     if (cookie) {
         input.setFromString(cookie.split('=')[1])

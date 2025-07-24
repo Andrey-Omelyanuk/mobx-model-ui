@@ -1,4 +1,4 @@
-import { Repository, Model, Input } from '..'
+import { Repository, Model, Variable } from '..'
 import { Form } from './Form'
 
 /**
@@ -13,7 +13,7 @@ export class ActionForm<M extends Model> extends Form {
     constructor(
         repository  : Repository<M>,
         action      : string,
-        inputs      : {[key: string]: Input<any> },
+        inputs      : {[key: string]: Variable<any> },
         onSubmit   ?: (response?: any) => void,
         onCancel   ?: () => void,
     ) {

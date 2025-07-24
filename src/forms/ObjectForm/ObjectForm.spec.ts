@@ -1,4 +1,4 @@
-import { model, Model, local, Input, NUMBER, STRING, id, config, SaveObjectForm, ObjectForm } from '../..'
+import { model, Model, local, Variable, NUMBER, STRING, id, config, SaveObjectForm, ObjectForm } from '../..'
 
 describe('ObjectForm', () => {
 
@@ -24,8 +24,8 @@ describe('ObjectForm', () => {
     it('constructor', async ()=> {
         const onSuccess= () => {}
         const onCancel = () => {}
-        const inputA = new Input(STRING())
-        const inputB = new Input(NUMBER()) 
+        const inputA = new Variable(STRING())
+        const inputB = new Variable(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
         const obj = new A()
         const form = new TestObjectForm(obj, inputs, onSuccess, onCancel)
@@ -45,8 +45,8 @@ describe('ObjectForm', () => {
         let called = false
         const onSuccess= () => { called = true }
         const onCancel = () => {}
-        const inputA = new Input(STRING())
-        const inputB = new Input(NUMBER()) 
+        const inputA = new Variable(STRING())
+        const inputB = new Variable(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
         const obj = new A()
         const form = new TestObjectForm(obj, inputs, onSuccess, onCancel)

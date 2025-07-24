@@ -1,8 +1,8 @@
 import { reaction } from 'mobx'
-import { Input } from '../Input'
+import { Variable } from '../Variable'
 
 
-export const syncLocalStorageHandler = (paramName: string, input: Input<any>) => {
+export const syncLocalStorageHandler = (paramName: string, input: Variable<any>) => {
     // init value from localStorage
     if (paramName in localStorage) {
         let raw_value = localStorage.getItem(paramName)

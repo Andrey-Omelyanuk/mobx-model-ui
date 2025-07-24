@@ -3,7 +3,7 @@ import { Repository } from '../repository'
 import { Model } from '../model'
 import { Filter } from '../filters/Filter'
 import { waitIsFalse } from '../utils'
-import { Input } from '../inputs'
+import { Variable } from '../inputs'
 import { config } from '../config'
 import { ARRAY, NUMBER, STRING, ORDER_BY } from '../types'
 import { Destroyable } from '../object'
@@ -15,14 +15,14 @@ export interface QueryProps<M extends Model> {
     repository                  ?: Repository<M>
     //
     filter                      ?: Filter
-    orderBy                     ?: Input<[string, boolean][]>
+    orderBy                     ?: Variable<[string, boolean][]>
     // pagination
-    offset                      ?: Input<number>
-    limit                       ?: Input<number>
+    offset                      ?: Variable<number>
+    limit                       ?: Variable<number>
     // fields controll
-    relations                   ?: Input<string[]>
-    fields                      ?: Input<string[]> 
-    omit                        ?: Input<string[]> 
+    relations                   ?: Variable<string[]>
+    fields                      ?: Variable<string[]> 
+    omit                        ?: Variable<string[]> 
     //
     autoupdate                  ?: boolean
 }
@@ -51,12 +51,12 @@ export class Query <M extends Model> implements Destroyable {
 
     readonly repository: Repository<M>
     readonly filter    : Filter
-    readonly orderBy   : Input<[string, boolean][]>
-    readonly offset    : Input<number>
-    readonly limit     : Input<number>
-    readonly relations : Input<string[]>
-    readonly fields    : Input<string[]>
-    readonly omit      : Input<string[]>
+    readonly orderBy   : Variable<[string, boolean][]>
+    readonly offset    : Variable<number>
+    readonly limit     : Variable<number>
+    readonly relations : Variable<string[]>
+    readonly fields    : Variable<string[]>
+    readonly omit      : Variable<string[]>
 
     @observable protected __items: M[] = []         // items from the server
     @observable total           : number              // total count of items on the server, usefull for pagination
@@ -80,12 +80,12 @@ export class Query <M extends Model> implements Destroyable {
 
         this.repository = repository 
         this.filter    = filter
-        this.orderBy   = orderBy    ? orderBy   : new Input(ARRAY(ORDER_BY()))
-        this.offset    = offset     ? offset    : new Input(NUMBER())
-        this.limit     = limit      ? limit     : new Input(NUMBER())
-        this.relations = relations  ? relations : new Input(ARRAY(STRING()))
-        this.fields    = fields     ? fields    : new Input(ARRAY(STRING()))
-        this.omit      = omit       ? omit      : new Input(ARRAY(STRING()))
+        this.orderBy   = orderBy    ? orderBy   : new Variable(ARRAY(ORDER_BY()))
+        this.offset    = offset     ? offset    : new Variable(NUMBER())
+        this.limit     = limit      ? limit     : new Variable(NUMBER())
+        this.relations = relations  ? relations : new Variable(ARRAY(STRING()))
+        this.fields    = fields     ? fields    : new Variable(ARRAY(STRING()))
+        this.omit      = omit       ? omit      : new Variable(ARRAY(STRING()))
         this.autoupdate = autoupdate
         makeObservable(this)
 

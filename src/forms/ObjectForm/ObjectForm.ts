@@ -1,4 +1,4 @@
-import { Repository, Model, Input } from '../..'
+import { Repository, Model, Variable } from '../..'
 import { Form } from '../Form'
 
 /**
@@ -10,7 +10,7 @@ export abstract class ObjectForm<M extends Model> extends Form {
 
     constructor(
         obj         : M,
-        inputs      : {[key: string]: Input<any> },
+        inputs      : {[key: string]: Variable<any> },
         onSuccess   ?: (response?: any) => void,
         onCancel   ?: () => void,
         repository ?: Repository<M>

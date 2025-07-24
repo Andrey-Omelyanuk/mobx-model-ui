@@ -1,5 +1,5 @@
 import { reaction, runInAction } from 'mobx'
-import { Input, STRING, config } from '..'
+import { Variable, STRING, config } from '..'
 import { Form } from './Form'
 
 describe('Form', () => {
@@ -13,8 +13,8 @@ describe('Form', () => {
     it('constructor', async ()=> {
         const onSuccess= () => {}
         const onCancel = () => {}
-        const inputA = new Input(STRING())
-        const inputB = new Input(STRING())
+        const inputA = new Variable(STRING())
+        const inputB = new Variable(STRING())
         const form = new TestForm({a: inputA, b: inputB}, onSuccess, onCancel)
 
         expect(form).toMatchObject({
@@ -28,9 +28,9 @@ describe('Form', () => {
 
     it('isReady', () => {
         const form = new TestForm({ 
-            a: new Input(STRING({required: true})),
-            b: new Input(STRING()),  // by default input is not required
-            c: new Input(STRING({required: true})),
+            a: new Variable(STRING({required: true})),
+            b: new Variable(STRING()),  // by default input is not required
+            c: new Variable(STRING({required: true})),
         })                                                ; expect(form.isReady).toBe(false)
         runInAction(() => form.inputs.a.value = 'a'      ); expect(form.isReady).toBe(false)
         runInAction(() => form.inputs.b.value = 'b'      ); expect(form.isReady).toBe(false)
@@ -40,9 +40,9 @@ describe('Form', () => {
 
     describe('isError', () => {
         const form = new TestForm({ 
-            a: new Input(STRING()),
-            b: new Input(STRING()), 
-            c: new Input(STRING()),
+            a: new Variable(STRING()),
+            b: new Variable(STRING()), 
+            c: new Variable(STRING()),
         }, async () => {}, () => {} )
 
         afterEach(() => {
@@ -86,9 +86,9 @@ describe('Form', () => {
 
     describe('submit', () => {
         const inputs = {
-            a: new Input(STRING()),
-            b: new Input(STRING()), 
-            c: new Input(STRING()),
+            a: new Variable(STRING()),
+            b: new Variable(STRING()), 
+            c: new Variable(STRING()),
         }
         it('good request', (done)=> {
             const onSuccess = jest.fn(async () => {})
@@ -160,7 +160,7 @@ describe('Form', () => {
         it('do not submit when the form is not ready yet', (done)=> {
             // nothing should happen
             const onSuccess = jest.fn(async () => {})
-            const form = new TestForm({a: new Input(STRING())}, onSuccess )
+            const form = new TestForm({a: new Variable(STRING())}, onSuccess )
             runInAction(() => form.inputs.a.isNeedToUpdate = true)
             expect(form).toMatchObject({isReady: false, isLoading: false})
             form.submit().then(() => {

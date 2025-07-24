@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.3.2
+   * mobx-model-ui.js v0.3.3
    * Released under the MIT license.
    */
 
@@ -220,7 +220,7 @@ const syncCookieHandler = (paramName, input) => {
     }, { fireImmediately: true }));
 };
 
-class Input {
+class Variable {
     // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
     // it's look like a bug in the TypeScript
     constructor(type, args) {
@@ -361,37 +361,46 @@ class Input {
 __decorate([
     observable,
     __metadata("design:type", Object)
-], Input.prototype, "value", void 0);
+], Variable.prototype, "value", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Input.prototype, "isDisabled", void 0);
+], Variable.prototype, "isDisabled", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Input.prototype, "isDebouncing", void 0);
+], Variable.prototype, "isDebouncing", void 0);
 __decorate([
     observable,
     __metadata("design:type", Boolean)
-], Input.prototype, "isNeedToUpdate", void 0);
+], Variable.prototype, "isNeedToUpdate", void 0);
 __decorate([
     observable,
     __metadata("design:type", Array)
-], Input.prototype, "errors", void 0);
+], Variable.prototype, "errors", void 0);
 __decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], Input.prototype, "set", null);
+], Variable.prototype, "set", null);
 __decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], Input.prototype, "validate", null);
+], Variable.prototype, "validate", null);
+/**
+ * DEPRECATED: use Variable instead
+ * Keep it for backward compatibility.
+ */
+class Input extends Variable {
+    constructor(type, args) {
+        super(type, args);
+    }
+}
 
-class ObjectInput extends Input {
+class ObjectInput extends Variable {
     constructor(type, args) {
         super(type, args);
         Object.defineProperty(this, "options", {
@@ -891,12 +900,12 @@ class Query {
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
         this.repository = repository;
         this.filter = filter;
-        this.orderBy = orderBy ? orderBy : new Input(ARRAY(ORDER_BY()));
-        this.offset = offset ? offset : new Input(NUMBER());
-        this.limit = limit ? limit : new Input(NUMBER());
-        this.relations = relations ? relations : new Input(ARRAY(STRING()));
-        this.fields = fields ? fields : new Input(ARRAY(STRING()));
-        this.omit = omit ? omit : new Input(ARRAY(STRING()));
+        this.orderBy = orderBy ? orderBy : new Variable(ARRAY(ORDER_BY()));
+        this.offset = offset ? offset : new Variable(NUMBER());
+        this.limit = limit ? limit : new Variable(NUMBER());
+        this.relations = relations ? relations : new Variable(ARRAY(STRING()));
+        this.fields = fields ? fields : new Variable(ARRAY(STRING()));
+        this.omit = omit ? omit : new Variable(ARRAY(STRING()));
         this.autoupdate = autoupdate;
         makeObservable(this);
         this.disposers.push(reaction(
@@ -2089,7 +2098,7 @@ class SingleFilter extends Filter {
 }
 __decorate([
     observable,
-    __metadata("design:type", Input)
+    __metadata("design:type", Variable)
 ], SingleFilter.prototype, "input", void 0);
 function match(obj, field_name, filter_value, operator) {
     let field_names = field_name.split('__');
@@ -2634,5 +2643,5 @@ class DeleteObjectForm extends ObjectForm {
     }
 }
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map

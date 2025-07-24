@@ -1,4 +1,4 @@
-import { Model, Query, Input, NUMBER, model, id } from '..'
+import { Model, Query, Variable, NUMBER, model, id } from '..'
 import { EQ } from './SingleFilter'
 import { ComboFilter, AND } from './ComboFilter'
 
@@ -25,8 +25,8 @@ describe('ComboFilter', () => {
 
     describe('AND', () => {
         it('isMatch', () => {
-            const a = new Input(NUMBER(), {value: 1})
-            const b = new Input(NUMBER(), {value: 2})
+            const a = new Variable(NUMBER(), {value: 1})
+            const b = new Variable(NUMBER(), {value: 2})
             const obj_true = { a: 1, b: 2 }
             const obj_false = { a: 1, b: 1 }
             expect(AND(EQ('a', a), EQ('b', b)).isMatch(obj_true)).toBe(true)

@@ -1,4 +1,4 @@
-import { Model, Input, Repository } from '../..'
+import { Model, Variable, Repository } from '../..'
 import { ObjectForm } from './ObjectForm'
 
 /**
@@ -10,7 +10,7 @@ export class ActionObjectForm<M extends Model> extends ObjectForm<M> {
     constructor(
         action      : string,
         obj         : M,
-        inputs      : {[key: string]: Input<any> },
+        inputs      : {[key: string]: Variable<any> },
         onSuccess  ?: (response?) => void,
         onCancel   ?: () => void,
         repository ?: Repository<M>

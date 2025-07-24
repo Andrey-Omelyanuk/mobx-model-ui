@@ -1,16 +1,16 @@
 import { reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
-import { Input, InputConstructorArgs } from './Input'
+import { Variable, VariableConstructorArgs } from './Variable'
 import { ID, STRING, TypeDescriptor } from '../types'
 
 
-export interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<ID> {
+export interface ObjectInputConstructorArgs<M extends Model> extends VariableConstructorArgs<ID> {
     options    : Query<M>
     autoReset ?: (input: ObjectInput<M>) => void
 }
 
-export class ObjectInput<M extends Model> extends Input<ID> {
+export class ObjectInput<M extends Model> extends Variable<ID> {
     readonly options: Query<M>
 
     constructor (type: TypeDescriptor<ID>, args?: ObjectInputConstructorArgs<M>) {

@@ -134,7 +134,7 @@ declare abstract class Filter {
     abstract get isReady(): boolean;
 }
 
-interface InputConstructorArgs<T> {
+interface VariableConstructorArgs<T> {
     value?: T;
     disabled?: boolean;
     debounce?: number;
@@ -142,7 +142,7 @@ interface InputConstructorArgs<T> {
     syncLocalStorage?: string;
     syncCookie?: string;
 }
-declare class Input<T> implements Destroyable {
+declare class Variable<T> implements Destroyable {
     type: TypeDescriptor<T>;
     value: T;
     isDisabled: boolean;
@@ -154,7 +154,7 @@ declare class Input<T> implements Destroyable {
     readonly syncLocalStorage?: string;
     readonly syncCookie?: string;
     __disposers: any[];
-    constructor(type: TypeDescriptor<T>, args?: InputConstructorArgs<any>);
+    constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
     destroy(): void;
     private stopDebouncing;
     set(value: T): void;
@@ -163,28 +163,35 @@ declare class Input<T> implements Destroyable {
     setFromString(value: string): void;
     toString(): string;
 }
+/**
+ * DEPRECATED: use Variable instead
+ * Keep it for backward compatibility.
+ */
+declare class Input<T> extends Variable<T> {
+    constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
+}
 
 declare class SingleFilter extends Filter {
     readonly field: string;
-    input: Input<any>;
+    input: Variable<any>;
     __disposers: (() => void)[];
     readonly getURIField: (field: string) => string;
     readonly operator: (value_a: any, value_b: any) => boolean;
-    constructor(field: string, input: Input<any>, getURIField: (field: string) => string, operator: (a: any, b: any) => boolean);
+    constructor(field: string, input: Variable<any>, getURIField: (field: string) => string, operator: (a: any, b: any) => boolean);
     get isReady(): boolean;
     get URLSearchParams(): URLSearchParams;
     isMatch(obj: any): boolean;
 }
-declare function EQ(field: string, input: Input<any>): SingleFilter;
-declare function EQV(field: string, input: Input<any>): SingleFilter;
-declare function NOT_EQ(field: string, input: Input<any>): SingleFilter;
-declare function GT(field: string, input: Input<any>): SingleFilter;
-declare function GTE(field: string, input: Input<any>): SingleFilter;
-declare function LT(field: string, input: Input<any>): SingleFilter;
-declare function LTE(field: string, input: Input<any>): SingleFilter;
-declare function LIKE(field: string, input: Input<any>): SingleFilter;
-declare function ILIKE(field: string, input: Input<any>): SingleFilter;
-declare function IN(field: string, input: Input<any>): SingleFilter;
+declare function EQ(field: string, input: Variable<any>): SingleFilter;
+declare function EQV(field: string, input: Variable<any>): SingleFilter;
+declare function NOT_EQ(field: string, input: Variable<any>): SingleFilter;
+declare function GT(field: string, input: Variable<any>): SingleFilter;
+declare function GTE(field: string, input: Variable<any>): SingleFilter;
+declare function LT(field: string, input: Variable<any>): SingleFilter;
+declare function LTE(field: string, input: Variable<any>): SingleFilter;
+declare function LIKE(field: string, input: Variable<any>): SingleFilter;
+declare function ILIKE(field: string, input: Variable<any>): SingleFilter;
+declare function IN(field: string, input: Variable<any>): SingleFilter;
 
 declare abstract class ComboFilter extends Filter {
     readonly filters: Filter[];
@@ -281,11 +288,11 @@ declare class Repository<M extends Model> {
     getQueryDistinct(field: string, props: QueryProps<M>): QueryDistinct;
 }
 
-interface ObjectInputConstructorArgs<M extends Model> extends InputConstructorArgs<ID> {
+interface ObjectInputConstructorArgs<M extends Model> extends VariableConstructorArgs<ID> {
     options: Query<M>;
     autoReset?: (input: ObjectInput<M>) => void;
 }
-declare class ObjectInput<M extends Model> extends Input<ID> {
+declare class ObjectInput<M extends Model> extends Variable<ID> {
     readonly options: Query<M>;
     constructor(type: TypeDescriptor<ID>, args?: ObjectInputConstructorArgs<M>);
     get obj(): M | undefined;
@@ -295,33 +302,33 @@ declare class ObjectInput<M extends Model> extends Input<ID> {
 
 declare function autoResetId(input: ObjectInput<any>): void;
 
-declare const syncURLHandler: (paramName: string, input: Input<any>) => void;
+declare const syncURLHandler: (paramName: string, input: Variable<any>) => void;
 
-declare const syncLocalStorageHandler: (paramName: string, input: Input<any>) => void;
+declare const syncLocalStorageHandler: (paramName: string, input: Variable<any>) => void;
 
-declare const syncCookieHandler: (paramName: string, input: Input<any>) => void;
+declare const syncCookieHandler: (paramName: string, input: Variable<any>) => void;
 
 declare const DISPOSER_AUTOUPDATE = "__autoupdate";
 interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
-    orderBy?: Input<[string, boolean][]>;
-    offset?: Input<number>;
-    limit?: Input<number>;
-    relations?: Input<string[]>;
-    fields?: Input<string[]>;
-    omit?: Input<string[]>;
+    orderBy?: Variable<[string, boolean][]>;
+    offset?: Variable<number>;
+    limit?: Variable<number>;
+    relations?: Variable<string[]>;
+    fields?: Variable<string[]>;
+    omit?: Variable<string[]>;
     autoupdate?: boolean;
 }
 declare class Query<M extends Model> implements Destroyable {
     readonly repository: Repository<M>;
     readonly filter: Filter;
-    readonly orderBy: Input<[string, boolean][]>;
-    readonly offset: Input<number>;
-    readonly limit: Input<number>;
-    readonly relations: Input<string[]>;
-    readonly fields: Input<string[]>;
-    readonly omit: Input<string[]>;
+    readonly orderBy: Variable<[string, boolean][]>;
+    readonly offset: Variable<number>;
+    readonly limit: Variable<number>;
+    readonly relations: Variable<string[]>;
+    readonly fields: Variable<string[]>;
+    readonly omit: Variable<string[]>;
     protected __items: M[];
     total: number;
     isLoading: boolean;
@@ -654,12 +661,12 @@ declare abstract class Form implements Destroyable {
     isLoading: boolean;
     errors: string[];
     readonly inputs: {
-        [key: string]: Input<any>;
+        [key: string]: Variable<any>;
     };
     readonly onSuccess?: (this: Form, response?: any) => void;
     readonly onCancel?: (this: Form) => void;
     constructor(inputs: {
-        [key: string]: Input<any>;
+        [key: string]: Variable<any>;
     }, onSuccess?: (this: Form, response?: any) => void, onCancel?: (this: Form) => void);
     destroy(): void;
     get isReady(): boolean;
@@ -683,7 +690,7 @@ declare class ActionForm<M extends Model> extends Form {
     protected action: string;
     protected repository: Repository<M>;
     constructor(repository: Repository<M>, action: string, inputs: {
-        [key: string]: Input<any>;
+        [key: string]: Variable<any>;
     }, onSubmit?: (response?: any) => void, onCancel?: () => void);
     apply(): Promise<any>;
 }
@@ -695,7 +702,7 @@ declare abstract class ObjectForm<M extends Model> extends Form {
     obj: M;
     protected repository?: Repository<M>;
     constructor(obj: M, inputs: {
-        [key: string]: Input<any>;
+        [key: string]: Variable<any>;
     }, onSuccess?: (response?: any) => void, onCancel?: () => void, repository?: Repository<M>);
 }
 
@@ -712,7 +719,7 @@ declare class SaveObjectForm<M extends Model> extends ObjectForm<M> {
 declare class ActionObjectForm<M extends Model> extends ObjectForm<M> {
     protected action: string;
     constructor(action: string, obj: M, inputs: {
-        [key: string]: Input<any>;
+        [key: string]: Variable<any>;
     }, onSuccess?: (response?: any) => void, onCancel?: () => void, repository?: Repository<M>);
     apply(): Promise<any>;
 }
@@ -728,4 +735,4 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, Destroyable, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, InputConstructorArgs, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, Destroyable, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, Variable, VariableConstructorArgs, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

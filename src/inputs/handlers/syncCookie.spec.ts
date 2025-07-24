@@ -1,4 +1,4 @@
-import { config, Input, STRING } from '../..'
+import { config, Variable, STRING } from '../..'
 
 function delete_cookie( name, path, domain ) {
     if( get_cookie( name ) ) {
@@ -22,24 +22,24 @@ describe('syncCookieHandler', () => {
 
     it('empty value', async () => {
                                       expect(document.cookie).toBe('')
-        const testInput = new Input(STRING(), { syncCookie: 'test'})
+        const testInput = new Variable(STRING(), { syncCookie: 'test'})
                                       expect(testInput.value).toBe('')
                                       expect(document.cookie).toBe('test=')
     })
     it('set value', async () => {
-        const testInput = new Input(STRING(), { syncCookie: 'test'})
+        const testInput = new Variable(STRING(), { syncCookie: 'test'})
                                     ; expect(testInput.value).toBe('')
                                     ; expect(document.cookie).toBe('test=')
         testInput.set('test')       ; expect(document.cookie).toBe('test=test')
     })
     it('set null', async () => {
-        const testInput = new Input(STRING(), { syncCookie: 'test'})  
+        const testInput = new Variable(STRING(), { syncCookie: 'test'})  
                                       expect(testInput.value).toBe('')
                                       expect(document.cookie).toBe('test=')
         testInput.set(null)         ; expect(document.cookie).toBe('test=null')
     })
     it('set undefined', async () => {
-        const testInput = new Input(STRING(), { syncCookie: 'test'})
+        const testInput = new Variable(STRING(), { syncCookie: 'test'})
                                       expect(document.cookie).toBe('test=')
         testInput.set('test')       ; expect(document.cookie).toBe('test=test')
         testInput.set(undefined)    ; expect(document.cookie).toBe('test=')

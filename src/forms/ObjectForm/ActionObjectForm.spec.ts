@@ -1,4 +1,4 @@
-import { model, Model, local, Input, NUMBER, STRING, id, config, SaveObjectForm, ActionForm } from '../..'
+import { model, Model, local, Variable, NUMBER, STRING, id, config, SaveObjectForm, ActionForm } from '../..'
 import { TestRepository } from '../../test.utils'
 import { ActionObjectForm } from './ActionObjectForm'
 
@@ -20,8 +20,8 @@ describe('ActionObjectForm', () => {
     it('constructor', async ()=> {
         const onSuccess= () => {}
         const onCancel = () => {}
-        const inputA = new Input(STRING())
-        const inputB = new Input(NUMBER()) 
+        const inputA = new Variable(STRING())
+        const inputB = new Variable(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
         const obj = new A()
         const form = new ActionObjectForm('action', obj, inputs, onSuccess, onCancel)
@@ -38,8 +38,8 @@ describe('ActionObjectForm', () => {
 
     it('apply', (done)=> {
         const onSuccess = jest.fn(() => { })
-        const inputA = new Input(STRING(), {value: 'a'})
-        const inputB = new Input(NUMBER(), {value:  1 }) 
+        const inputA = new Variable(STRING(), {value: 'a'})
+        const inputB = new Variable(NUMBER(), {value:  1 }) 
         const inputs = { a: inputA, b: inputB }
         const obj = new A()
         const form = new ActionObjectForm('action', obj, inputs, onSuccess)
@@ -55,8 +55,8 @@ describe('ActionObjectForm', () => {
 
     it('apply with repository', (done)=> {
         const onSuccess = jest.fn(async () => {})
-        const inputA = new Input(STRING(), {value: 'a'})
-        const inputB = new Input(NUMBER(), {value:  1 }) 
+        const inputA = new Variable(STRING(), {value: 'a'})
+        const inputB = new Variable(NUMBER(), {value:  1 }) 
         const inputs = { a: inputA, b: inputB }
         const obj = new A()
         const repository = new TestRepository(A.getModelDescriptor(), { action: jest.fn(async (...args) => { }) })

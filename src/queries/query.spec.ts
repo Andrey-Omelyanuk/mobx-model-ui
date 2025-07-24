@@ -3,7 +3,7 @@ import { reaction } from 'mobx'
 import { TestAdapter } from '../test.utils'
 import { 
     model, Model, EQ, local, Repository,
-    Input, STRING, ORDER_BY, NUMBER, ARRAY,
+    Variable, STRING, ORDER_BY, NUMBER, ARRAY,
     Query, DISPOSER_AUTOUPDATE, DESC, ObjectInput,
     autoResetId,
     constant,
@@ -49,15 +49,15 @@ describe('Query', () => {
             expect((query as any).disposers.length).toBe(1)
         })
         it('some values', async ()=> {
-            const filter    = EQ('name', new Input(STRING(), {value: 'test'}))
+            const filter    = EQ('name', new Variable(STRING(), {value: 'test'}))
             const _ORDER_BY  = ORDER_BY()
             const _ARRAY_ORDER_BY = () => ARRAY(_ORDER_BY)
-            const orderBy   = new Input(ARRAY(ORDER_BY()), {value: [['asc', DESC]]})
-            const offset    = new Input(NUMBER(), {value: 100})
-            const limit     = new Input(NUMBER(), {value: 500})
-            const relations = new Input(ARRAY(STRING()), {value: ['rel_a', 'rel_b']})
-            const fields    = new Input(ARRAY(STRING()), {value: ['field_a', 'field_b']})
-            const omit      = new Input(ARRAY(STRING()), {value: ['omit_a', 'omit_b']})
+            const orderBy   = new Variable(ARRAY(ORDER_BY()), {value: [['asc', DESC]]})
+            const offset    = new Variable(NUMBER(), {value: 100})
+            const limit     = new Variable(NUMBER(), {value: 500})
+            const relations = new Variable(ARRAY(STRING()), {value: ['rel_a', 'rel_b']})
+            const fields    = new Variable(ARRAY(STRING()), {value: ['field_a', 'field_b']})
+            const omit      = new Variable(ARRAY(STRING()), {value: ['omit_a', 'omit_b']})
             const query     = new Query<A>({
                 repository  : repositoryA,
                 filter      : filter,

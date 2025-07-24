@@ -1,11 +1,11 @@
 import { makeObservable, observable } from 'mobx'
 import { Filter } from './Filter'
-import { Input } from '../inputs/Input'
+import { Variable } from '../inputs/Variable'
 
 
 export class SingleFilter extends Filter {
     readonly    field       : string
-    @observable input       : Input<any> 
+    @observable input       : Variable<any> 
     // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
     __disposers             : (()=>void)[] = []
 
@@ -14,7 +14,7 @@ export class SingleFilter extends Filter {
 
     constructor(
         field: string,
-        input: Input<any>,
+        input: Variable<any>,
         getURIField: (field: string) => string,
         operator: (a: any, b: any) => boolean,
     ) {
@@ -72,36 +72,36 @@ function match(obj: any, field_name: string, filter_value: any, operator: (value
     return false
 }
 
-export function EQ(field: string, input: Input<any>) : SingleFilter {
+export function EQ(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}`, (a: any, b: any) => a === b)
 }
-export function EQV(field: string, input: Input<any>) : SingleFilter {
+export function EQV(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__eq`, (a: any, b: any) => a === b)
 }
-export function NOT_EQ(field: string, input: Input<any>) : SingleFilter {
+export function NOT_EQ(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__not_eq`, (a: any, b: any) => a !== b)
 }
-export function GT(field: string, input: Input<any>) : SingleFilter {
+export function GT(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__gt`, (a: any, b: any) => a > b)
 }
-export function GTE(field: string, input: Input<any>) : SingleFilter {
+export function GTE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__gte`, (a: any, b: any) => a >= b)
 }
-export function LT(field: string, input: Input<any>) : SingleFilter {
+export function LT(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (feild: string) => `${field}__lt`, (a: any, b: any) => a < b)
 }
-export function LTE(field: string, input: Input<any>) : SingleFilter {
+export function LTE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__lte`, (a: any, b: any) => a <= b)
 }
-export function LIKE(field: string, input: Input<any>) : SingleFilter {
+export function LIKE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__contains`, (a: any, b: any) => a.includes(b))
 }
-export function ILIKE(field: string, input: Input<any>) : SingleFilter {
+export function ILIKE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__icontains`,
         (a: any, b: any) => a.toLowerCase().includes(b.toLowerCase())
     )
 }
-export function IN(field: string, input: Input<any>) : SingleFilter { 
+export function IN(field: string, input: Variable<any>) : SingleFilter { 
     return new SingleFilter(field, input, (field: string) => `${field}__in`,
         (a, b) => {
             // it's always match if value of filter is empty []

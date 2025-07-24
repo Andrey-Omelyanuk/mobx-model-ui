@@ -5,7 +5,7 @@ import { TypeDescriptor } from '../types'
 import { Destroyable } from '../object'
 
 
-export interface InputConstructorArgs<T> {
+export interface VariableConstructorArgs<T> {
     value               ?: T
     disabled            ?: boolean
     debounce            ?: number
@@ -14,7 +14,7 @@ export interface InputConstructorArgs<T> {
     syncCookie          ?: string
 }
 
-export class Input<T> implements Destroyable {
+export class Variable<T> implements Destroyable {
     type: TypeDescriptor<T>
     @observable          value               : T
     @observable          isDisabled          : boolean
@@ -29,7 +29,7 @@ export class Input<T> implements Destroyable {
     
     // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
     // it's look like a bug in the TypeScript
-    constructor (type: TypeDescriptor<T>, args?: InputConstructorArgs<any>) {
+    constructor (type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>) {
         // init all observables before use it in reaction
         this.type               = type
         this.value              = args && args.value !== undefined ? args.value : type.default()
@@ -101,5 +101,15 @@ export class Input<T> implements Destroyable {
     }
     toString() {
         return this.type.toString(this.value)
+    }
+}
+
+/**
+ * DEPRECATED: use Variable instead
+ * Keep it for backward compatibility.
+ */
+export class Input<T> extends Variable<T> {
+    constructor (type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>) {
+        super(type, args)
     }
 }

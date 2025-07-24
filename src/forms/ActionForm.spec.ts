@@ -1,4 +1,4 @@
-import { model, Model, local, Input, NUMBER, STRING, id } from '..'
+import { model, Model, local, Variable, NUMBER, STRING, id } from '..'
 import { TestRepository } from '../test.utils'
 import { ActionForm } from './ActionForm'
 
@@ -16,8 +16,8 @@ describe('ActionForm', () => {
     it('constructor', async ()=> {
         const onSuccess= () => {}
         const onCancel = () => {}
-        const inputA = new Input(STRING())
-        const inputB = new Input(NUMBER()) 
+        const inputA = new Variable(STRING())
+        const inputB = new Variable(NUMBER()) 
         const inputs = { a: inputA, b: inputB }
         const form = new ActionForm(A.defaultRepository, 'action', inputs, onSuccess, onCancel)
         expect(form).toMatchObject({
@@ -33,8 +33,8 @@ describe('ActionForm', () => {
 
     it('apply', (done)=> {
         const onSuccess = jest.fn(async () => {})
-        const inputA = new Input(STRING(), {value: 'a'})
-        const inputB = new Input(NUMBER(), {value:  1 }) 
+        const inputA = new Variable(STRING(), {value: 'a'})
+        const inputB = new Variable(NUMBER(), {value:  1 }) 
         const inputs = { a: inputA, b: inputB }
         let called: any
         const repository = new TestRepository(A.getModelDescriptor(), { modelAction: async (...args) => { called = args } })

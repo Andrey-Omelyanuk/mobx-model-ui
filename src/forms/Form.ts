@@ -1,5 +1,5 @@
 import { makeObservable, observable, runInAction } from 'mobx'
-import { Input, config, Destroyable } from '..'
+import { Variable, config, Destroyable } from '..'
 
 /**
  * Base abstract class for all forms.
@@ -12,12 +12,12 @@ export abstract class Form implements Destroyable {
     @observable isLoading   : boolean = false
     @observable errors      : string[] = []
 
-    readonly inputs    : { [key: string]: Input<any> }
+    readonly inputs    : { [key: string]: Variable<any> }
     readonly onSuccess?: (this: Form, response?: any) => void
     readonly onCancel ?: (this: Form) => void
 
     constructor(
-        inputs   : { [key: string]: Input<any> },
+        inputs   : { [key: string]: Variable<any> },
         onSuccess?: (this: Form, response?: any) => void,
         onCancel ?: (this: Form) => void
     ) {
