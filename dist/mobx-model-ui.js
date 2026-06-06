@@ -809,6 +809,102 @@
         return new UUIDDescriptor(props);
     }
 
+    function isEnumObject(obj) {
+        return typeof obj === 'object'
+            && obj !== null
+            && !Array.isArray(obj);
+    }
+    function extractEnumValues(enumObj) {
+        return Object.keys(enumObj)
+            .filter(key => {
+            const val = enumObj[key];
+            const reverseKey = enumObj[val];
+            return typeof reverseKey !== 'number';
+        })
+            .map(key => enumObj[key]);
+    }
+    function extractEnumLabels(enumObj) {
+        return Object.keys(enumObj)
+            .filter(key => {
+            const val = enumObj[key];
+            const reverseKey = enumObj[val];
+            return typeof reverseKey !== 'number';
+        });
+    }
+    class EnumDescriptor extends TypeDescriptor {
+        constructor(props) {
+            super(props);
+            Object.defineProperty(this, "_rawOptions", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "_values", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            Object.defineProperty(this, "_labels", {
+                enumerable: true,
+                configurable: true,
+                writable: true,
+                value: void 0
+            });
+            this._rawOptions = props.options;
+            if (Array.isArray(props.options)) {
+                this._values = props.options;
+                this._labels = props.options.map(v => String(v));
+            }
+            else if (isEnumObject(props.options)) {
+                this._values = extractEnumValues(props.options);
+                this._labels = extractEnumLabels(props.options);
+            }
+            else {
+                this._values = [];
+                this._labels = [];
+            }
+        }
+        toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
+            return String(value);
+        }
+        fromString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === 'null' || value === null)
+                return null;
+            const parsed = this._values.find(v => String(v) === value);
+            return parsed !== undefined ? parsed : undefined;
+        }
+        validate(value) {
+            super.validate(value);
+            if (value !== undefined && value !== null && !this._values.includes(value))
+                throw new Error('Value is not a valid enum option');
+        }
+        default() {
+            if (this.required && this._values.length > 0)
+                return this._values[0];
+            return undefined;
+        }
+        getOptions() {
+            return this._values.map((v, i) => ({
+                label: this._labels[i],
+                value: v
+            }));
+        }
+        get values() {
+            return this._values;
+        }
+    }
+    function ENUM(props) {
+        return new EnumDescriptor(props);
+    }
+
     const DISPOSER_AUTOUPDATE = '__autoupdate';
     /* Query live cycle:
 
@@ -2753,8 +2849,10 @@
     exports.DateDescriptor = DateDescriptor;
     exports.DateTimeDescriptor = DateTimeDescriptor;
     exports.DeleteObjectForm = DeleteObjectForm;
+    exports.ENUM = ENUM;
     exports.EQ = EQ;
     exports.EQV = EQV;
+    exports.EnumDescriptor = EnumDescriptor;
     exports.Filter = Filter;
     exports.Form = Form;
     exports.GT = GT;

@@ -30,9 +30,9 @@ export default [
                 sourcemap   : pkg['main'] + '.map',
                 banner,
             },
-            {   file        : pkg['jsnext:main'], 
+            {   file        : pkg['module'], 
                 format      : "es",
-                sourcemap   : pkg['jsnext:main'] + '.map',
+                sourcemap   : pkg['module'] + '.map',
                 banner,
             }
         ],

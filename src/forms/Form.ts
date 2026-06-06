@@ -1,5 +1,7 @@
 import { makeObservable, observable, runInAction } from 'mobx'
-import { Variable, config, Destroyable } from '..'
+import { Variable } from '../inputs'
+import { config } from '../config'
+import { Destroyable } from '../object'
 
 /**
  * Base abstract class for all forms.

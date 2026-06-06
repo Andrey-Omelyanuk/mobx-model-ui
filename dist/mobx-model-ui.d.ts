@@ -137,6 +137,27 @@ declare class UUIDDescriptor extends TypeDescriptor<string> {
 }
 declare function UUID(props?: UUIDDescriptorProps): UUIDDescriptor;
 
+interface EnumOption<T> {
+    label: string;
+    value: T;
+}
+interface EnumDescriptorProps<T> extends TypeDescriptorProps {
+    options: T[] | Record<string, T>;
+}
+declare class EnumDescriptor<T extends string | number> extends TypeDescriptor<T> {
+    private _rawOptions;
+    private _values;
+    private _labels;
+    constructor(props: EnumDescriptorProps<T>);
+    toString(value: T): string;
+    fromString(value: string): T;
+    validate(value: T): void;
+    default(): T;
+    getOptions(): EnumOption<T>[];
+    get values(): T[];
+}
+declare function ENUM<T extends string | number>(props: EnumDescriptorProps<T>): EnumDescriptor<T>;
+
 type ID = string | number;
 
 declare abstract class Filter {
@@ -747,5 +768,5 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
-export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, ID, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, VariableConstructorArgs };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, EnumDescriptorProps, EnumOption, ID, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, VariableConstructorArgs };
