@@ -19,7 +19,7 @@
     "registry"  : "https://registry.npmjs.org/" 
   },
   "main"        : "dist/mobx-model-ui.js",
-  "jsnext:main" : "dist/mobx-model-ui.es2015.js",
+  "module"      : "dist/mobx-model-ui.es2015.js",
   "typings"     : "dist/mobx-model-ui.d.ts",
   "dependencies": {
     "mobx"      : "~6.7.0"

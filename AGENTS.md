@@ -149,5 +149,5 @@ field (base)
 ```
 
 ### Dependencies
-- **runtime:** mobx ~6.7.0, lodash ^4.17.21
+- **runtime:** mobx ~6.7.0
 - **dev:** typescript ^5.6.3, jest ^29.7.0, rollup ^2.75.5, tslint ^6.1.3
