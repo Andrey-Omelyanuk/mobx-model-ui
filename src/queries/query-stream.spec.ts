@@ -5,8 +5,8 @@ import { QueryStream } from './query-stream'
 describe('QueryStream', () => {
 
     @local() @model class A extends Model { @id(NUMBER()) id: number }
-    const repository = A.defaultRepository as Repository<A>
-    const adapter = repository.adapter as LocalAdapter<A>
+    const repository = A.defaultRepository as unknown as Repository<A>
+    const adapter = repository.adapter as unknown as LocalAdapter<A>
     let query: QueryStream<A>
 
     beforeEach(async () => {

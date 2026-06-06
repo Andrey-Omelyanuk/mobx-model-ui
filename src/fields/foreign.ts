@@ -35,7 +35,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_id?: string
                     },
                     // update foreign field
                     action('MO: Foreign - update',
-                        (_new, _old) => obj[field_name] = _new 
+                        (_new: any, _old: any) => obj[field_name] = _new 
                     ),
                     {fireImmediately: true}
                 ))

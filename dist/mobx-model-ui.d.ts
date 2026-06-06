@@ -5,7 +5,7 @@ declare const config: {
     FORM_UNKNOWN_ERROR_MESSAGE: string;
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
     WATCTH_URL_CHANGES: (callback: any) => () => void;
-    DEBOUNCE: (func: Function, debounce: number) => any;
+    DEBOUNCE: (func: Function, debounce: number) => (this: any, ...args: any[]) => void;
     COOKIE_DOMAIN: string;
 };
 
@@ -125,6 +125,17 @@ declare class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
     default(): [string, boolean];
 }
 declare function ORDER_BY(): OrderByDescriptor;
+
+interface UUIDDescriptorProps extends TypeDescriptorProps {
+}
+declare class UUIDDescriptor extends TypeDescriptor<string> {
+    constructor(props?: UUIDDescriptorProps);
+    toString(value: string): string;
+    fromString(value: string): string;
+    validate(value: string): void;
+    default(): string;
+}
+declare function UUID(props?: UUIDDescriptorProps): UUIDDescriptor;
 
 type ID = string | number;
 
@@ -330,21 +341,21 @@ declare class Query<M extends Model> implements Destroyable {
     readonly fields: Variable<string[]>;
     readonly omit: Variable<string[]>;
     protected __items: M[];
-    total: number;
+    total: number | undefined;
     isLoading: boolean;
     isNeedToUpdate: boolean;
-    timestamp: number;
-    error: string;
+    timestamp: number | undefined;
+    error: string | undefined;
     get items(): M[];
-    protected controller: AbortController;
+    protected controller: AbortController | undefined;
     protected disposers: (() => void)[];
     protected disposerObjects: {
         [field: string]: () => void;
     };
     constructor(props: QueryProps<M>);
     destroy(): void;
-    loading: () => Promise<Boolean>;
-    ready: () => Promise<Boolean>;
+    loading(): Promise<Boolean>;
+    ready(): Promise<Boolean>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
     toString(): string;
@@ -382,8 +393,9 @@ declare class QueryCacheSync<M extends Model> extends Query<M> {
 }
 
 declare class QueryStream<M extends Model> extends Query<M> {
-    goToFirstPage(): void;
-    goToNextPage(): void;
+    restart(): void;
+    loadMore(): void;
+    isEndReached: boolean;
     constructor(props: QueryProps<M>);
     __load(): Promise<void>;
 }
@@ -627,8 +639,8 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
-    getTotalCount(filter: Filter): Promise<number>;
-    getDistinct(filter: any, filed: any): Promise<any[]>;
+    getTotalCount(filter?: Filter): Promise<number>;
+    getDistinct(filter: Filter, field: string): Promise<any[]>;
     getURLSearchParams(query: Query<M>): URLSearchParams;
 }
 declare function local(store_name?: string): (cls: any) => void;
@@ -735,4 +747,5 @@ declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, ArrayDescriptorProps, BOOLEAN, BooleanDescriptor, BooleanDescriptorProps, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateDescriptorProps, DateTimeDescriptor, DeleteObjectForm, Destroyable, EQ, EQV, Filter, Form, GT, GTE, ID, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, NumberDescriptorProps, ORDER_BY, ObjectForm, ObjectInput, ObjectInputConstructorArgs, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryProps, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, RequestConfig, STRING, SaveObjectForm, SingleFilter, StringDescriptor, StringDescriptorProps, TypeDescriptor, TypeDescriptorProps, Variable, VariableConstructorArgs, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, ID, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, VariableConstructorArgs };

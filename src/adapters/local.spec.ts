@@ -5,7 +5,7 @@ import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e  } from '../test.utils'
 describe('LocalAdapter', () => {
 
     @local() @model class A extends Model { @id(NUMBER()) id: number }
-    const adapter = A.defaultRepository.adapter as LocalAdapter<A> 
+    const adapter = A.defaultRepository.adapter as unknown as LocalAdapter<A> 
 
     afterEach(async () => {
         local_store['A'] = {} // clean the store
@@ -19,7 +19,7 @@ describe('LocalAdapter', () => {
 
         it('decorate the model', async ()=> {
             @local() @model class A2 extends Model { @id(NUMBER()) id: number }
-            expect((A2.defaultRepository.adapter as LocalAdapter<A2>).store_name).toBe('A2')
+            expect((A2.defaultRepository.adapter as unknown as LocalAdapter<A2>).store_name).toBe('A2')
         })
     })
 
@@ -152,7 +152,7 @@ describe('LocalAdapter', () => {
     describe('getDistinct', () => {
         it('returns distinct values for a field', async ()=> {
             adapter.init_local_data(data_set)
-            const values = await adapter.getDistinct(undefined, 'b')
+            const values = await adapter.getDistinct(null as any, 'b')
             expect(values.sort()).toEqual(['a', 'c', 'f'].sort())
         })
 

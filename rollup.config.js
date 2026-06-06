@@ -1,7 +1,9 @@
 // import typescript from '@rollup/plugin-typescript'
 import typescript from 'rollup-plugin-typescript2'
 // import { terser } from 'rollup-plugin-terser'
-import dts        from 'rollup-plugin-dts'
+import { createRequire } from 'module'
+const require = createRequire(import.meta.url)
+const dts = require('rollup-plugin-dts').default
 import pkg from "./package.json"
 
 const moduleName = pkg.name.replace(/^@.*\//, "")

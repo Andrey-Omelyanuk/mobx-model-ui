@@ -6,10 +6,8 @@
    * Released under the MIT license.
    */
 
-import _ from 'lodash';
 import { observable, action, makeObservable, autorun, reaction, runInAction, computed, observe, extendObservable, intercept } from 'mobx';
 
-// TODO: remove dependency of lodash 
 // Global config of Mobx-ORM
 const config = {
     DEFAULT_PAGE_SIZE: 50,
@@ -26,7 +24,16 @@ const config = {
         return () => { window.removeEventListener('popstate', callback); };
     },
     DEBOUNCE: (func, debounce) => {
-        return _.debounce(func, debounce);
+        let timeoutId = null;
+        return function (...args) {
+            if (timeoutId !== null) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(() => {
+                timeoutId = null;
+                func.apply(this, args);
+            }, debounce);
+        };
     },
     COOKIE_DOMAIN: 'localhost' // Change this to your domain if needed.
 };
@@ -45,6 +52,8 @@ LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
 OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
+/* global Reflect, Promise, SuppressedError, Symbol, Iterator */
+
 
 function __decorate(decorators, target, key, desc) {
     var c = arguments.length, r = c < 3 ? target : desc === null ? desc = Object.getOwnPropertyDescriptor(target, key) : desc, d;
@@ -132,7 +141,7 @@ __decorate([
 ], Cache.prototype, "clear", null);
 
 function waitIsTrue(obj, field) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         autorun((reaction) => {
             if (obj[field]) {
                 reaction.dispose();
@@ -142,7 +151,7 @@ function waitIsTrue(obj, field) {
     });
 }
 function waitIsFalse(obj, field) {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         autorun((reaction) => {
             if (!obj[field]) {
                 reaction.dispose();
@@ -760,6 +769,42 @@ function ORDER_BY() {
     return new OrderByDescriptor();
 }
 
+class UUIDDescriptor extends TypeDescriptor {
+    constructor(props) {
+        super(props);
+    }
+    toString(value) {
+        if (value === undefined)
+            return undefined;
+        if (value === null)
+            return 'null';
+        return value;
+    }
+    fromString(value) {
+        if (value === undefined)
+            return undefined;
+        else if (value === 'null')
+            return null;
+        else if (value === null)
+            return null;
+        return value;
+    }
+    validate(value) {
+        super.validate(value);
+        if (value === '' && this.required)
+            throw new Error('Field is required');
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        if (value && !uuidRegex.test(value))
+            throw new Error('Invalid UUID format');
+    }
+    default() {
+        return '00000000-0000-0000-0000-000000000000';
+    }
+}
+function UUID(props) {
+    return new UUIDDescriptor(props);
+}
+
 const DISPOSER_AUTOUPDATE = '__autoupdate';
 /* Query live cycle:
 
@@ -842,7 +887,7 @@ class Query {
             configurable: true,
             writable: true,
             value: void 0
-        }); // total count of items on the server, usefull for pagination
+        }); // total count of items on the server, useful for pagination
         Object.defineProperty(this, "isLoading", {
             enumerable: true,
             configurable: true,
@@ -860,7 +905,7 @@ class Query {
             configurable: true,
             writable: true,
             value: void 0
-        }); // timestamp of the last update, usefull to aviod to trigger react hooks twise
+        }); // timestamp of the last update, useful to avoid triggering react hooks twice
         Object.defineProperty(this, "error", {
             enumerable: true,
             configurable: true,
@@ -885,18 +930,6 @@ class Query {
             writable: true,
             value: {}
         });
-        Object.defineProperty(this, "loading", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: async () => waitIsFalse(this, 'isLoading')
-        });
-        Object.defineProperty(this, "ready", {
-            enumerable: true,
-            configurable: true,
-            writable: true,
-            value: async () => waitIsFalse(this, 'isReady')
-        });
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
         this.repository = repository;
         this.filter = filter;
@@ -913,7 +946,7 @@ class Query {
         // because isNeedToUpdate should be set to true 
         // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
         () => {
-            return { dependenciesAreReady: this.dependenciesAreReady, value: this.toString };
+            return { dependenciesAreReady: this.dependenciesAreReady, value: this.toString() };
         }, ({ dependenciesAreReady, value }) => {
             if (dependenciesAreReady && !this.isNeedToUpdate)
                 runInAction(() => this.isNeedToUpdate = true);
@@ -925,11 +958,13 @@ class Query {
         while (this.disposers.length) {
             this.disposers.pop()();
         }
-        for (let __id in this.disposerObjects) {
+        for (const __id of Object.keys(this.disposerObjects)) {
             this.disposerObjects[__id]();
             delete this.disposerObjects[__id];
         }
     }
+    async loading() { return waitIsFalse(this, 'isLoading'); }
+    async ready() { return waitIsFalse(this, 'isReady'); }
     get autoupdate() {
         return !!this.disposerObjects[DISPOSER_AUTOUPDATE];
     }
@@ -938,7 +973,7 @@ class Query {
     // because autoupdate means => user have changed something on UI inputs
     // and we should to show the UI reaction
     set autoupdate(value) {
-        if (value !== this.autoupdate) { // indepotent guarantee
+        if (value !== this.autoupdate) { // idempotent guarantee
             // on 
             if (value) {
                 this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt, old) => {
@@ -951,8 +986,11 @@ class Query {
             }
             // off
             else {
-                this.disposerObjects[DISPOSER_AUTOUPDATE]();
-                delete this.disposerObjects[DISPOSER_AUTOUPDATE];
+                const disposer = this.disposerObjects[DISPOSER_AUTOUPDATE];
+                if (disposer) {
+                    disposer();
+                    delete this.disposerObjects[DISPOSER_AUTOUPDATE];
+                }
             }
         }
     }
@@ -1012,10 +1050,10 @@ class Query {
             await this.__load();
         }
         catch (e) {
-            // ignore the cancelation of the request
-            if (e.name !== 'AbortError' && e.message !== 'canceled') {
-                // console.error(e)
-                runInAction(() => this.error = e.message);
+            const isAbort = (e instanceof DOMException && e.name === 'AbortError')
+                || (e instanceof Error && e.message === 'canceled');
+            if (!isAbort) {
+                runInAction(() => this.error = e instanceof Error ? e.message : String(e));
             }
         }
         finally {
@@ -1139,9 +1177,6 @@ class QueryCacheSync extends Query {
         }
     }
     async __load() {
-        if (this.controller)
-            this.controller.abort();
-        this.controller = new AbortController();
         try {
             await this.repository.load(this, { controller: this.controller });
             // Query don't need to overide the __items,
@@ -1154,7 +1189,6 @@ class QueryCacheSync extends Query {
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
         await Promise.resolve();
-        // await new Promise(resolve => setTimeout(resolve))
     }
     get items() {
         let __items = this.__items.map(x => x); // copy __items (not deep)
@@ -1211,15 +1245,31 @@ __decorate([
 ], QueryCacheSync.prototype, "items", null);
 
 class QueryStream extends Query {
-    // you can reset all and start from beginning
-    goToFirstPage() { this.__items = []; this.offset.set(0); }
-    // you can scroll only forward
-    goToNextPage() { this.offset.set(this.offset.value + this.limit.value); }
+    restart() {
+        this.__items = [];
+        this.offset.set(undefined);
+        this.total = undefined;
+        this.isEndReached = false;
+        this.load();
+    }
+    loadMore() {
+        if (this.controller)
+            return;
+        if (this.total === 1)
+            return;
+        this.load();
+    }
     constructor(props) {
         super(props);
+        Object.defineProperty(this, "isEndReached", {
+            enumerable: true,
+            configurable: true,
+            writable: true,
+            value: false
+        });
         runInAction(() => {
             if (this.offset.value === undefined)
-                this.offset.set(0);
+                this.offset.set(undefined);
             if (this.limit.value === undefined)
                 this.limit.set(config.DEFAULT_PAGE_SIZE);
         });
@@ -1227,26 +1277,35 @@ class QueryStream extends Query {
     async __load() {
         const objs = await this.repository.load(this, { controller: this.controller });
         runInAction(() => {
-            this.__items.push(...objs);
-            // total is not make sense for infinity queries
-            // total = 1 show that last page is reached
-            if (objs.length < this.limit.value)
+            if (objs.length === 0) {
                 this.total = 1;
+                this.isEndReached = true;
+            }
+            else {
+                this.__items.push(...objs);
+                this.offset.set(objs[objs.length - 1].ID);
+                this.total = undefined;
+                this.isEndReached = false;
+            }
         });
     }
 }
 __decorate([
-    action('MO: fisrt page'),
+    action('MO: restart'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], QueryStream.prototype, "goToFirstPage", null);
+], QueryStream.prototype, "restart", null);
 __decorate([
-    action('MO: next page'),
+    action('MO: load more'),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
-], QueryStream.prototype, "goToNextPage", null);
+], QueryStream.prototype, "loadMore", null);
+__decorate([
+    observable,
+    __metadata("design:type", Object)
+], QueryStream.prototype, "isEndReached", void 0);
 
 /**
  * QueryRaw is a class to load raw objects from the server
@@ -1267,8 +1326,8 @@ class QueryRaw extends Query {
  */
 class QueryRawPage extends QueryPage {
     async __load() {
-        const objs = await this.repository.adapter.load(this);
-        const total = await this.repository.getTotalCount(this.filter);
+        const objs = await this.repository.adapter.load(this, { controller: this.controller });
+        const total = await this.repository.getTotalCount(this.filter, { controller: this.controller });
         runInAction(() => {
             this.__items = objs;
             this.total = total;
@@ -2141,7 +2200,7 @@ function GTE(field, input) {
     return new SingleFilter(field, input, (field) => `${field}__gte`, (a, b) => a >= b);
 }
 function LT(field, input) {
-    return new SingleFilter(field, input, (feild) => `${field}__lt`, (a, b) => a < b);
+    return new SingleFilter(field, input, (field) => `${field}__lt`, (a, b) => a < b);
 }
 function LTE(field, input) {
     return new SingleFilter(field, input, (field) => `${field}__lte`, (a, b) => a <= b);
@@ -2301,8 +2360,12 @@ class LocalAdapter extends Adapter {
     async find(query) {
         if (this.delay)
             await timeout(this.delay);
-        let raw_obj = Object.values(local_store[this.store_name])[0];
-        return raw_obj;
+        for (let raw_obj of Object.values(local_store[this.store_name])) {
+            if (!query.filter || query.filter.isMatch(raw_obj)) {
+                return raw_obj;
+            }
+        }
+        return undefined;
     }
     async load(query) {
         if (this.delay)
@@ -2338,17 +2401,40 @@ class LocalAdapter extends Adapter {
                 return 0;
             });
         }
-        // page
-        if (query.limit.value !== undefined && query.offset.value !== undefined) {
+        // cursor-based pagination for QueryStream
+        if (query instanceof QueryStream) {
+            if (query.offset.value !== undefined) {
+                const cursor = query.offset.value;
+                raw_objs = raw_objs.filter(obj => obj.id > cursor);
+            }
+            raw_objs = raw_objs.slice(0, query.limit.value);
+        }
+        // offset/limit pagination for other queries
+        else if (query.limit.value !== undefined && query.offset.value !== undefined) {
             raw_objs = raw_objs.slice(query.offset.value, query.offset.value + query.limit.value);
         }
         return raw_objs;
     }
     async getTotalCount(filter) {
-        return Object.values(local_store[this.store_name]).length;
+        if (!filter)
+            return Object.values(local_store[this.store_name]).length;
+        let count = 0;
+        for (const raw_obj of Object.values(local_store[this.store_name])) {
+            if (filter.isMatch(raw_obj))
+                count++;
+        }
+        return count;
     }
-    async getDistinct(filter, filed) {
-        return [];
+    async getDistinct(filter, field) {
+        const values = new Set();
+        for (const raw_obj of Object.values(local_store[this.store_name])) {
+            if (!filter || filter.isMatch(raw_obj)) {
+                if (raw_obj[field] !== undefined && raw_obj[field] !== null) {
+                    values.add(raw_obj[field]);
+                }
+            }
+        }
+        return Array.from(values);
     }
     getURLSearchParams(query) {
         return new URLSearchParams();
@@ -2643,5 +2729,5 @@ class DeleteObjectForm extends ObjectForm {
     }
 }
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, EQ, EQV, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map

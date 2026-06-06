@@ -195,22 +195,22 @@ export default abstract class Model implements Destroyable {
     // --------------------------------------------------------------------------------------------
     // helper class functions
     // --------------------------------------------------------------------------------------------
-    static getQuery         <T extends Model>(props: QueryProps<T>): Query         <T> { return (this.defaultRepository as Repository<T>).getQuery(props) }
-    static getQueryPage     <T extends Model>(props: QueryProps<T>): QueryPage     <T> { return (this.defaultRepository as Repository<T>).getQueryPage(props) }
-    static getQueryRaw      <T extends Model>(props: QueryProps<T>): QueryRaw      <T> { return (this.defaultRepository as Repository<T>).getQueryRaw(props) }
-    static getQueryRawPage  <T extends Model>(props: QueryProps<T>): QueryRawPage  <T> { return (this.defaultRepository as Repository<T>).getQueryRawPage(props) }
-    static getQueryCacheSync<T extends Model>(props: QueryProps<T>): QueryCacheSync<T> { return (this.defaultRepository as Repository<T>).getQueryCacheSync(props) }
-    static getQueryStream   <T extends Model>(props: QueryProps<T>): QueryStream   <T> { return (this.defaultRepository as Repository<T>).getQueryStream(props) }
+    static getQuery         <T extends Model>(props: QueryProps<T>): Query         <T> { return (this.defaultRepository as unknown as Repository<T>).getQuery(props) }
+    static getQueryPage     <T extends Model>(props: QueryProps<T>): QueryPage     <T> { return (this.defaultRepository as unknown as Repository<T>).getQueryPage(props) }
+    static getQueryRaw      <T extends Model>(props: QueryProps<T>): QueryRaw      <T> { return (this.defaultRepository as unknown as Repository<T>).getQueryRaw(props) }
+    static getQueryRawPage  <T extends Model>(props: QueryProps<T>): QueryRawPage  <T> { return (this.defaultRepository as unknown as Repository<T>).getQueryRawPage(props) }
+    static getQueryCacheSync<T extends Model>(props: QueryProps<T>): QueryCacheSync<T> { return (this.defaultRepository as unknown as Repository<T>).getQueryCacheSync(props) }
+    static getQueryStream   <T extends Model>(props: QueryProps<T>): QueryStream   <T> { return (this.defaultRepository as unknown as Repository<T>).getQueryStream(props) }
     static getQueryDistinct <T extends Model>(field: string, props: QueryProps<T>): QueryDistinct {
-        return (this.defaultRepository as Repository<T>).getQueryDistinct(field, props)
+        return (this.defaultRepository as unknown as Repository<T>).getQueryDistinct(field, props)
     }
     static get<T extends Model>(id: ID): T {
         return this.getModelDescriptor().cache.get(id) as T
     }
     static async findById<T extends Model>(id: ID) : Promise<T> {
-        return (this.defaultRepository as Repository<T>).get(id)
+        return (this.defaultRepository as unknown as Repository<T>).get(id)
     }
     static async find<T extends Model>(query: Query<T>) : Promise<T> {
-        return (this.defaultRepository as Repository<T>).find(query)
+        return (this.defaultRepository as unknown as Repository<T>).find(query)
     }
 }

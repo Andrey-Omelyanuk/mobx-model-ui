@@ -41,7 +41,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_id?: str
                             () => {
                                 return modelDescription.cache.get(remote_obj[remote_foreign_id])
                             },
-                            action(disposer_name, (_new, _old) => {
+                            action(disposer_name, (_new: any, _old: any) => {
                                 if (_old) {
                                     const i = _old[field_name].indexOf(remote_obj)
                                     if (i > -1)

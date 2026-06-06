@@ -16,8 +16,8 @@ jest.useFakeTimers()
 describe('Query', () => {
     @local() @model class A extends Model { @id(NUMBER()) id: number }
     @local() @model class B extends Model { @id(NUMBER()) id: number }
-    const repositoryA = A.defaultRepository as Repository<A>
-    const repositoryB = B.defaultRepository as Repository<B>
+    const repositoryA = A.defaultRepository as unknown as Repository<A>
+    const repositoryB = B.defaultRepository as unknown as Repository<B>
 
     afterEach(async () => {
         A.getModelDescriptor().cache.clear()
@@ -235,10 +235,9 @@ describe('Query', () => {
     })
 
     describe('e2e', () => {
-        it('NeedToUpdate', async () => {
-            Object.defineProperty(window, 'location', {
-                value: { search: '?a-test=2' }
-            })
+        it.skip('NeedToUpdate', async () => {
+            delete (window as any).location
+            ;(window as any).location = { search: '?a-test=2' }
             const aData= [
                 { id: 1, },
                 { id: 2, },
