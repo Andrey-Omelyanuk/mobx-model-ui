@@ -2,16 +2,16 @@
 import { Model, model, local, id, field, foreign, many, NUMBER, STRING, DATE, DATETIME } from '../dist/mobx-model-ui'
 
 /**
- *  Есть чаты и пользователи в них которые могут обмениваться сообщениями.
- *  Основные участники:
+ *  There are chats and users who can exchange messages.
+ *  Main participants:
  *      - Chats: ChatA, ChatB, ChatC
  *      - Users
- *          - UserA состоит в чатах A и B
- *          - UserB состоит в чатах B и C
- *          - UserC состоит в чатах A, B и C
- *  Основные сценарии:
- *      - Пользователи обчаються во всех чатах (каждый минимум по 10 сообщений в каждый чат)
- *      - UserA прокручивает все сообщения от последнего к самому старому в ChatB.
+ *          - UserA is in chats A and B
+ *          - UserB is in chats B and C
+ *          - UserC is in chats A, B and C
+ *  Main scenarios:
+ *      - Users exchange messages in all chats (at least 10 messages each per chat)
+ *      - UserA scrolls through all messages from newest to oldest in ChatB
  */
 
 describe('e2e: Chat.', () => {
