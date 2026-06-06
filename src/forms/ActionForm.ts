@@ -8,16 +8,16 @@ import { Form } from './Form'
  */
 export class ActionForm<M extends Model> extends Form {
     protected action: string
-    protected repository: Repository<M>
+    protected readonly repository: Repository<M>
 
     constructor(
         repository  : Repository<M>,
         action      : string,
         inputs      : {[key: string]: Variable<any> },
-        onSubmit   ?: (response?: any) => void,
+        onSuccess  ?: (response?: any) => void,
         onCancel   ?: () => void,
     ) {
-        super(inputs, onSubmit, onCancel)
+        super(inputs, onSuccess, onCancel)
         this.repository = repository
         this.action = action
     }

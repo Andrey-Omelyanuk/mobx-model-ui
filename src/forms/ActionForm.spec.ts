@@ -31,6 +31,16 @@ describe('ActionForm', () => {
         })
     })
 
+    it('apply error propagation', (done)=> {
+        const repository = new TestRepository(A.getModelDescriptor(), { modelAction: async () => { throw new Error('action failed') } })
+        const form = new ActionForm(repository, 'action', {})
+        form.submit().then(() => {
+            expect(form.isLoading).toBe(false)
+            expect(form.errors).toEqual(['action failed'])
+            done()
+        })
+    })
+
     it('apply', (done)=> {
         const onSuccess = jest.fn(async () => {})
         const inputA = new Variable(STRING(), {value: 'a'})
