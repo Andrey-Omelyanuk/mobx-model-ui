@@ -1,14 +1,15 @@
 MobX-Model-UI
 ===
-ex [@Andrey-Omelyanuk/MobX-ORM:2.1.7](https://github.com/Andrey-Omelyanuk/mobx-orm)
+Library for data models and UI interactions built on MobX.
+successor of [@Andrey-Omelyanuk/MobX-ORM:2.1.7](https://github.com/Andrey-Omelyanuk/mobx-orm)
 
 Data and UI models based on [MobX](https://github.com/mobxjs/mobx)
 Inspired by [ember-data](https://github.com/emberjs/data) and [js-data](https://github.com/js-data/js-data).
-This library is another opinion (my personal) about what models should be on the front-end and how work with it.
+This library is another opinion (my personal) about what models should be on the front-end and how to work with them.
 
 Introduction:
 ---
-There are entities into the lib:
+The library contains these entities:
 
     Model, Field, Repository, Adapter
     Query, Filter
@@ -18,8 +19,8 @@ A quick example:
 ---
 
 ```ts
-    // This exapmle is not tested yet, it how I whant to see it.
-    import { Model, model, field, foreign, many } from 'mobx-model-ui'
+    // This example is not tested yet, it shows how I want it to work.
+    import { Model, model, id, field, foreign, many } from 'mobx-model-ui'
 
     @model class User extends Model {
         @id    id   : number  // it can be a string for UUID for example
@@ -49,31 +50,31 @@ A quick example:
     let user_a = new User({id: 1, name: 'User A'})
     let user_b = new User({id: 2, name: 'User B'})
 
-    let book_a = new Book({id: 1, name: 'Book A'})
-    let book_b = new Book({id: 2, name: 'Book B'})
-    let book_c = new Book({id: 3, name: 'Book C'})
+    let book_a = new Book({id: 1, title: 'Book A'})
+    let book_b = new Book({id: 2, title: 'Book B'})
+    let book_c = new Book({id: 3, title: 'Book C'})
 
     new Author({id: 1, user_id: 1, book_id: 1})
     new Author({id: 2, user_id: 1, book_id: 2})
     new Author({id: 3, user_id: 1, book_id: 3})
     new Author({id: 4, user_id: 2, book_id: 3})
 
-    for (const autorship of user_a.authorship) console.log(autorship.book.title)
+    for (const authorship of user_a.authorship) console.log(authorship.book.title)
     // Book A
     // Book B
     // Book C
-    for (const autorship of user_b.authorship) console.log(autorship.book.title)
+    for (const authorship of user_b.authorship) console.log(authorship.book.title)
     // Book C
-    for (const autorship of book_a.authorship) console.log(autorship.user.name)
+    for (const authorship of book_a.authorship) console.log(authorship.user.name)
     // User A
-    for (const autorship of book_b.authorship) console.log(autorship.user.name)
+    for (const authorship of book_b.authorship) console.log(authorship.user.name)
     // User A
-    for (const autorship of book_c.authorship) console.log(autorship.user.name)
+    for (const authorship of book_c.authorship) console.log(authorship.user.name)
     // User A
     // User B
 ```
 
-More examples you can find into ./e2e tests.
+More examples you can find in the ./e2e tests.
 
 
 Architecture:
@@ -123,8 +124,8 @@ Architecture:
 │  ├ filter / orderBy        ├ URLSearchParams (for API)              │
 │  ├ offset / limit          ├ isMatch(obj) (client-side)             │
 │  ├ isLoading / isReady     └────────────────────────────────────────┘
-│  ├ autoupdate (reaction)                                                   │
-│  └ items / timestamp                                                    │
+│  ├ autoupdate (reaction)                                           │
+│  └ items / timestamp                                               │
 │       │
 │       ├─ QueryPage<M>     (pagination: setPage, goToNextPage...)    │
 │       ├─ QueryStream<M>   (infinite scroll: append items)           │
@@ -152,8 +153,8 @@ Architecture:
 │  ├ inputs: Map<Variable>   ├ toString() / fromString()              │
 │  ├ isLoading / isError     ├ validate() / default()                 │
 │  ├ isReady                 └ required / null                        │
-│  ├ submit() → apply()                                                  │
-│  └ onSuccess / onCancel                                                │
+│  ├ submit() → apply()                                          │
+│  └ onSuccess / onCancel                                        │
 │       │
 │       ├─ ActionForm<M>        (repository.modelAction)              │
 │       ├─ ObjectForm<M>        (bound to specific model instance)    │
@@ -395,9 +396,9 @@ classDiagram
 ```
 
 # For Developers:
-I recommend to use docker for development. See the `makefile` how to use it.
+I recommend using Docker for development. See the `makefile` for how to use it.
 
-If you don't want to use docker then you can see `scripts` commands into `package.json`
+If you don't want to use Docker then you can see `scripts` commands in `package.json`
 How to debug:
 ```sh
 node_modules/.bin/jest --testMatch='**/src/**/*.spec.ts' --watchAll

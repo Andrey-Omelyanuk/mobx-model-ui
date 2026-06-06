@@ -19,7 +19,7 @@ export interface QueryProps<M extends Model> {
     // pagination
     offset                      ?: Variable<number>
     limit                       ?: Variable<number>
-    // fields controll
+    // fields control
     relations                   ?: Variable<string[]>
     fields                      ?: Variable<string[]> 
     omit                        ?: Variable<string[]> 
@@ -127,7 +127,7 @@ export class Query <M extends Model> implements Destroyable {
     // because autoupdate means => user have changed something on UI inputs
     // and we should to show the UI reaction
     set autoupdate(value: boolean) {
-        if (value !== this.autoupdate) {  // indepotent guarantee
+        if (value !== this.autoupdate) {  // idempotent guarantee
             // on 
             if (value) {
                 this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(
