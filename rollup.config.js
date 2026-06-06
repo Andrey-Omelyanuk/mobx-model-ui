@@ -1,6 +1,6 @@
 // import typescript from '@rollup/plugin-typescript'
 import typescript from 'rollup-plugin-typescript2'
-// import { terser } from 'rollup-plugin-terser'
+// import terser from '@rollup/plugin-terser'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const dts = require('rollup-plugin-dts').default
