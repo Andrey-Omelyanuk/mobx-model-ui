@@ -68,7 +68,26 @@ describe('LocalAdapter', () => {
         expect(await adapter.get(2)).toStrictEqual({id: 2, a: 2})
     })
 
-    it('find', async ()=> {
+    describe('find', () => {
+        it('returns first object without filter', async ()=> {
+            adapter.init_local_data(data_set)
+            const result = await adapter.find(A.getQuery({}))
+            expect(result).toEqual(obj_a)
+        })
+
+        it('returns first matching object with filter', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Variable(NUMBER(), {value: 2})
+            const result = await adapter.find(A.getQuery({filter: EQ('a', inputA)}))
+            expect(result).toEqual(obj_c)
+        })
+
+        it('returns undefined when no match', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Variable(NUMBER(), {value: 99})
+            const result = await adapter.find(A.getQuery({filter: EQ('a', inputA)}))
+            expect(result).toBeUndefined()
+        })
     })
 
     describe('load', () => {
@@ -108,10 +127,48 @@ describe('LocalAdapter', () => {
         // })
     })
 
-    it('getTotalCount', async ()=> {
+    describe('getTotalCount', () => {
+        it('returns total count without filter', async ()=> {
+            adapter.init_local_data(data_set)
+            const count = await adapter.getTotalCount()
+            expect(count).toBe(5)
+        })
+
+        it('returns count with filter', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Variable(NUMBER(), {value: 2})
+            const count = await adapter.getTotalCount(EQ('a', inputA))
+            expect(count).toBe(2)
+        })
+
+        it('returns zero when no match', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Variable(NUMBER(), {value: 99})
+            const count = await adapter.getTotalCount(EQ('a', inputA))
+            expect(count).toBe(0)
+        })
     })
 
-    it('getDistinct', async ()=> {
+    describe('getDistinct', () => {
+        it('returns distinct values for a field', async ()=> {
+            adapter.init_local_data(data_set)
+            const values = await adapter.getDistinct(undefined, 'b')
+            expect(values.sort()).toEqual(['a', 'c', 'f'].sort())
+        })
+
+        it('returns distinct values with filter', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Variable(NUMBER(), {value: 2})
+            const values = await adapter.getDistinct(EQ('a', inputA), 'b')
+            expect(values.sort()).toEqual(['f'].sort())
+        })
+
+        it('returns empty array when no match', async ()=> {
+            adapter.init_local_data(data_set)
+            const inputA = new Variable(NUMBER(), {value: 99})
+            const values = await adapter.getDistinct(EQ('a', inputA), 'b')
+            expect(values).toEqual([])
+        })
     })
 
     describe('init_local_data', () => {

@@ -85,8 +85,12 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     async find(query: Query<M>) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
-        let raw_obj = Object.values(local_store[this.store_name])[0]
-        return raw_obj
+        for(let raw_obj of Object.values(local_store[this.store_name])) {
+            if (!query.filter || query.filter.isMatch(raw_obj)) {
+                return raw_obj
+            }
+        }
+        return undefined
     }
 
     async load (query: Query<M>) : Promise<any[]> {
