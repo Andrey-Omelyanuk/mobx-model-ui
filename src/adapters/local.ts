@@ -1,5 +1,6 @@
 import { Model } from '../model'
 import { Query } from '../queries/query'
+import { QueryStream } from '../queries/query-stream'
 import { Filter } from '../filters/Filter'
 import { Adapter, RequestConfig } from './adapter'
 import { timeout } from '../utils'
@@ -120,8 +121,16 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
             })
         }
 
-        // page
-        if (query.limit.value !== undefined && query.offset.value !== undefined) {
+        // cursor-based pagination for QueryStream
+        if (query instanceof QueryStream) {
+            if (query.offset.value !== undefined) {
+                const cursor = query.offset.value
+                raw_objs = raw_objs.filter(obj => obj.id > cursor)
+            }
+            raw_objs = raw_objs.slice(0, query.limit.value)
+        }
+        // offset/limit pagination for other queries
+        else if (query.limit.value !== undefined && query.offset.value !== undefined) {
             raw_objs = raw_objs.slice(query.offset.value, query.offset.value+query.limit.value)
         }
         return raw_objs 

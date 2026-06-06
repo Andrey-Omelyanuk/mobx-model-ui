@@ -1,19 +1,31 @@
-import { action, runInAction } from 'mobx'
+import { action, observable, runInAction } from 'mobx'
 import { Model } from '../model'
 import { Query, QueryProps } from './query'
 import { config } from '../config'
+import { ID } from '../types'
 
 
 export class QueryStream <M extends Model> extends Query<M> {
-    // you can reset all and start from beginning
-    @action('MO: fisrt page') goToFirstPage() { this.__items = []; this.offset.set(0) }
-    // you can scroll only forward
-    @action('MO: next page')  goToNextPage () { this.offset.set(this.offset.value + this.limit.value) }
+    @action('MO: restart') restart() {
+        this.__items = []
+        this.offset.set(undefined)
+        this.total = undefined
+        this.isEndReached = false
+        this.load()
+    }
+
+    @action('MO: load more') loadMore() {
+        if (this.controller) return
+        if (this.total === 1) return
+        this.load()
+    }
+
+    @observable isEndReached = false
 
     constructor(props: QueryProps<M>) {
         super(props)
         runInAction(() => {
-            if (this.offset.value === undefined) this.offset.set(0)
+            if (this.offset.value === undefined) this.offset.set(undefined)
             if (this.limit.value  === undefined) this.limit.set(config.DEFAULT_PAGE_SIZE)
         })
     }
@@ -21,10 +33,15 @@ export class QueryStream <M extends Model> extends Query<M> {
     async __load() {
         const objs = await this.repository.load(this, { controller: this.controller })
         runInAction(() => {
-            this.__items.push(...objs)
-            // total is not make sense for infinity queries
-            // total = 1 show that last page is reached
-            if (objs.length < this.limit.value) this.total = 1
+            if (objs.length === 0) {
+                this.total = 1
+                this.isEndReached = true
+            } else {
+                this.__items.push(...objs)
+                this.offset.set(objs[objs.length - 1].ID as number)
+                this.total = undefined
+                this.isEndReached = false
+            }
         })
     }
 }
