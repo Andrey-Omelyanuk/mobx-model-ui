@@ -1,6 +1,18 @@
 ///<reference path="../dist/mobx-model-ui.d.ts" />
 import { Model, model, local, id, field, foreign, many, NUMBER, STRING, DATE, DATETIME } from '../dist/mobx-model-ui'
 
+/**
+ *  Есть чаты и пользователи в них которые могут обмениваться сообщениями.
+ *  Основные участники:
+ *      - Chats: ChatA, ChatB, ChatC
+ *      - Users
+ *          - UserA состоит в чатах A и B
+ *          - UserB состоит в чатах B и C
+ *          - UserC состоит в чатах A, B и C
+ *  Основные сценарии:
+ *      - Пользователи обчаються во всех чатах (каждый минимум по 10 сообщений в каждый чат)
+ *      - UserA прокручивает все сообщения от последнего к самому старому в ChatB.
+ */
 
 describe('e2e: Chat.', () => {
     @local()

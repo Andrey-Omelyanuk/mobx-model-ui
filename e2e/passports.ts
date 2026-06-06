@@ -1,5 +1,18 @@
 import { DATETIME, NUMBER, STRING,  Model, model, local, field, foreign, one, many, id } from '../dist/mobx-model-ui'
 
+/**
+ *  There are users with passports and keys. Keys sign passports, creating action records.
+ *  Main participants:
+ *      - Users: UserA, UserB, UserC
+ *      - Passports: PassportA, PassportB, PassportC
+ *      - Keys: KeyA1, KeyB1, KeyC1
+ *      - Actions: self-sign and cross-sign
+ *  Main scenarios:
+ *      - Each user creates a passport and a key
+ *      - Self-sign: each key signs its own passport
+ *      - Cross-sign: keys sign other users' passports
+ */
+
 
 describe('Other tests: Passports.', () => {
 

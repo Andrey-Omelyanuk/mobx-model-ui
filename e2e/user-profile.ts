@@ -1,6 +1,15 @@
 ///<reference path="../dist/mobx-model-ui.d.ts" />
 import {  NUMBER, STRING, Model, model, id, field, foreign, one, local } from '../dist/mobx-model-ui'
 
+/**
+ *  There are users and each can have one profile.
+ *  Main participants:
+ *      - Users: UserA, UserB
+ *      - Profiles: ProfileA (UserA), ProfileB (UserB)
+ *  Main scenarios:
+ *      - Create profiles and verify two-way linkage user.profile ↔ profile.user
+ */
+
 
 describe('User Profile.', () => {
     @local()

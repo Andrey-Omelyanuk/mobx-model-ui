@@ -7,6 +7,7 @@ export * from './datetime'
 export * from './array'
 export * from './order-by'
 export * from './uuid'
+export * from './enum'
 
 
 // only this type support any id field

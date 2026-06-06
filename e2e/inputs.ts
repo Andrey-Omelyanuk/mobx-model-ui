@@ -1,5 +1,15 @@
 import { field, ILIKE, Input, Model, id, NUMBER, model, ORDER_BY, STRING, ARRAY, DESC } from '../dist/mobx-model-ui'
 
+/**
+ *  Demonstrates reactive inputs for controlling Query parameters.
+ *  Main participants:
+ *      - Files: file model
+ *      - Input: reactive input with URL synchronization
+ *  Main scenarios:
+ *      - Input controls ILIKE filter on file title
+ *      - Input controls ordering and relations list
+ */
+
 
 describe('Other tests: Inputs.', () => {
 
