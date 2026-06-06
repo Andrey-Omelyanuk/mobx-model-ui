@@ -97,6 +97,26 @@ describe('Query', () => {
             query.destroy();                                                            expect(query.disposers.length).toBe(0)
                                                                                         expect(Object.keys(query.disposerObjects).length).toBe(0)
         })
+
+        it('should not iterate over prototype chain properties', async ()=> {
+            // Simulate a polluted prototype chain
+            Object.defineProperty(Object.prototype, 'pollutedProperty', {
+                value: function() { throw new Error('Should not be called!') },
+                enumerable: true,
+                configurable: true
+            })
+
+            const query = new Query<A>({repository: repositoryA, autoupdate: false }) as any
+            const mockDisposer = jest.fn()
+            query.disposerObjects['x'] = mockDisposer
+
+            // Should not throw — pollutedProperty from prototype chain must be ignored
+            expect(() => query.destroy()).not.toThrow()
+            expect(mockDisposer).toHaveBeenCalled()
+
+            // Cleanup
+            delete (Object.prototype as any).pollutedProperty
+        })
     })
 
     describe('Load', () => {
@@ -169,6 +189,14 @@ describe('Query', () => {
                                         expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).not.toBe(undefined)                     
             query.autoupdate = false;   expect(query.autoupdate).toBe(false)
                                         expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
+        })
+
+        it('should not throw when autoupdate setter called but disposer is missing', () => {
+            const query = new Query<A>({repository: repositoryA, autoupdate: true }) as any
+            // Simulate corrupted state — disposer removed manually
+            delete query.disposerObjects[DISPOSER_AUTOUPDATE]
+            // Should not throw TypeError: undefined is not a function
+            expect(() => { query.autoupdate = false }).not.toThrow()
         })
 
         it('in action', async () => {

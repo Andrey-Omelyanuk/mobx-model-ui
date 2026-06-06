@@ -59,11 +59,11 @@ export class Query <M extends Model> implements Destroyable {
     readonly omit      : Variable<string[]>
 
     @observable protected __items: M[] = []         // items from the server
-    @observable total           : number              // total count of items on the server, usefull for pagination
-    @observable isLoading       : boolean = false     // query is loading the data
-    @observable isNeedToUpdate  : boolean = true      // query was changed and we need to update the data
-    @observable timestamp       : number              // timestamp of the last update, usefull to aviod to trigger react hooks twise
-    @observable error           : string              // error message
+    @observable total           : number | undefined    // total count of items on the server, useful for pagination
+    @observable isLoading       : boolean = false       // query is loading the data
+    @observable isNeedToUpdate  : boolean = true        // query was changed and we need to update the data
+    @observable timestamp       : number | undefined    // timestamp of the last update, useful to avoid triggering react hooks twice
+    @observable error           : string | undefined    // error message
 
     get items       () { return this.__items }      // the items can be changed after the load (post processing)
 
@@ -94,7 +94,7 @@ export class Query <M extends Model> implements Destroyable {
             // because isNeedToUpdate should be set to true 
             // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
             () => {
-                return {dependenciesAreReady: this.dependenciesAreReady, value: this.toString} 
+                return {dependenciesAreReady: this.dependenciesAreReady, value: this.toString()} 
             },
             ({dependenciesAreReady, value}) => {
                 if(dependenciesAreReady && !this.isNeedToUpdate)
@@ -109,7 +109,7 @@ export class Query <M extends Model> implements Destroyable {
         while(this.disposers.length) {
             this.disposers.pop()()
         }
-        for(let __id in this.disposerObjects) {
+        for(const __id of Object.keys(this.disposerObjects)) {
             this.disposerObjects[__id]()
             delete this.disposerObjects[__id]
         } 
@@ -145,8 +145,11 @@ export class Query <M extends Model> implements Destroyable {
             }
             // off
             else {
-                this.disposerObjects[DISPOSER_AUTOUPDATE]()
-                delete this.disposerObjects[DISPOSER_AUTOUPDATE]
+                const disposer = this.disposerObjects[DISPOSER_AUTOUPDATE]
+                if (disposer) {
+                    disposer()
+                    delete this.disposerObjects[DISPOSER_AUTOUPDATE]
+                }
             }
         }
     }
