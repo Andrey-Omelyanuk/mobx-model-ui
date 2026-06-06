@@ -9,8 +9,8 @@ import { Model, ModelDescriptor, models } from '../model'
  * because it invoke before a model decorator.
  */
 export function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable: boolean = true) {
-    return (cls: any, fieldName: string) => {
-        const modelName = cls.modelName ?? cls.constructor.name
+    return <M extends Model>(cls: M | ((new (...args: any[]) => M) & { modelName?: string }), fieldName: string) => {
+        const modelName = (cls as any).modelName ?? cls.constructor.name
         let modelDescription = models.get(modelName)
         // id field is first decorator that invoke before model and other fields decorators
         // so we need to check if model is already registered and if not then register it

@@ -3,9 +3,9 @@ import { Model, models } from '../model'
 
 
 export function one<M extends Model>(remote_model: any, remote_foreign_id?: string) {
-    return function (cls: any, field_name: string) {
+    return function <M extends Model>(cls: M | ((new (...args: any[]) => M) & { modelName?: string }), field_name: string) {
 
-        const modelName = cls.modelName ?? cls.constructor.name
+        const modelName = (cls as any).modelName ?? cls.constructor.name
         if (!modelName)
             throw new Error('Model name is not defined. Did you forget to declare any id fields?')
 

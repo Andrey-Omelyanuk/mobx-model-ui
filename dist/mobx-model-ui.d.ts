@@ -609,26 +609,34 @@ declare class Cache<M extends Model> {
 /**
  * Decorator for fields
  */
-declare function field<T>(typeDescriptor?: TypeDescriptor<T>, observable?: boolean): (cls: any, fieldName: string) => void;
+declare function field<T>(typeDescriptor?: TypeDescriptor<T>, observable?: boolean): <M extends Model>(cls: M | (new (...args: any[]) => M), fieldName: string) => void;
 
 /**
  * Decorator for foreign fields
  */
-declare function foreign<M extends Model>(foreign_model: any, foreign_id?: string): (cls: any, field_name: string) => void;
+declare function foreign<M extends Model>(foreign_model: any, foreign_id?: string): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+    modelName?: string;
+}), field_name: string) => void;
 
-declare function one<M extends Model>(remote_model: any, remote_foreign_id?: string): (cls: any, field_name: string) => void;
+declare function one<M extends Model>(remote_model: any, remote_foreign_id?: string): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+    modelName?: string;
+}), field_name: string) => void;
 
 /**
  * Decorator for many fields
  */
-declare function many<M extends Model>(remote_model: any, remote_foreign_id?: string): (cls: any, field_name: string) => void;
+declare function many<M extends Model>(remote_model: any, remote_foreign_id?: string): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+    modelName?: string;
+}), field_name: string) => void;
 
 /**
  * Decorator for id field
  * Only id field can register model in models map,
  * because it invoke before a model decorator.
  */
-declare function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable?: boolean): (cls: any, fieldName: string) => void;
+declare function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable?: boolean): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+    modelName?: string;
+}), fieldName: string) => void;
 
 /**
  * ReadOnlyAdapter not allow to create, update or delete objects.
@@ -721,10 +729,10 @@ declare abstract class Form implements Destroyable {
  */
 declare class ActionForm<M extends Model> extends Form {
     protected action: string;
-    protected repository: Repository<M>;
+    protected readonly repository: Repository<M>;
     constructor(repository: Repository<M>, action: string, inputs: {
         [key: string]: Variable<any>;
-    }, onSubmit?: (response?: any) => void, onCancel?: () => void);
+    }, onSuccess?: (response?: any) => void, onCancel?: () => void);
     apply(): Promise<any>;
 }
 

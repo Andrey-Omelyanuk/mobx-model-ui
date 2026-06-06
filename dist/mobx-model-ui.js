@@ -2728,8 +2728,8 @@
      * Use it for forms with complex data that saved in multiple models.
      */
     class ActionForm extends Form {
-        constructor(repository, action, inputs, onSubmit, onCancel) {
-            super(inputs, onSubmit, onCancel);
+        constructor(repository, action, inputs, onSuccess, onCancel) {
+            super(inputs, onSuccess, onCancel);
             Object.defineProperty(this, "action", {
                 enumerable: true,
                 configurable: true,
