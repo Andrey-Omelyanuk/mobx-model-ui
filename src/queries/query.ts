@@ -115,8 +115,8 @@ export class Query <M extends Model> implements Destroyable {
         } 
     }
 
-    loading = async () => waitIsFalse(this, 'isLoading')
-    ready   = async () => waitIsFalse(this, 'isReady')
+    async loading() { return waitIsFalse(this, 'isLoading') }
+    async ready()   { return waitIsFalse(this, 'isReady') }
 
     get autoupdate() : boolean {
         return !! this.disposerObjects[DISPOSER_AUTOUPDATE]
@@ -217,10 +217,11 @@ export class Query <M extends Model> implements Destroyable {
             await this.__load()
         }
         catch (e) {
-            // ignore the cancelation of the request
-            if (e.name !== 'AbortError' && e.message !== 'canceled') {
-                // console.error(e)
-                runInAction(() => this.error = e.message )
+            const isAbort = (e instanceof DOMException && e.name === 'AbortError')
+                         || (e instanceof Error && e.message === 'canceled')
+
+            if (!isAbort) {
+                runInAction(() => this.error = e instanceof Error ? e.message : String(e))
             }
         }
         finally {
