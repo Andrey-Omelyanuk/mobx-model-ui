@@ -1,4 +1,3 @@
-import _ from 'lodash'
 import { reaction } from 'mobx'
 import { TestAdapter } from '../test.utils'
 import { 

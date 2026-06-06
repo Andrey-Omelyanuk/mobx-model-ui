@@ -22,7 +22,6 @@
   "jsnext:main" : "dist/mobx-model-ui.es2015.js",
   "typings"     : "dist/mobx-model-ui.d.ts",
   "dependencies": {
-    "lodash"    : "^4.17.21", 
     "mobx"      : "~6.7.0"
   },
   "scripts": {

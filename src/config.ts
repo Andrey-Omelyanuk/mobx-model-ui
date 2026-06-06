@@ -1,6 +1,3 @@
-// TODO: remove dependency of lodash 
-import _ from 'lodash'
-
 // Global config of Mobx-ORM
 export const config = {
     DEFAULT_PAGE_SIZE   : 50,
@@ -19,7 +16,16 @@ export const config = {
     },
 
     DEBOUNCE: (func: Function, debounce: number) => {
-        return _.debounce(func, debounce)
+        let timeoutId: ReturnType<typeof setTimeout> | null = null
+        return function(this: any, ...args: any[]) {
+            if (timeoutId !== null) {
+                clearTimeout(timeoutId)
+            }
+            timeoutId = setTimeout(() => {
+                timeoutId = null
+                func.apply(this, args)
+            }, debounce)
+        }
     },
 
     COOKIE_DOMAIN: 'localhost' // Change this to your domain if needed.
