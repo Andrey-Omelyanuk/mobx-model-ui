@@ -88,7 +88,7 @@ export function GTE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__gte`, (a: any, b: any) => a >= b)
 }
 export function LT(field: string, input: Variable<any>) : SingleFilter {
-    return new SingleFilter(field, input, (feild: string) => `${field}__lt`, (a: any, b: any) => a < b)
+    return new SingleFilter(field, input, (field: string) => `${field}__lt`, (a: any, b: any) => a < b)
 }
 export function LTE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__lte`, (a: any, b: any) => a <= b)

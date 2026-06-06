@@ -127,12 +127,25 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return raw_objs 
     }
 
-    async getTotalCount(filter: Filter): Promise<number> {
-        return Object.values(local_store[this.store_name]).length
+    async getTotalCount(filter?: Filter): Promise<number> {
+        if (!filter) return Object.values(local_store[this.store_name]).length
+        let count = 0
+        for (const raw_obj of Object.values(local_store[this.store_name])) {
+            if (filter.isMatch(raw_obj)) count++
+        }
+        return count
     }
 
-    async getDistinct(filter, filed): Promise<any[]> {
-        return []
+    async getDistinct(filter: Filter, field: string): Promise<any[]> {
+        const values = new Set<any>()
+        for (const raw_obj of Object.values(local_store[this.store_name])) {
+            if (!filter || filter.isMatch(raw_obj)) {
+                if (raw_obj[field] !== undefined && raw_obj[field] !== null) {
+                    values.add(raw_obj[field])
+                }
+            }
+        }
+        return Array.from(values)
     }
 
     getURLSearchParams(query: Query<M>): URLSearchParams {

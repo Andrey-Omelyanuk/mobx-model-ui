@@ -9,8 +9,8 @@ import { QueryPage } from './query-page'
 
 export class QueryRawPage<M extends Model> extends QueryPage<M> {
     async __load() {
-        const objs = await this.repository.adapter.load(this)
-        const total = await this.repository.getTotalCount(this.filter)
+        const objs = await this.repository.adapter.load(this, { controller: this.controller })
+        const total = await this.repository.getTotalCount(this.filter, { controller: this.controller })
         runInAction(() => {
             this.__items = objs
             this.total = total

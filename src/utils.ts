@@ -3,7 +3,7 @@ import { Model, ModelDescriptor } from './model'
 
 
 export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {
-    return new Promise((resolve, reject) => { 
+    return new Promise((resolve) => { 
         autorun((reaction) => {
             if (obj[field]) {
                 reaction.dispose()
@@ -14,7 +14,7 @@ export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {
 }
 
 export function waitIsFalse(obj: any, field: string) : Promise<Boolean> {
-    return new Promise((resolve, reject) => { 
+    return new Promise((resolve) => { 
         autorun((reaction) => {
             if (!obj[field]) {
                 reaction.dispose()

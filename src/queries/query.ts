@@ -67,7 +67,7 @@ export class Query <M extends Model> implements Destroyable {
 
     get items       () { return this.__items }      // the items can be changed after the load (post processing)
 
-    protected controller        : AbortController
+    protected controller        : AbortController | undefined
     protected disposers         : (()=>void)[] = []
     protected disposerObjects   : {[field: string]: ()=>void} = {}
 
