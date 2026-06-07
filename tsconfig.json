@@ -1,32 +1,22 @@
 {
     "compilerOptions": {
-        "outDir"    : "lib",
-        "rootDir"   : "src",
-        "module"    : "es2022",
-        "target"    : "es2022",
+        "rootDir": "src",
+        "module": "es2022",
+        "target": "es2022",
         "strictNullChecks": false,
         "noImplicitAny": false,
         "strictPropertyInitialization": false,
         "useUnknownInCatchVariables": false,
-        // "strict"    : true,
-        "moduleResolution"              : "bundler",
-        "emitDecoratorMetadata"         : true,
-        "esModuleInterop"               : true,
-        "experimentalDecorators"        : true,
-        "useDefineForClassFields"       : true,
-        "allowSyntheticDefaultImports"  : true,
-        "skipLibCheck"                  : true,
-        "sourceMap"                     : true,
-        "declaration"                   : false,
-        "lib": [      
-            "dom",
-            "es2022"
-        ],
-        "types": ["jest"]
+        // "strict"                    : true,
+        "moduleResolution": "bundler",
+        "emitDecoratorMetadata": true,
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "useDefineForClassFields": true,
+        "skipLibCheck": true,
+        "declaration": false,
+        "lib": ["dom", "es2022"],
+        "types": ["jest"],
     },
-    "exclude": [
-        "node_modules",
-        "e2e",
-        "**/*.spec.ts"
-    ]
+    "exclude": ["node_modules", "e2e", "**/*.spec.ts"],
 }

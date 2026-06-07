@@ -20,6 +20,12 @@ When working in planning mode, the output must be written to `PLAN.md` with the 
 
 - After implementing **each** item from `PLAN.md`, run `make test` to verify all tests pass before proceeding to the next item
 
+## Code Style
+
+- **Prefer alignment** of values in configuration files, JSON, TypeScript configs, and other structured data for better readability
+- Align colons, values, and comments vertically when listing multiple key-value pairs
+- Preserve existing alignment when editing files — do not collapse or reformat aligned code
+
 ## Project Map
 
 ### Overview
