@@ -38,7 +38,7 @@ export default [
         ],
         plugins   : [
             typescript({
-                exclude: ["e2e/", "**/*.spec.ts"]
+                tsconfig: 'tsconfig.build.json'
             }),
             // terser(),
         ],

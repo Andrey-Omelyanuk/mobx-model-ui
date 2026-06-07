@@ -26,9 +26,9 @@
   },
   "scripts": {
     "build" : "rollup -c --bundleConfigAsCjs",
-    "dev"   : "jest --testMatch='**/src/**/*.spec.ts' --watchAll",
-    "test"  : "jest --testMatch='**/src/**/*.spec.ts' --coverage",
-    "e2e"   : "jest --testMatch='**/e2e/**/*.ts'",
+    "dev"   : "jest --selectProjects unit --watchAll",
+    "test"  : "jest --selectProjects unit --coverage",
+    "e2e"   : "jest --selectProjects e2e",
     "lint"  : "eslint 'src/**/*.ts'",
     "lint-fix": "eslint 'src/**/*.ts' --fix"
   },
@@ -50,7 +50,24 @@
     "node": ">= 22.0.0"
   },
   "jest": {
-    "testEnvironment": "jsdom",
+    "projects": [
+      {
+        "displayName": "unit",
+        "testEnvironment": "jsdom",
+        "testMatch": ["<rootDir>/src/**/*.spec.ts"],
+        "transform": {
+          "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "tsconfig.spec.json" }]
+        }
+      },
+      {
+        "displayName": "e2e",
+        "testEnvironment": "jsdom",
+        "testMatch": ["<rootDir>/e2e/**/*.ts"],
+        "transform": {
+          "^.+\\.tsx?$": ["ts-jest", { "tsconfig": "tsconfig.e2e.json" }]
+        }
+      }
+    ],
     "moduleFileExtensions": [
       "ts",
       "js",
@@ -61,9 +78,6 @@
     ],
     "modulePaths": [
       "."
-    ],
-    "transform": {
-      "^.+\\.tsx?$": "ts-jest"
-    }
+    ]
   }
 }
