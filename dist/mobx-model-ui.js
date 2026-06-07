@@ -79,13 +79,8 @@
      * Cache for model objects.
      */
     class Cache {
+        store = new Map();
         constructor() {
-            Object.defineProperty(this, "store", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: new Map()
-            });
             mobx.makeObservable(this);
         }
         /**
@@ -234,91 +229,30 @@
     };
 
     class Variable {
+        type;
+        value;
+        isDisabled;
+        isDebouncing; //  
+        isNeedToUpdate; //  
+        errors = []; // validations or backend errors put here
+        debounce;
+        syncURL;
+        syncLocalStorage;
+        syncCookie;
+        __disposers = [];
         // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
         // it's look like a bug in the TypeScript
         constructor(type, args) {
-            Object.defineProperty(this, "type", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "value", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "isDisabled", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "isDebouncing", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); //  
-            Object.defineProperty(this, "isNeedToUpdate", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); //  
-            Object.defineProperty(this, "errors", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            }); // validations or backend errors put here
-            Object.defineProperty(this, "debounce", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "syncURL", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "syncLocalStorage", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "syncCookie", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "__disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            Object.defineProperty(this, "stopDebouncing", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             // init all observables before use it in reaction
             this.type = type;
             this.value = args && args.value !== undefined ? args.value : type.default();
-            this.isDisabled = !!(args === null || args === void 0 ? void 0 : args.disabled);
+            this.isDisabled = !!args?.disabled;
             this.isDebouncing = false;
             this.isNeedToUpdate = false;
-            this.debounce = args === null || args === void 0 ? void 0 : args.debounce;
-            this.syncURL = args === null || args === void 0 ? void 0 : args.syncURL;
-            this.syncLocalStorage = args === null || args === void 0 ? void 0 : args.syncLocalStorage;
-            this.syncCookie = args === null || args === void 0 ? void 0 : args.syncCookie;
+            this.debounce = args?.debounce;
+            this.syncURL = args?.syncURL;
+            this.syncLocalStorage = args?.syncLocalStorage;
+            this.syncCookie = args?.syncCookie;
             mobx.makeObservable(this);
             if (this.debounce) {
                 this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => {
@@ -335,6 +269,7 @@
         destroy() {
             this.__disposers.forEach(disposer => disposer());
         }
+        stopDebouncing;
         set(value) {
             this.value = value;
             this.isNeedToUpdate = false;
@@ -414,24 +349,19 @@
     }
 
     class ObjectInput extends Variable {
+        options;
         constructor(type, args) {
             super(type, args);
-            Object.defineProperty(this, "options", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.options = args.options;
             if (this.options) {
                 this.__disposers.push(mobx.reaction(() => this.options.isReady, (isReady, previousValue) => {
                     if (isReady && !previousValue) {
                         mobx.runInAction(() => this.isNeedToUpdate = true);
-                        (args === null || args === void 0 ? void 0 : args.autoReset) && args.autoReset(this);
+                        args?.autoReset && args.autoReset(this);
                     }
                 }));
             }
-            else if (args === null || args === void 0 ? void 0 : args.autoReset) {
+            else if (args?.autoReset) {
                 console.warn('autoReset function should be used only with options');
             }
         }
@@ -448,14 +378,12 @@
             return this.options ? this.options.isReady && super.isReady : super.isReady;
         }
         destroy() {
-            var _a;
             super.destroy();
-            (_a = this.options) === null || _a === void 0 ? void 0 : _a.destroy();
+            this.options?.destroy();
         }
     }
 
     function autoResetId(input) {
-        var _a;
         // if value still in options, do nothing
         for (const item of input.options.items) {
             if (item.ID === input.value) {
@@ -465,26 +393,15 @@
             }
         }
         // otherwise set first available id or undefined
-        input.set((_a = input.options.items[0]) === null || _a === void 0 ? void 0 : _a.ID);
+        input.set(input.options.items[0]?.ID);
     }
 
     class TypeDescriptor {
+        required; // allow undefined value
+        null; // allow null value
         constructor(props) {
-            var _a, _b;
-            Object.defineProperty(this, "required", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // allow undefined value
-            Object.defineProperty(this, "null", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // allow null value
-            this.null = (_a = props === null || props === void 0 ? void 0 : props.null) !== null && _a !== void 0 ? _a : false;
-            this.required = (_b = props === null || props === void 0 ? void 0 : props.required) !== null && _b !== void 0 ? _b : false;
+            this.null = props?.null ?? false;
+            this.required = props?.required ?? false;
         }
         /**
          * Check if the value is valid
@@ -498,24 +415,13 @@
     }
 
     class StringDescriptor extends TypeDescriptor {
+        minLength;
+        maxLength;
         constructor(props) {
-            var _a, _b;
             super(props);
-            Object.defineProperty(this, "minLength", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "maxLength", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             // by default string has no length constraints
-            this.minLength = (_a = props === null || props === void 0 ? void 0 : props.minLength) !== null && _a !== void 0 ? _a : 0;
-            this.maxLength = (_b = props === null || props === void 0 ? void 0 : props.maxLength) !== null && _b !== void 0 ? _b : null;
+            this.minLength = props?.minLength ?? 0;
+            this.maxLength = props?.maxLength ?? null;
         }
         toString(value) {
             if (value === undefined)
@@ -537,9 +443,9 @@
             super.validate(value);
             if (value === '' && this.required)
                 throw new Error('Field is required');
-            if (this.minLength && (value === null || value === void 0 ? void 0 : value.length) < this.minLength)
+            if (this.minLength && value?.length < this.minLength)
                 throw new Error(`String must be at least ${this.minLength} characters long`);
-            if (this.maxLength && (value === null || value === void 0 ? void 0 : value.length) > this.maxLength)
+            if (this.maxLength && value?.length > this.maxLength)
                 throw new Error(`String must be no more than ${this.maxLength} characters long`);
         }
         default() {
@@ -551,23 +457,12 @@
     }
 
     class NumberDescriptor extends TypeDescriptor {
+        min;
+        max;
         constructor(props) {
-            var _a, _b;
             super(props);
-            Object.defineProperty(this, "min", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "max", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.min = (_a = props === null || props === void 0 ? void 0 : props.min) !== null && _a !== void 0 ? _a : -Infinity;
-            this.max = (_b = props === null || props === void 0 ? void 0 : props.max) !== null && _b !== void 0 ? _b : Infinity;
+            this.min = props?.min ?? -Infinity;
+            this.max = props?.max ?? Infinity;
         }
         toString(value) {
             if (value === undefined)
@@ -634,23 +529,12 @@
     }
 
     class DateDescriptor extends TypeDescriptor {
+        min;
+        max;
         constructor(props) {
-            var _a, _b;
             super(props);
-            Object.defineProperty(this, "min", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "max", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            this.min = (_a = props === null || props === void 0 ? void 0 : props.min) !== null && _a !== void 0 ? _a : new Date(0);
-            this.max = (_b = props === null || props === void 0 ? void 0 : props.max) !== null && _b !== void 0 ? _b : new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000); // + 100 years
+            this.min = props?.min ?? new Date(0);
+            this.max = props?.max ?? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000); // + 100 years
         }
         toString(value) {
             if (value === undefined)
@@ -691,30 +575,14 @@
     }
 
     class ArrayDescriptor extends TypeDescriptor {
+        type;
+        minItems;
+        maxItems;
         constructor(type, props) {
-            var _a, _b;
             super(props);
-            Object.defineProperty(this, "type", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "minItems", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "maxItems", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.type = type;
-            this.minItems = (_a = props === null || props === void 0 ? void 0 : props.minItems) !== null && _a !== void 0 ? _a : 0;
-            this.maxItems = (_b = props === null || props === void 0 ? void 0 : props.maxItems) !== null && _b !== void 0 ? _b : Infinity;
+            this.minItems = props?.minItems ?? 0;
+            this.maxItems = props?.maxItems ?? Infinity;
         }
         toString(value) {
             if (!value)
@@ -730,9 +598,9 @@
         }
         validate(value) {
             super.validate(value);
-            if (this.minItems && (value === null || value === void 0 ? void 0 : value.length) < this.minItems)
+            if (this.minItems && value?.length < this.minItems)
                 throw new Error('Items count is less than minimum allowed');
-            if (this.maxItems && (value === null || value === void 0 ? void 0 : value.length) > this.maxItems)
+            if (this.maxItems && value?.length > this.maxItems)
                 throw new Error('Items count is more than maximum allowed');
             value.forEach(item => this.type.validate(item));
         }
@@ -832,26 +700,11 @@
         });
     }
     class EnumDescriptor extends TypeDescriptor {
+        _rawOptions;
+        _values;
+        _labels;
         constructor(props) {
             super(props);
-            Object.defineProperty(this, "_rawOptions", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "_values", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "_labels", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this._rawOptions = props.options;
             if (Array.isArray(props.options)) {
                 this._values = props.options;
@@ -926,110 +779,25 @@
 
     */
     class Query {
+        repository;
+        filter;
+        orderBy;
+        offset;
+        limit;
+        relations;
+        fields;
+        omit;
+        __items = []; // items from the server
+        total; // total count of items on the server, useful for pagination
+        isLoading = false; // query is loading the data
+        isNeedToUpdate = true; // query was changed and we need to update the data
+        timestamp; // timestamp of the last update, useful to avoid triggering react hooks twice
+        error; // error message
         get items() { return this.__items; } // the items can be changed after the load (post processing)
+        controller;
+        disposers = [];
+        disposerObjects = {};
         constructor(props) {
-            Object.defineProperty(this, "repository", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "filter", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "orderBy", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "offset", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "limit", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "relations", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "fields", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "omit", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "__items", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            }); // items from the server
-            Object.defineProperty(this, "total", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // total count of items on the server, useful for pagination
-            Object.defineProperty(this, "isLoading", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: false
-            }); // query is loading the data
-            Object.defineProperty(this, "isNeedToUpdate", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: true
-            }); // query was changed and we need to update the data
-            Object.defineProperty(this, "timestamp", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // timestamp of the last update, useful to avoid triggering react hooks twice
-            Object.defineProperty(this, "error", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // error message
-            Object.defineProperty(this, "controller", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            Object.defineProperty(this, "disposerObjects", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: {}
-            });
             let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
             this.repository = repository;
             this.filter = filter;
@@ -1053,8 +821,7 @@
             }, { fireImmediately: true }));
         }
         destroy() {
-            var _a;
-            (_a = this.controller) === null || _a === void 0 ? void 0 : _a.abort();
+            this.controller?.abort();
             while (this.disposers.length) {
                 this.disposers.pop()();
             }
@@ -1359,14 +1126,9 @@
                 return;
             this.load();
         }
+        isEndReached = false;
         constructor(props) {
             super(props);
-            Object.defineProperty(this, "isEndReached", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: false
-            });
             mobx.runInAction(() => {
                 if (this.offset.value === undefined)
                     this.offset.set(undefined);
@@ -1436,14 +1198,9 @@
     }
 
     class QueryDistinct extends Query {
+        field;
         constructor(field, props) {
             super(props);
-            Object.defineProperty(this, "field", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.field = field;
         }
         async __load() {
@@ -1458,19 +1215,11 @@
      * Repository class is responsible for CRUD operations on the model.
      */
     class Repository {
+        modelDescriptor;
+        adapter;
         constructor(modelDescriptor, adapter) {
-            Object.defineProperty(this, "modelDescriptor", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: modelDescriptor
-            });
-            Object.defineProperty(this, "adapter", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: adapter
-            });
+            this.modelDescriptor = modelDescriptor;
+            this.adapter = adapter;
         }
         /**
          * Create the object.
@@ -1559,13 +1308,13 @@
         async getDistinct(filter, field, config) {
             return await this.adapter.getDistinct(filter, field, config);
         }
-        getQuery(props) { return new Query(Object.assign(Object.assign({}, props), { repository: this })); }
-        getQueryPage(props) { return new QueryPage(Object.assign(Object.assign({}, props), { repository: this })); }
-        getQueryRaw(props) { return new QueryRaw(Object.assign(Object.assign({}, props), { repository: this })); }
-        getQueryRawPage(props) { return new QueryRawPage(Object.assign(Object.assign({}, props), { repository: this })); }
-        getQueryCacheSync(props) { return new QueryCacheSync(Object.assign(Object.assign({}, props), { repository: this })); }
-        getQueryStream(props) { return new QueryStream(Object.assign(Object.assign({}, props), { repository: this })); }
-        getQueryDistinct(field, props) { return new QueryDistinct(field, Object.assign(Object.assign({}, props), { repository: this })); }
+        getQuery(props) { return new Query({ ...props, repository: this }); }
+        getQueryPage(props) { return new QueryPage({ ...props, repository: this }); }
+        getQueryRaw(props) { return new QueryRaw({ ...props, repository: this }); }
+        getQueryRawPage(props) { return new QueryRawPage({ ...props, repository: this }); }
+        getQueryCacheSync(props) { return new QueryCacheSync({ ...props, repository: this }); }
+        getQueryStream(props) { return new QueryStream({ ...props, repository: this }); }
+        getQueryDistinct(field, props) { return new QueryDistinct(field, { ...props, repository: this }); }
     }
 
     /**
@@ -1587,6 +1336,18 @@
     }
 
     class Model {
+        /**
+         * Static version initializes in the id decorator.
+         * Instance version initializes in the constructor that declare in model decorator.
+         * It is used for registering the model in the models map.
+         * It is used for get the model descriptor from the models map.
+         */
+        static modelName;
+        modelName;
+        /**
+         * Default repository that used in methods like `load`, `getTotalCount`, etc.
+         */
+        static defaultRepository;
         getDefaultRepository() {
             return this.modelDescriptor.cls.defaultRepository;
         }
@@ -1599,32 +1360,7 @@
         /**
          * @param init - initial data of the object
          */
-        constructor(init) {
-            Object.defineProperty(this, "modelName", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            /**
-             * Save the initial data of the object that was loaded from the server.
-             */
-            Object.defineProperty(this, "init_data", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            /**
-             * disposers for mobx reactions and interceptors, you can add your own disposers
-             */
-            Object.defineProperty(this, "disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: new Map()
-            });
-        }
+        constructor(init) { }
         /**
          * @returns {ModelDescriptor} - model descriptor
          */
@@ -1638,6 +1374,14 @@
         get ID() {
             return this.modelDescriptor.getID(this);
         }
+        /**
+         * Save the initial data of the object that was loaded from the server.
+         */
+        init_data;
+        /**
+         * disposers for mobx reactions and interceptors, you can add your own disposers
+         */
+        disposers = new Map();
         /**
          * Destructor of the object.
          * It eject from cache and removes all disposers.
@@ -1866,88 +1610,34 @@
      * ModelFieldDescriptor is a class that contains all the information about the field.
      */
     class ModelFieldDescriptor {
-        constructor() {
-            Object.defineProperty(this, "decorator", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            Object.defineProperty(this, "type", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "settings", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-        }
+        decorator;
+        disposers = [];
+        type;
+        settings;
     }
     /**
      * ModelDescriptor is a class that contains all the information about the model.
      */
     class ModelDescriptor {
-        constructor() {
-            /**
-             * Model class
-             */
-            Object.defineProperty(this, "cls", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            /**
-             * Id fields
-             */
-            Object.defineProperty(this, "id", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "idFieldDescriptors", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            /**
-             * Fields is a map of all fields in the model that usually use in repository.
-             */
-            Object.defineProperty(this, "fields", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: {}
-            });
-            /**
-             * Relations is a map of all relations (foreign, one, many) in the model.
-             * It is derivative and does not come from outside.
-             */
-            Object.defineProperty(this, "relations", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: {}
-            });
-            Object.defineProperty(this, "cache", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: new Cache()
-            });
-        }
+        /**
+         * Model class
+         */
+        cls;
+        /**
+         * Id fields
+         */
+        id;
+        idFieldDescriptors;
+        /**
+         * Fields is a map of all fields in the model that usually use in repository.
+         */
+        fields = {};
+        /**
+         * Relations is a map of all relations (foreign, one, many) in the model.
+         * It is derivative and does not come from outside.
+         */
+        relations = {};
+        cache = new Cache();
         /**
          * Return id value from object. Object can have id field with different name.
          */
@@ -1992,15 +1682,14 @@
      */
     function foreign(foreign_model, foreign_id) {
         return function (cls, field_name) {
-            var _a;
-            const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+            const modelName = cls.modelName ?? cls.constructor.name;
             if (!modelName)
                 throw new Error('Model name is not defined. Did you forget to declare any id fields?');
             const modelDescription = models.get(modelName);
             if (!modelDescription)
                 throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
             // if it is empty then try auto detect it (it works only with single id) 
-            foreign_id = foreign_id !== null && foreign_id !== void 0 ? foreign_id : `${field_name}_id`;
+            foreign_id = foreign_id ?? `${field_name}_id`;
             modelDescription.relations[field_name] = {
                 decorator: (obj) => {
                     // make observable and set default value
@@ -2031,14 +1720,13 @@
 
     function one(remote_model, remote_foreign_id) {
         return function (cls, field_name) {
-            var _a;
-            const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+            const modelName = cls.modelName ?? cls.constructor.name;
             if (!modelName)
                 throw new Error('Model name is not defined. Did you forget to declare any id fields?');
             const modelDescription = models.get(modelName);
             if (!modelDescription)
                 throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
-            remote_foreign_id = remote_foreign_id !== null && remote_foreign_id !== void 0 ? remote_foreign_id : `${modelName.toLowerCase()}_id`;
+            remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`;
             const remoteModelDescriptor = remote_model.getModelDescriptor();
             const disposer_name = `MO: One - update - ${modelName}.${field_name}`;
             modelDescription.relations[field_name] = {
@@ -2068,9 +1756,9 @@
                                 obj: modelDescription.cache.get(foreignID)
                             };
                         }, mobx.action(disposer_name, (_new, _old) => {
-                            if (_old === null || _old === void 0 ? void 0 : _old.obj)
+                            if (_old?.obj)
                                 _old.obj[field_name] = _new.id ? undefined : null;
-                            if (_new === null || _new === void 0 ? void 0 : _new.obj)
+                            if (_new?.obj)
                                 _new.obj[field_name] = remote_obj;
                         }), { fireImmediately: true }));
                         break;
@@ -2095,15 +1783,14 @@
      */
     function many(remote_model, remote_foreign_id) {
         return function (cls, field_name) {
-            var _a;
-            const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+            const modelName = cls.modelName ?? cls.constructor.name;
             if (!modelName)
                 throw new Error('Model name is not defined. Did you forget to declare any id fields?');
             const modelDescription = models.get(modelName);
             if (!modelDescription)
                 throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
             // if it is empty then try auto detect it (it works only with single id) 
-            remote_foreign_id = remote_foreign_id !== null && remote_foreign_id !== void 0 ? remote_foreign_id : `${modelName.toLowerCase()}_id`;
+            remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`;
             modelDescription.relations[field_name] = {
                 decorator: (obj) => {
                     mobx.extendObservable(obj, { [field_name]: [] });
@@ -2159,8 +1846,7 @@
      */
     function id(typeDescriptor, observable = true) {
         return (cls, fieldName) => {
-            var _a;
-            const modelName = (_a = cls.modelName) !== null && _a !== void 0 ? _a : cls.constructor.name;
+            const modelName = cls.modelName ?? cls.constructor.name;
             let modelDescription = models.get(modelName);
             // id field is first decorator that invoke before model and other fields decorators
             // so we need to check if model is already registered and if not then register it
@@ -2200,39 +1886,14 @@
     }
 
     class SingleFilter extends Filter {
+        field;
+        input;
+        // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
+        __disposers = [];
+        getURIField;
+        operator;
         constructor(field, input, getURIField, operator) {
             super();
-            Object.defineProperty(this, "field", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "input", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            // TODO: is __disposers deprecated? I don't find any usage of it and I don't how it can be used
-            Object.defineProperty(this, "__disposers", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            Object.defineProperty(this, "getURIField", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "operator", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.field = field;
             this.input = input;
             this.getURIField = getURIField;
@@ -2325,14 +1986,9 @@
     }
 
     class ComboFilter extends Filter {
+        filters;
         constructor(filters) {
             super();
-            Object.defineProperty(this, "filters", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.filters = filters;
         }
         get isReady() {
@@ -2366,14 +2022,7 @@
      * Adapter is a class that provides a way to interact with the server or other data source.
      */
     class Adapter {
-        constructor() {
-            Object.defineProperty(this, "delay", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            }); // delays for simulate real usage, use it only for tests
-        }
+        delay; // delays for simulate real usage, use it only for tests
     }
 
     /**
@@ -2394,6 +2043,7 @@
      * You can use this adapter for mock data or for unit test
      */
     class LocalAdapter extends Adapter {
+        store_name;
         clear() {
             local_store[this.store_name] = {};
         }
@@ -2406,12 +2056,6 @@
         }
         constructor(store_name) {
             super();
-            Object.defineProperty(this, "store_name", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.store_name = store_name;
             local_store[this.store_name] = {};
         }
@@ -2548,14 +2192,9 @@
     }
 
     class ConstantAdapter extends Adapter {
+        constant;
         constructor(constant) {
             super();
-            Object.defineProperty(this, "constant", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.constant = constant;
         }
         async action() {
@@ -2608,37 +2247,12 @@
      *
      */
     class Form {
+        isLoading = false;
+        errors = [];
+        inputs;
+        onSuccess;
+        onCancel;
         constructor(inputs, onSuccess, onCancel) {
-            Object.defineProperty(this, "isLoading", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: false
-            });
-            Object.defineProperty(this, "errors", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: []
-            });
-            Object.defineProperty(this, "inputs", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "onSuccess", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "onCancel", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             mobx.makeObservable(this);
             this.inputs = inputs;
             this.onSuccess = onSuccess;
@@ -2658,8 +2272,7 @@
         }
         errorHandler(err) {
             mobx.runInAction(() => {
-                var _a;
-                if (!((_a = err.response) === null || _a === void 0 ? void 0 : _a.data)) {
+                if (!err.response?.data) {
                     this.errors = [err.message];
                 }
                 else {
@@ -2728,20 +2341,10 @@
      * Use it for forms with complex data that saved in multiple models.
      */
     class ActionForm extends Form {
+        action;
+        repository;
         constructor(repository, action, inputs, onSuccess, onCancel) {
             super(inputs, onSuccess, onCancel);
-            Object.defineProperty(this, "action", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "repository", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.repository = repository;
             this.action = action;
         }
@@ -2754,20 +2357,10 @@
      * Abstract class for forms that are used to work with an object.
      */
     class ObjectForm extends Form {
+        obj;
+        repository;
         constructor(obj, inputs, onSuccess, onCancel, repository) {
             super(inputs, onSuccess, onCancel);
-            Object.defineProperty(this, "obj", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
-            Object.defineProperty(this, "repository", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.obj = obj;
             this.repository = repository;
         }
@@ -2804,14 +2397,9 @@
      * Form to make an action of object.
      */
     class ActionObjectForm extends ObjectForm {
+        action;
         constructor(action, obj, inputs, onSuccess, onCancel, repository) {
             super(obj, inputs, onSuccess, onCancel, repository);
-            Object.defineProperty(this, "action", {
-                enumerable: true,
-                configurable: true,
-                writable: true,
-                value: void 0
-            });
             this.action = action;
         }
         async apply() {

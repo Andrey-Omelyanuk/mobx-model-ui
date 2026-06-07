@@ -1,20 +1,15 @@
 {
-    "compileOnSave": true,
     "compilerOptions": {
         "outDir"    : "lib",
         "rootDir"   : "src",
-        "baseUrl"   : ".",
-        "module"    : "es2020",
-        "target"    : "es2017",
+        "module"    : "es2022",
+        "target"    : "es2022",
         "strictNullChecks": false,
         "noImplicitAny": false,
         "strictPropertyInitialization": false,
         "useUnknownInCatchVariables": false,
-        "ignoreDeprecations": "6.0",
         // "strict"    : true,
-        "downlevelIteration": true,
-        "moduleResolution"              : "node",
-        "stripInternal"                 : true,
+        "moduleResolution"              : "bundler",
         "emitDecoratorMetadata"         : true,
         "esModuleInterop"               : true,
         "experimentalDecorators"        : true,
@@ -25,12 +20,9 @@
         "declaration"                   : false,
         "lib": [      
             "dom",
-            "es2020"
+            "es2022"
         ],
-        "types": ["jest"],
-        "paths": {
-            "@/*": ["src/*"] 
-        }
+        "types": ["jest"]
     },
     "exclude": [
         "node_modules",
