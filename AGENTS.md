@@ -22,6 +22,7 @@ When working in planning mode, the output must be written to `PLAN.md` with the 
 
 ## Code Style
 
+- **All comments and documentation must be in English**, regardless of the conversation language
 - **Prefer alignment** of values in configuration files, JSON, TypeScript configs, and other structured data for better readability
 - Align colons, values, and comments vertically when listing multiple key-value pairs
 - Preserve existing alignment when editing files — do not collapse or reformat aligned code

@@ -22,7 +22,7 @@ export class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
             throw new Error('Field is required')
     }
     default(): [string, boolean] {
-        return [undefined, ASC]
+        return ['', ASC]
     }
 }
 

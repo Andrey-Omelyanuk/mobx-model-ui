@@ -5,6 +5,10 @@ export interface NumberDescriptorProps extends TypeDescriptorProps {
     max?: number
 }
 
+/**
+ * NumberDescriptor - numeric data type
+ * fromString uses parseInt, so fractional numbers are truncated to integers (3.14 => 3)
+ */
 export class NumberDescriptor extends TypeDescriptor<number> {
     min: number
     max: number
@@ -32,9 +36,9 @@ export class NumberDescriptor extends TypeDescriptor<number> {
 
     validate(value: number) {
         super.validate(value)
-        if (this.min && value < this.min)
+        if (this.min !== -Infinity && value < this.min)
             throw new Error('Number should be greater than or equal to ' + this.min) 
-        if (this.max && value > this.max)
+        if (this.max !==  Infinity && value > this.max)
             throw new Error('Number should be less than or equal to ' + this.max)
     }
     default(): number {
