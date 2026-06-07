@@ -1,25 +1,30 @@
-import { makeAutoObservable, reaction, runInAction } from 'mobx'
-import { waitIsFalse, waitIsTrue } from './utils'
+import { makeAutoObservable, runInAction } from 'mobx'
+import { waitIsFalse, waitIsTrue, timeout } from './utils'
 
 describe('Utils', () => {
 
-    it('waitIsFalse', (done)=> {
-        const obj = { field: true}
+    it('waitIsFalse', async () => {
+        const obj = { field: true }
         makeAutoObservable(obj)
-        waitIsFalse(obj, 'field').then(() => {
-            expect(obj.field).toBe(false)
-            done()
-        })
+        const promise = waitIsFalse(obj, 'field')
         runInAction(() => obj.field = false)
+        await promise
+        expect(obj.field).toBe(false)
     })
 
-    it('waitIsTrue', (done)=> {
+    it('waitIsTrue', async () => {
         const obj = { field: false }
         makeAutoObservable(obj)
-        waitIsTrue(obj, 'field').then(() => {
-            expect(obj.field).toBe(true)
-            done()
-        })
+        const promise = waitIsTrue(obj, 'field')
         runInAction(() => obj.field = true)
+        await promise
+        expect(obj.field).toBe(true)
+    })
+
+    it('timeout', async () => {
+        const start = Date.now()
+        await timeout(50)
+        const elapsed = Date.now() - start
+        expect(elapsed).toBeGreaterThanOrEqual(45)
     })
 })

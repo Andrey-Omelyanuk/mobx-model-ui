@@ -1,8 +1,7 @@
 import { autorun } from 'mobx'
-import { Model, ModelDescriptor } from './model'
 
 
-export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {
+export function waitIsTrue(obj: any, field: string) : Promise<boolean> {
     return new Promise((resolve) => { 
         autorun((reaction) => {
             if (obj[field]) {
@@ -13,7 +12,7 @@ export function waitIsTrue(obj: any, field: string) : Promise<Boolean> {
     })
 }
 
-export function waitIsFalse(obj: any, field: string) : Promise<Boolean> {
+export function waitIsFalse(obj: any, field: string) : Promise<boolean> {
     return new Promise((resolve) => { 
         autorun((reaction) => {
             if (!obj[field]) {
