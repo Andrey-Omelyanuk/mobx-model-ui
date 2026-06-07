@@ -15,8 +15,8 @@ export class Cache<M extends Model> {
     /**
      * Get object by ID 
      */
-    get(ID: ID): M|undefined {
-        return this.store.get(ID)
+    get(id: ID): M|undefined {
+        return this.store.get(id)
     }
 
     /**
@@ -37,7 +37,7 @@ export class Cache<M extends Model> {
      * Eject object from the cache 
      */
     @action eject(obj: M) {
-        if (obj.ID)
+        if (obj.ID !== undefined && obj.ID !== null && obj.ID !== '')
             this.store.delete(obj.ID)
     }
 
