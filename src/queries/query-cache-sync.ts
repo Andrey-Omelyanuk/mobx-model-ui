@@ -52,9 +52,9 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
 
     @computed
     get items() { 
-        let __items = this.__items.map(x=>x) // copy __items (not deep)
+        let __items = [...this.__items]
         if (this.orderBy.value && this.orderBy.value.length) {
-            let compare = (a, b) => {
+            let compare = (a: M, b: M) => {
                 for(const [key, value] of this.orderBy.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
@@ -76,9 +76,9 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         return __items 
     }
 
-    __watch_obj(obj) {
-        if (this.disposerObjects[obj.id]) this.disposerObjects[obj.id]()
-        this.disposerObjects[obj.id] = reaction(
+    __watch_obj(obj: M) {
+        if (this.disposerObjects[obj.ID as string]) this.disposerObjects[obj.ID as string]()
+        this.disposerObjects[obj.ID as string] = reaction(
             () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',
             (should: boolean) => {

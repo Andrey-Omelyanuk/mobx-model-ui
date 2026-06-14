@@ -16,10 +16,10 @@ export abstract class Adapter <M extends Model> {
     abstract create (raw_data: any,                        config?: RequestConfig): Promise<any>
     abstract update (id: ID, only_changed_raw_data: any,   config?: RequestConfig): Promise<any>
     abstract delete (id: ID,                               config?: RequestConfig): Promise<void>
-    abstract action (id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>
+    abstract action (id: ID, name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>
     abstract get    (id: ID,                               config?: RequestConfig): Promise<any>
 
-    abstract modelAction (name: string, kwargs: Object, config?: RequestConfig): Promise<any>
+    abstract modelAction (name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>
 
     // the find returns first object that match the query or undefined
     abstract find(query: Query<M>, config?: RequestConfig): Promise<any>

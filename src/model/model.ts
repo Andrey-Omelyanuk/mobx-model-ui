@@ -57,7 +57,7 @@ export default abstract class Model implements Destroyable {
     /**
      * Save the initial data of the object that was loaded from the server.
      */
-    @observable init_data: any   
+    @observable init_data: Record<string, any>   
     /**
      * disposers for mobx reactions and interceptors, you can add your own disposers
      */
@@ -145,7 +145,7 @@ export default abstract class Model implements Destroyable {
      * It is used when raw data comes from any source (server, websocket, etc.) and you want to update the object. 
      * TODO: ID is not ready! I'll finish it later. 
      */
-    @action updateFromRaw(rawObj) {
+    @action updateFromRaw(rawObj: Record<string, any>) {
         // update id if not exist
         const idField = this.modelDescriptor.id
         if (this[idField] === null || this[idField] === undefined) {
@@ -185,7 +185,7 @@ export default abstract class Model implements Destroyable {
     // helper instance functions
     // --------------------------------------------------------------------------------------------
 
-    async action(name: string, kwargs: Object) { return await this.getDefaultRepository().action(this, name, kwargs) }
+    async action(name: string, kwargs: Record<string, any>) { return await this.getDefaultRepository().action(this, name, kwargs) }
     async create<T extends Model>(): Promise<T> { return await this.getDefaultRepository().create(this) as T }
     async update<T extends Model>(): Promise<T> { return await this.getDefaultRepository().update(this) as T }
     async save<T extends Model>(): Promise<T> { return await this.getDefaultRepository().save(this) as T }

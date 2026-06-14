@@ -13,9 +13,9 @@ class TestReadOnlyAdapter<M extends Model> extends ReadOnlyAdapter<M> {
     async delete() { return super.delete() } 
     // next methods just to avoid abstract class
     async get    (obj_id: any): Promise<any> { return 'get' }
-    async action (obj_id: any, name: string, kwargs: Object) : Promise<any> { return 'action' }
+    async action (obj_id: any, name: string, kwargs: Record<string, any>) : Promise<any> { return 'action' }
 
-    async modelAction(action: string, kwargs: Object): Promise<any> { return 'modelAction' }
+    async modelAction(action: string, kwargs: Record<string, any>): Promise<any> { return 'modelAction' }
 
     async find(query: Query<M>): Promise<any> { return 'find' }
     async load(query: Query<M>): Promise<any[]> { return [] }

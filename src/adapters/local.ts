@@ -46,7 +46,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         for(let id of Object.keys(local_store[this.store_name])) {
             ids.push(parseInt(id))
         }
-        let max = Math.max.apply(null, ids)
+        let max = Math.max(...ids)
         raw_data.id = max + 1
         local_store[this.store_name][raw_data.id] = raw_data
         return raw_data
@@ -66,7 +66,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         delete local_store[this.store_name][id]
     }
 
-    async action (id: ID, name: string, kwargs: Object) : Promise<any> {
+    async action (id: ID, name: string, kwargs: Record<string, any>) : Promise<any> {
         console.error('Action method is not implemented for local adapter')
         // ignore error
         // throw(`Not implemented`)
@@ -77,7 +77,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return local_store[this.store_name][id]
     }
 
-    async modelAction (name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+    async modelAction (name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> {
         console.error('Model action method is not implemented for local adapter')
         // ignore error
         // throw(`Not implemented`)

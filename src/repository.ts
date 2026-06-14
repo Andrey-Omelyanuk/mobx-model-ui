@@ -56,14 +56,14 @@ export class  Repository<M extends Model> {
     /**
      * Run action for the object.
      */
-    async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+    async action(obj: M, name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> {
         return await this.adapter.action(obj.ID, name, kwargs, config)
     }
 
     /**
      * Run action for the model.
      */
-    async modelAction(name: string, kwargs: Object, config?: RequestConfig) : Promise<any> {
+    async modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> {
         return await this.adapter.modelAction(name, kwargs, config)
     }
 

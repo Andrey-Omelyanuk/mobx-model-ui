@@ -71,12 +71,12 @@ export class  TestRepository<M extends Model> extends Repository<M> {
     async create(obj: M, config?: RequestConfig) : Promise<M> { return super.create(obj) }
     async update(obj: M, config?: RequestConfig) : Promise<M> { return super.update(obj) }
     async delete(obj: M, config?: RequestConfig) : Promise<void> { return super.delete(obj) }
-    async action(obj: M, name: string, kwargs: Object, config?: RequestConfig) : Promise<any> { return super.action(obj, name, kwargs) }
+    async action(obj: M, name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> { return super.action(obj, name, kwargs) }
     async find(query: Query<M>, config?: RequestConfig): Promise<M> { return super.find(query) }
     async load(query: Query<M>, config?: RequestConfig):Promise<M[]> { return super.load(query) }
     async getTotalCount  (filter: Filter, config?: RequestConfig): Promise<number> { return super.getTotalCount(filter) }
     async getDistinct    (filter: Filter, field: string, config?: RequestConfig): Promise<any[]> { return super.getDistinct(filter, field) }
-    async modelAction(name: string, kwargs: Object, config?: RequestConfig) : Promise<any> { return super.modelAction(name, kwargs) }
+    async modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> { return super.modelAction(name, kwargs) }
 
     static mockClear() {
         (TestRepository.prototype.create        as jest.Mock).mockClear(); 

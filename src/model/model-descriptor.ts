@@ -20,7 +20,7 @@ export class ModelDescriptor<T extends Model> {
     /**
      * Model class
      */
-    cls: new (args) => T
+    cls: new (args?: any) => T
     /**
      * Id fields
      */
