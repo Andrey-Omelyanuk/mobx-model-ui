@@ -12,7 +12,7 @@ export let data_set = [ obj_a, obj_b, obj_c, obj_d, obj_e ]
 
 /**
  * TestCache for testing.
- * Use it when you neet to count how many times the method was called. 
+ * Use it when you need to count how many times the method was called. 
  */
 export class TestCache<M extends Model> extends Cache<M> {
 
@@ -34,7 +34,7 @@ TestCache.prototype.eject   = jest.fn(TestCache.prototype.eject)
 
 /**
  * TestAdapter for testing.
- * Use it when you neet to count how many times the method was called.
+ * Use it when you need to count how many times the method was called.
  */
 export class TestAdapter<M extends Model> extends LocalAdapter<M> {
     static mockClear() {
@@ -62,7 +62,7 @@ TestAdapter.prototype.getDistinct   = jest.fn(TestAdapter.prototype.getDistinct)
 
 /**
  * TestRepository for testing.
- * Use it when you neet to count how many times the method was called.
+ * Use it when you need to count how many times the method was called.
  */
 export class  TestRepository<M extends Model> extends Repository<M> {
     constructor(model: any, adapter: any) { super(model, adapter) }

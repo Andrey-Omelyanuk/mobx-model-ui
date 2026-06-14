@@ -5,12 +5,12 @@ export const config = {
     FORM_NON_FIELD_ERRORS_KEY : 'non_field_errors',
     FORM_UNKNOWN_ERROR_MESSAGE: 'Unknown errors. Please contact support.',
     // NOTE: React router manage URL by own way. 
-    // change UPDATE_SEARCH_PARAMS and WATCTH_URL_CHANGES in this case
+    // change UPDATE_SEARCH_PARAMS and WATCH_URL_CHANGES in this case
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => {
         window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`)
 
     },
-    WATCTH_URL_CHANGES: (callback: any) => {
+    WATCH_URL_CHANGES: (callback: any) => {
         window.addEventListener('popstate', callback)
         return () => { window.removeEventListener('popstate', callback) }
     },

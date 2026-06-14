@@ -10,7 +10,7 @@ export const syncURLHandler = (paramName: string, input: Variable<any>) => {
         input.setFromString(searchParams.get(paramName))
     }
     // watch for URL changes and update Input
-    function updataInputFromURL() {
+    function updateInputFromURL() {
         const searchParams = new URLSearchParams(window.location.search)
         if (searchParams.has(paramName)) {
             const raw_value = searchParams.get(paramName)
@@ -22,7 +22,7 @@ export const syncURLHandler = (paramName: string, input: Variable<any>) => {
         else if (input.value !== undefined)
             input.set(undefined)
     }
-    input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(input)))
+    input.__disposers.push(config.WATCH_URL_CHANGES(updateInputFromURL.bind(input)))
     // watch for Input changes and update URL
     input.__disposers.push(reaction(
         () => input.toString(),  // I cannot use this.value because it can be a Map
