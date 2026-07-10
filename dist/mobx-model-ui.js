@@ -985,6 +985,7 @@
         goToNextPage() { this.setPage(this.current_page + 1); }
         goToLastPage() { this.setPage(this.total_pages); }
         get is_first_page() { return this.offset.value === 0; }
+        // QueryPage uses offset as a numeric page offset (not a cursor), so treat it as a number
         get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
         get current_page() { return this.offset.value / this.limit.value + 1; }
         get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
@@ -1153,6 +1154,7 @@
                 }
                 else {
                     this.__items.push(...objs);
+                    // cursor = last seen ID (works for numeric and string/UUID IDs)
                     this.offset.set(objs[objs.length - 1].ID);
                     this.total = undefined;
                     this.isEndReached = false;
@@ -2165,9 +2167,10 @@
                 }
                 raw_objs = raw_objs.slice(0, query.limit.value);
             }
-            // offset/limit pagination for other queries
+            // offset/limit pagination for other queries (offset is a numeric page offset here)
             else if (query.limit.value !== undefined && query.offset.value !== undefined) {
-                raw_objs = raw_objs.slice(query.offset.value, query.offset.value + query.limit.value);
+                const offset = query.offset.value;
+                raw_objs = raw_objs.slice(offset, offset + query.limit.value);
             }
             return raw_objs;
         }

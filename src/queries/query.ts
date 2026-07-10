@@ -5,7 +5,7 @@ import { Filter } from '../filters/Filter'
 import { waitIsFalse } from '../utils'
 import { Variable } from '../inputs'
 import { config } from '../config'
-import { ARRAY, NUMBER, STRING, ORDER_BY } from '../types'
+import { ARRAY, NUMBER, STRING, ORDER_BY, ID } from '../types'
 import { Destroyable } from '../object'
 
 
@@ -17,7 +17,9 @@ export interface QueryProps<M extends Model> {
     filter                      ?: Filter
     orderBy                     ?: Variable<[string, boolean][]>
     // pagination
-    offset                      ?: Variable<number>
+    // offset is a numeric page offset for Query/QueryPage, but a cursor (last seen ID)
+    // for QueryStream, so it carries the general ID type (string | number)
+    offset                      ?: Variable<ID>
     limit                       ?: Variable<number>
     // fields control
     relations                   ?: Variable<string[]>
@@ -52,7 +54,7 @@ export class Query <M extends Model> implements Destroyable {
     readonly repository: Repository<M>
     readonly filter    : Filter
     readonly orderBy   : Variable<[string, boolean][]>
-    readonly offset    : Variable<number>
+    readonly offset    : Variable<ID>
     readonly limit     : Variable<number>
     readonly relations : Variable<string[]>
     readonly fields    : Variable<string[]>

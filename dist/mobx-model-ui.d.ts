@@ -349,7 +349,7 @@ interface QueryProps<M extends Model> {
     repository?: Repository<M>;
     filter?: Filter;
     orderBy?: Variable<[string, boolean][]>;
-    offset?: Variable<number>;
+    offset?: Variable<ID>;
     limit?: Variable<number>;
     relations?: Variable<string[]>;
     fields?: Variable<string[]>;
@@ -360,7 +360,7 @@ declare class Query<M extends Model> implements Destroyable {
     readonly repository: Repository<M>;
     readonly filter: Filter;
     readonly orderBy: Variable<[string, boolean][]>;
-    readonly offset: Variable<number>;
+    readonly offset: Variable<ID>;
     readonly limit: Variable<number>;
     readonly relations: Variable<string[]>;
     readonly fields: Variable<string[]>;

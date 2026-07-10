@@ -38,7 +38,8 @@ export class QueryStream <M extends Model> extends Query<M> {
                 this.isEndReached = true
             } else {
                 this.__items.push(...objs)
-                this.offset.set(objs[objs.length - 1].ID as number)
+                // cursor = last seen ID (works for numeric and string/UUID IDs)
+                this.offset.set(objs[objs.length - 1].ID)
                 this.total = undefined
                 this.isEndReached = false
             }

@@ -2,19 +2,6 @@
 
 ## 1. Ошибки (Bugs)
 
-### 1.3 `QueryCacheSync.__watch_obj()` хардкодит `obj.id` вместо `obj.ID`
-
-**Файл**: `src/queries/query-cache-sync.ts`, строка 79
-**Проблема**: Если ID-поле называется иначе (например, `uuid`, `key`), то `obj.id` — `undefined`, disposer никогда не перезапишется/не удалится. Оба объекта сохраняют реакцию под ключом `disposerObjects['undefined']`, и второй вызов перетирает первый — объект теряет отслеживание фильтра.
-**Тест-ловушка**: `should track filter changes for all objects with custom id field name` в `src/queries/query-cache-sync.spec.ts`
-**Фикс**: заменить `obj.id` на `obj.ID` (геттер Model.ID).
-
-### 1.4 `QueryStream.__load()` хардкодит `as number` для cursor
-
-**Файл**: `src/queries/query-stream.ts`, строка 41
-**Проблема**: `objs[objs.length - 1].ID as number` ломается с UUID/строковыми ID.
-**Фикс**: использовать `String()` или универсальное сравнение; накапливать cursor по типу `ID`, а не `number`.
-
 ### 1.5 `SaveObjectForm.apply()` проверяет поля через `Object.keys(this.obj)`
 
 **Файл**: `src/forms/ObjectForm/SaveObjectForm.ts`, строка 10

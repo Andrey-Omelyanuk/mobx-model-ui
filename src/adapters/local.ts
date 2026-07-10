@@ -136,9 +136,10 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
             }
             raw_objs = raw_objs.slice(0, query.limit.value)
         }
-        // offset/limit pagination for other queries
+        // offset/limit pagination for other queries (offset is a numeric page offset here)
         else if (query.limit.value !== undefined && query.offset.value !== undefined) {
-            raw_objs = raw_objs.slice(query.offset.value, query.offset.value+query.limit.value)
+            const offset = query.offset.value as number
+            raw_objs = raw_objs.slice(offset, offset+query.limit.value)
         }
         return raw_objs 
     }

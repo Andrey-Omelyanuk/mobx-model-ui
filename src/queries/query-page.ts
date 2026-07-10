@@ -14,8 +14,9 @@ export class QueryPage<M extends Model> extends Query<M> {
     goToLastPage () { this.setPage(this.total_pages) }
 
     get is_first_page() : boolean { return this.offset.value === 0 }
-    get is_last_page () : boolean { return this.offset.value + this.limit.value >= this.total }
-    get current_page()  : number  { return this.offset.value / this.limit.value + 1 }
+    // QueryPage uses offset as a numeric page offset (not a cursor), so treat it as a number
+    get is_last_page () : boolean { return (this.offset.value as number) + this.limit.value >= this.total }
+    get current_page()  : number  { return (this.offset.value as number) / this.limit.value + 1 }
     get total_pages()   : number  { return this.total ? Math.ceil(this.total / this.limit.value) : 1 }
     // for compatibility with js code style
     get isFirstPage() : boolean { return this.is_first_page }
