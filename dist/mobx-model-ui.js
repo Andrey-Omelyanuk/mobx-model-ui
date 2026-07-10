@@ -1066,7 +1066,7 @@
             await Promise.resolve();
         }
         get items() {
-            let __items = this.__items.map(x => x); // copy __items (not deep)
+            let __items = [...this.__items];
             if (this.orderBy.value && this.orderBy.value.length) {
                 let compare = (a, b) => {
                     for (const [key, value] of this.orderBy.value) {
@@ -1098,9 +1098,9 @@
             return __items;
         }
         __watch_obj(obj) {
-            if (this.disposerObjects[obj.id])
-                this.disposerObjects[obj.id]();
-            this.disposerObjects[obj.id] = mobx.reaction(() => !this.filter || this.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
+            if (this.disposerObjects[obj.ID])
+                this.disposerObjects[obj.ID]();
+            this.disposerObjects[obj.ID] = mobx.reaction(() => !this.filter || this.filter.isMatch(obj), mobx.action('MO: Query - obj was changed', (should) => {
                 let i = this.__items.indexOf(obj);
                 // should be in the items and it is not in the items? add it to the items
                 if (should && i == -1)
@@ -2071,12 +2071,16 @@
             if (this.delay)
                 await timeout(this.delay);
             // calculate and set new ID
+            // skip non-numeric IDs (e.g. UUID/string) so parseInt's NaN can't poison Math.max
             let ids = [0];
             for (let id of Object.keys(local_store[this.store_name])) {
-                ids.push(parseInt(id));
+                let parsed = parseInt(id);
+                if (!isNaN(parsed))
+                    ids.push(parsed);
             }
-            let max = Math.max.apply(null, ids);
-            raw_data.id = max + 1;
+            let max = Math.max(...ids);
+            // copy before mutating so we don't modify the caller's object
+            raw_data = { ...raw_data, id: max + 1 };
             local_store[this.store_name][raw_data.id] = raw_data;
             return raw_data;
         }

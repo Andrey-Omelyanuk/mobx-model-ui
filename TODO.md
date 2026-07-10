@@ -2,20 +2,6 @@
 
 ## 1. Ошибки (Bugs)
 
-### 1.1 `LocalAdapter.create()` — поломан для UUID/строковых ID
-
-**Файл**: `src/adapters/local.ts`
-**Проблема**: `parseInt` от UUID возвращает `NaN`, `Math.max` даёт `NaN`, ID становится `NaN`.
-**Тест-ловушка**: `should handle string ID models without producing NaN` в `src/adapters/local.spec.ts`
-**Фикс**: проверять тип ID-поля через descriptor или использовать генерацию через `crypto.randomUUID()`.
-
-### 1.2 `LocalAdapter.create()` мутирует `raw_data` извне
-
-**Файл**: `src/adapters/local.ts`, строка 50
-**Проблема**: `raw_data.id = max + 1` изменяет объект, переданный из `Repository.create()`, что может быть неожиданно для вызывающего кода.
-**Тест-ловушка**: `should not mutate the input raw_data object` в `src/adapters/local.spec.ts`
-**Фикс**: копировать `raw_data` перед мутацией: `raw_data = {...raw_data, id: max + 1}`.
-
 ### 1.3 `QueryCacheSync.__watch_obj()` хардкодит `obj.id` вместо `obj.ID`
 
 **Файл**: `src/queries/query-cache-sync.ts`, строка 79

@@ -252,9 +252,9 @@ declare abstract class Adapter<M extends Model> {
     abstract create(raw_data: any, config?: RequestConfig): Promise<any>;
     abstract update(id: ID, only_changed_raw_data: any, config?: RequestConfig): Promise<any>;
     abstract delete(id: ID, config?: RequestConfig): Promise<void>;
-    abstract action(id: ID, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    abstract action(id: ID, name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
     abstract get(id: ID, config?: RequestConfig): Promise<any>;
-    abstract modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    abstract modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
     abstract find(query: Query<M>, config?: RequestConfig): Promise<any>;
     abstract load(query: Query<M>, config?: RequestConfig): Promise<any[]>;
     abstract getTotalCount(filter: Filter, config?: RequestConfig): Promise<number>;
@@ -290,11 +290,11 @@ declare class Repository<M extends Model> {
     /**
      * Run action for the object.
      */
-    action(obj: M, name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    action(obj: M, name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
     /**
      * Run action for the model.
      */
-    modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
     /**
      * Returns ONE object by id.
      */
@@ -414,7 +414,7 @@ declare class QueryCacheSync<M extends Model> extends Query<M> {
     constructor(props: QueryProps<M>);
     __load(): Promise<void>;
     get items(): M[];
-    __watch_obj(obj: any): void;
+    __watch_obj(obj: M): void;
 }
 
 declare class QueryStream<M extends Model> extends Query<M> {
@@ -463,7 +463,7 @@ declare class ModelDescriptor<T extends Model> {
     /**
      * Model class
      */
-    cls: new (args: any) => T;
+    cls: new (args?: any) => T;
     /**
      * Id fields
      */
@@ -524,7 +524,7 @@ declare abstract class Model implements Destroyable {
     /**
      * Save the initial data of the object that was loaded from the server.
      */
-    init_data: any;
+    init_data: Record<string, any>;
     /**
      * disposers for mobx reactions and interceptors, you can add your own disposers
      */
@@ -553,8 +553,8 @@ declare abstract class Model implements Destroyable {
      * It is used when raw data comes from any source (server, websocket, etc.) and you want to update the object.
      * TODO: ID is not ready! I'll finish it later.
      */
-    updateFromRaw(rawObj: any): void;
-    action(name: string, kwargs: Object): Promise<any>;
+    updateFromRaw(rawObj: Record<string, any>): void;
+    action(name: string, kwargs: Record<string, any>): Promise<any>;
     create<T extends Model>(): Promise<T>;
     update<T extends Model>(): Promise<T>;
     save<T extends Model>(): Promise<T>;
@@ -667,9 +667,9 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     create(raw_data: any): Promise<any>;
     update(id: ID, only_changed_raw_data: any): Promise<any>;
     delete(id: ID): Promise<void>;
-    action(id: ID, name: string, kwargs: Object): Promise<any>;
+    action(id: ID, name: string, kwargs: Record<string, any>): Promise<any>;
     get(id: ID, config?: RequestConfig): Promise<any>;
-    modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter?: Filter): Promise<number>;
@@ -686,7 +686,7 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     update(): Promise<any>;
     delete(): Promise<void>;
     get(): Promise<any>;
-    modelAction(name: string, kwargs: Object, config?: RequestConfig): Promise<any>;
+    modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
     find(): Promise<any>;
     load(): Promise<any[]>;
     getTotalCount(): Promise<number>;

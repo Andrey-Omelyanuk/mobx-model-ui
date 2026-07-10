@@ -42,12 +42,15 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         if (this.delay) await timeout(this.delay) 
 
         // calculate and set new ID
+        // skip non-numeric IDs (e.g. UUID/string) so parseInt's NaN can't poison Math.max
         let ids = [0]
         for(let id of Object.keys(local_store[this.store_name])) {
-            ids.push(parseInt(id))
+            let parsed = parseInt(id)
+            if (!isNaN(parsed)) ids.push(parsed)
         }
         let max = Math.max(...ids)
-        raw_data.id = max + 1
+        // copy before mutating so we don't modify the caller's object
+        raw_data = {...raw_data, id: max + 1}
         local_store[this.store_name][raw_data.id] = raw_data
         return raw_data
     }
