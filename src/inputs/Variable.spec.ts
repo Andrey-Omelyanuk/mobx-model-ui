@@ -1,3 +1,4 @@
+import { runInAction } from 'mobx'
 import { config } from '../config'
 import { ORDER_BY, STRING, NUMBER, DATE, DATETIME, ARRAY, ASC, DESC } from '../types'
 import { Variable } from './Variable'
@@ -70,6 +71,20 @@ describe('Input', () => {
         variable.set('test')                                   ; expect(variable.isReady).toBe(false)
         // Fast-forward time
         jest.runAllTimers()                                 ; expect(variable.isReady).toBe(true)
+    })
+
+    it('debounced set() keeps isNeedToUpdate until the debounce settles', () => {
+        const variable = new Variable(STRING(), { debounce: 100 })
+        runInAction(() => variable.isNeedToUpdate = true)
+        variable.set('test')
+        // the value has not settled yet, so the pending-update flag must remain
+        // (old bug: set() cleared isNeedToUpdate immediately, before validation)
+        expect(variable.isNeedToUpdate).toBe(true)
+        expect(variable.isReady).toBe(false)
+        // Fast-forward time
+        jest.runAllTimers()
+        expect(variable.isNeedToUpdate).toBe(false)
+        expect(variable.isReady).toBe(true)
     })
 
     it('syncLocalStorage should have more priority than default value', async () => {

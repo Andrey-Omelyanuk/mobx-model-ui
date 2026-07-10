@@ -256,6 +256,9 @@
             mobx.makeObservable(this);
             if (this.debounce) {
                 this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => {
+                    // the debounced value has settled: clear the pending-update
+                    // flag and validate together, once
+                    this.isNeedToUpdate = false;
                     this.validate();
                     this.isDebouncing = false;
                 }), this.debounce);
@@ -272,12 +275,13 @@
         stopDebouncing;
         set(value) {
             this.value = value;
-            this.isNeedToUpdate = false;
             if (this.debounce) {
                 this.isDebouncing = true;
-                this.stopDebouncing(); // will stop debouncing after debounce
+                this.stopDebouncing(); // clears isNeedToUpdate and validates after debounce
             }
             else {
+                // no debounce: the value is settled immediately
+                this.isNeedToUpdate = false;
                 this.validate();
             }
         }
@@ -2386,13 +2390,19 @@
      */
     class SaveObjectForm extends ObjectForm {
         async apply() {
-            const fieldsNames = Object.keys(this.obj);
+            const modelDescriptor = this.obj.modelDescriptor;
+            // A valid input target is a declared field, a relation, or the id field.
+            // We must NOT use Object.keys(this.obj): on a MobX model that also exposes
+            // internal props (init_data, disposers, modelName, ...), which would let an
+            // input silently overwrite the object's internal state.
+            const isKnownField = (name) => !!modelDescriptor.fields[name]
+                || !!modelDescriptor.relations[name]
+                || name === modelDescriptor.id;
             // check if all fields from inputs are in obj
             for (let fieldName of Object.keys(this.inputs))
-                if (!fieldsNames.includes(fieldName))
+                if (!isKnownField(fieldName))
                     throw new Error(`ObjectForm error: object has no field ${fieldName}`);
             // move all values from inputs to obj
-            const modelDescriptor = this.obj.modelDescriptor;
             mobx.runInAction(() => {
                 for (let fieldName of Object.keys(this.inputs)) {
                     // correct fieldName if it is foreign obj to foreign id

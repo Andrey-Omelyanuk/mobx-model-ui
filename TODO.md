@@ -2,19 +2,6 @@
 
 ## 1. Ошибки (Bugs)
 
-### 1.5 `SaveObjectForm.apply()` проверяет поля через `Object.keys(this.obj)`
-
-**Файл**: `src/forms/ObjectForm/SaveObjectForm.ts`, строка 10
-**Проблема**: `Object.keys()` от MobX-объекта возвращает служебные поля (`init_data`, `disposers`, `modelName`, `modelDescriptor`). Проверка должна быть против `this.obj.modelDescriptor.fields`.
-**Тест-ловушка**: `should check field existence against modelDescriptor.fields, not Object.keys` в `src/forms/ObjectForm/SaveObjectForm.spec.ts`
-**Фикс**: вместо `Object.keys(this.obj)` проверять `this.obj.modelDescriptor.fields`.
-
-### 1.6 `Variable.set()` с debounce сбрасывает `isNeedToUpdate` до валидации
-
-**Файл**: `src/inputs/Variable.ts`, строка 69
-**Проблема**: `this.isNeedToUpdate = false` вызывается сразу, до завершения debounced-валидации. Не критично, но логически непоследовательно.
-**Фикс**: не сбрасывать `isNeedToUpdate` до окончания debounce/валидации.
-
 ### 1.7 `Model.destroy()` — потенциальный бесконечный цикл
 
 **Файл**: `src/model/model.ts`, строка 73

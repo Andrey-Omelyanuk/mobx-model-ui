@@ -44,6 +44,9 @@ export class Variable<T> implements Destroyable {
         if (this.debounce) {
             this.stopDebouncing = config.DEBOUNCE(
                 () => runInAction(() => {
+                    // the debounced value has settled: clear the pending-update
+                    // flag and validate together, once
+                    this.isNeedToUpdate = false
                     this.validate()
                     this.isDebouncing = false
                 }),
@@ -66,12 +69,13 @@ export class Variable<T> implements Destroyable {
     @action
     public set (value: T) {
         this.value = value
-        this.isNeedToUpdate = false
         if (this.debounce) {
-            this.isDebouncing = true 
-            this.stopDebouncing()       // will stop debouncing after debounce
+            this.isDebouncing = true
+            this.stopDebouncing()       // clears isNeedToUpdate and validates after debounce
         }
         else {
+            // no debounce: the value is settled immediately
+            this.isNeedToUpdate = false
             this.validate()
         }
     }
