@@ -4,7 +4,7 @@ declare const config: {
     FORM_NON_FIELD_ERRORS_KEY: string;
     FORM_UNKNOWN_ERROR_MESSAGE: string;
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
-    WATCTH_URL_CHANGES: (callback: any) => () => void;
+    WATCH_URL_CHANGES: (callback: any) => () => void;
     DEBOUNCE: (func: Function, debounce: number) => (this: any, ...args: any[]) => void;
     COOKIE_DOMAIN: string;
 };
@@ -59,6 +59,10 @@ interface NumberDescriptorProps extends TypeDescriptorProps {
     min?: number;
     max?: number;
 }
+/**
+ * NumberDescriptor - numeric data type
+ * fromString uses parseInt, so fractional numbers are truncated to integers (3.14 => 3)
+ */
 declare class NumberDescriptor extends TypeDescriptor<number> {
     min: number;
     max: number;
@@ -375,8 +379,8 @@ declare class Query<M extends Model> implements Destroyable {
     };
     constructor(props: QueryProps<M>);
     destroy(): void;
-    loading(): Promise<Boolean>;
-    ready(): Promise<Boolean>;
+    loading(): Promise<boolean>;
+    ready(): Promise<boolean>;
     get autoupdate(): boolean;
     set autoupdate(value: boolean);
     toString(): string;
@@ -591,7 +595,7 @@ declare class Cache<M extends Model> {
     /**
      * Get object by ID
      */
-    get(ID: ID): M | undefined;
+    get(id: ID): M | undefined;
     /**
      * Inject object to the cache
      */
@@ -772,8 +776,8 @@ declare class DeleteObjectForm<M extends Model> extends ObjectForm<M> {
     apply(): Promise<void>;
 }
 
-declare function waitIsTrue(obj: any, field: string): Promise<Boolean>;
-declare function waitIsFalse(obj: any, field: string): Promise<Boolean>;
+declare function waitIsTrue(obj: any, field: string): Promise<boolean>;
+declare function waitIsFalse(obj: any, field: string): Promise<boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
 export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };

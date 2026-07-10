@@ -44,4 +44,18 @@ describe('syncCookieHandler', () => {
         testInput.set('test')       ; expect(document.cookie).toBe('test=test')
         testInput.set(undefined)    ; expect(document.cookie).toBe('test=')
     })
+
+    it('should properly delete cookie when value becomes undefined', async () => {
+        // The bug: syncCookie sets 'test=; path=/; domain=localhost'
+        // without max-age=0 or expires in the past.
+        // Some browsers may keep the cookie as empty value.
+        const testInput = new Variable(STRING(), { syncCookie: 'test'})
+        testInput.set('test')
+        expect(document.cookie).toContain('test=test')
+
+        testInput.set(undefined)
+        // Fixed behavior: cookie should be removed entirely,
+        // not just set to empty string
+        expect(document.cookie).not.toContain('test=')
+    })
 })

@@ -1,5 +1,5 @@
-import { model, Model, LocalAdapter, local, local_store, id, NUMBER, AND, Variable, STRING, BOOLEAN, EQ } from '../'
-import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e  } from '../test.utils' 
+import { model, Model, LocalAdapter, local, local_store, id, field, NUMBER, AND, Variable, STRING, BOOLEAN, EQ, UUID } from '../'
+import { data_set, obj_a, obj_b, obj_c, obj_d, obj_e  } from '../test.utils'
 
 
 describe('LocalAdapter', () => {
@@ -199,6 +199,62 @@ describe('LocalAdapter', () => {
             adapter.init_local_data(data_set_a)
             adapter.init_local_data(data_set_b)
             expect(local_store['A'][data_set_b[0].id]).toMatchObject(data_set_b[0])
+        })
+    })
+
+    describe('create edge cases', () => {
+        it('should not mutate the input raw_data object (bug: mutates raw_data.id)', async () => {
+            @local() @model class LocalMutateTest extends Model { @id(NUMBER()) id: number }
+            const testAdapter = LocalMutateTest.defaultRepository.adapter as unknown as LocalAdapter<LocalMutateTest>
+            const input = {name: 'test', value: 42}
+            const inputCopy = {...input}
+
+            await testAdapter.create(input)
+
+            // The original input should not have been modified
+            expect(input).toEqual(inputCopy)
+        })
+
+        it('should handle string ID models without producing NaN', async () => {
+            @local()
+            @model class LocalStringID extends Model {
+                @id(STRING()) id: string
+                @field(STRING()) name: string
+            }
+            const testAdapter = LocalStringID.defaultRepository.adapter as unknown as LocalAdapter<LocalStringID>
+            local_store['LocalStringID']['uuid-1'] = {id: 'uuid-1', name: 'existing-1'}
+            local_store['LocalStringID']['uuid-2'] = {id: 'uuid-2', name: 'existing-2'}
+
+            // When store has string IDs, parseInt returns NaN, Math.max becomes NaN
+            const result = await testAdapter.create({name: 'new-item'})
+            // Bug: result.id is NaN because parseInt('uuid-1') = NaN
+            expect(isNaN(result.id)).toBe(false)
+            expect(typeof result.id).toBe('number')
+            // The new item should be in the store
+            expect(local_store['LocalStringID'][result.id]).toEqual(result)
+
+            // cleanup
+            delete local_store['LocalStringID']
+        })
+
+        it('should handle UUID ID models without throwing', async () => {
+            @local()
+            @model class LocalUUIDTest extends Model {
+                @id(UUID()) id: string
+                @field(STRING()) name: string
+            }
+            const testAdapter = LocalUUIDTest.defaultRepository.adapter as unknown as LocalAdapter<LocalUUIDTest>
+            local_store['LocalUUIDTest']['00000000-0000-0000-0000-000000000001'] = {id: '00000000-0000-0000-0000-000000000001', name: 'existing'}
+
+            // Creating a new object with UUID ID type should not crash
+            // Bug: parseInt on UUID returns NaN
+            const result = await testAdapter.create({name: 'new-item'})
+            // The auto-increment logic is flawed for UUID, but at minimum shouldn't produce NaN
+            // Regardless of the fix strategy, the ID should not be NaN
+            expect(isNaN(result.id)).toBe(false)
+
+            // cleanup
+            delete local_store['LocalUUIDTest']
         })
     })
 })
