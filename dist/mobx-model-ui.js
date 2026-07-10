@@ -19,11 +19,11 @@
         FORM_NON_FIELD_ERRORS_KEY: 'non_field_errors',
         FORM_UNKNOWN_ERROR_MESSAGE: 'Unknown errors. Please contact support.',
         // NOTE: React router manage URL by own way. 
-        // change UPDATE_SEARCH_PARAMS and WATCTH_URL_CHANGES in this case
+        // change UPDATE_SEARCH_PARAMS and WATCH_URL_CHANGES in this case
         UPDATE_SEARCH_PARAMS: (search_params) => {
             window.history.pushState(null, '', `${window.location.pathname}?${search_params.toString()}`);
         },
-        WATCTH_URL_CHANGES: (callback) => {
+        WATCH_URL_CHANGES: (callback) => {
             window.addEventListener('popstate', callback);
             return () => { window.removeEventListener('popstate', callback); };
         },
@@ -86,8 +86,8 @@
         /**
          * Get object by ID
          */
-        get(ID) {
-            return this.store.get(ID);
+        get(id) {
+            return this.store.get(id);
         }
         /**
          * Inject object to the cache
@@ -104,7 +104,7 @@
          * Eject object from the cache
          */
         eject(obj) {
-            if (obj.ID)
+            if (obj.ID !== undefined && obj.ID !== null && obj.ID !== '')
                 this.store.delete(obj.ID);
         }
         /**
@@ -170,7 +170,7 @@
             input.setFromString(searchParams.get(paramName));
         }
         // watch for URL changes and update Input
-        function updataInputFromURL() {
+        function updateInputFromURL() {
             const searchParams = new URLSearchParams(window.location.search);
             if (searchParams.has(paramName)) {
                 const raw_value = searchParams.get(paramName);
@@ -182,7 +182,7 @@
             else if (input.value !== undefined)
                 input.set(undefined);
         }
-        input.__disposers.push(config.WATCTH_URL_CHANGES(updataInputFromURL.bind(input)));
+        input.__disposers.push(config.WATCH_URL_CHANGES(updateInputFromURL.bind(input)));
         // watch for Input changes and update URL
         input.__disposers.push(mobx.reaction(() => input.toString(), // I cannot use this.value because it can be a Map
         (value) => {
@@ -456,6 +456,10 @@
         return new StringDescriptor(props);
     }
 
+    /**
+     * NumberDescriptor - numeric data type
+     * fromString uses parseInt, so fractional numbers are truncated to integers (3.14 => 3)
+     */
     class NumberDescriptor extends TypeDescriptor {
         min;
         max;
@@ -485,9 +489,9 @@
         }
         validate(value) {
             super.validate(value);
-            if (this.min && value < this.min)
+            if (this.min !== -Infinity && value < this.min)
                 throw new Error('Number should be greater than or equal to ' + this.min);
-            if (this.max && value > this.max)
+            if (this.max !== Infinity && value > this.max)
                 throw new Error('Number should be less than or equal to ' + this.max);
         }
         default() {
@@ -567,6 +571,10 @@
 
     class DateTimeDescriptor extends DateDescriptor {
         toString(value) {
+            if (value === undefined)
+                return undefined;
+            if (value === null)
+                return 'null';
             return value.toISOString();
         }
     }
@@ -634,7 +642,7 @@
                 throw new Error('Field is required');
         }
         default() {
-            return [undefined, ASC];
+            return ['', ASC];
         }
     }
     function ORDER_BY() {
@@ -1387,7 +1395,7 @@
          * It eject from cache and removes all disposers.
          */
         destroy() {
-            // trigger in id fields will ejenct the object from cache
+            // trigger in id fields will eject the object from cache
             this[this.modelDescriptor.id] = undefined;
             while (this.disposers.size) {
                 this.disposers.forEach((disposer, key) => {

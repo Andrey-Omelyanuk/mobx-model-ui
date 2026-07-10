@@ -158,6 +158,12 @@ src/
 - **LocalAdapter.constructor** creates an empty `local_store[store_name] = {}`. `init_local_data(data)` initializes the store from an array. `delay` is used in all methods to simulate latency.
 - **QueryStream** uses cursor-based pagination: offset = last item's ID. `isEndReached` = true when the server returns an empty array.
 
+## Development Environment
+
+All development runs inside **Docker**. Build the image with `make build` (uses `dockerfile`).
+
+Every command is run via **`make`** — see `makefile` for available targets. If something needs to be run frequently, add it to `makefile`. Never run `npm` or `npx` commands directly outside Docker.
+
 ## Verification
 
 - **Unit tests** (Jest, jsdom): `*.spec.ts` files co-located with sources. Cover each module in isolation. Run: `jest --selectProjects unit` or `npx jest --testMatch='**/src/**/*.spec.ts'`.
