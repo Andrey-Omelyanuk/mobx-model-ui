@@ -1,160 +1,144 @@
-# Project Workflow
+# MobX-Model-UI
 
-All development must be done through Docker.
+## Overview
 
-- **ONLY** run commands through `make` (e.g. `make test`, `make lint`, `make build`)
-- If the needed command is missing from the Makefile, add it and show the diff to the user for approval before running
-- **NEVER** run `npm`, `yarn`, `jest`, `node`, or any script directly — always wrap through `make`
-- **NEVER** install packages globally or locally outside of Docker
+MobX-based front-end ORM библиотека для декларативного определения моделей данных, управления связями, организации запросов, фильтрации, форм и синхронизации состояния с URL/localStorage/cookie.
 
-## Planning Mode
+## Boundaries
 
-When working in planning mode, the output must be written to `PLAN.md` with the following structure:
+**Что делает:**
+- Определение моделей через классы с декораторами (`@model`, `@id`, `@field`, `@foreign`, `@one`, `@many`)
+- Реактивное управление связями (many-to-one, one-to-one, one-to-many) через MobX
+- CRUD через Repository + Adapter с кешированием в Cache
+- Объекты запросов с фильтрацией, пагинацией, stream-подгрузкой, distinct-значениями
+- Система типов для валидации и сериализации/десериализации значений (STRING, NUMBER, DATE, ARRAY, ORDER_BY)
+- Формы (save, delete, action) с маппингом ошибок и жизненным циклом submit
+- Наблюдаемые инпуты (Variable / Input) с синхронизацией через URL, localStorage, cookie
 
-- Organize items into sections by class
-- Each item must have a unique code using the class abbreviation + number (e.g., `Q1` for Query, `QR1` for QueryRaw)
-- Include a detailed description of the problem
-- Include a brief (concise) proposed solution
+**Что НЕ делает:**
+- HTTP-запросов — нет встроенного REST/GraphQL адаптера (только Local, ReadOnly, Constant)
+- UI-компонентов — не предоставляет React/Vue/другие компоненты, только состояние
+- Роутинга — не управляет навигацией (только синхронизация search params)
 
-## Testing
+## Tech Stack
 
-- After implementing **each** item from `PLAN.md`, run `make test` to verify all tests pass before proceeding to the next item
+- TypeScript (ES2017 target, ES2020 modules)
+- MobX ~6.7 (makeAutoObservable, reaction, when, intercept/observe)
+- Lodash ^4.17.21 (только `_.debounce`)
+- Jest + jsdom (тесты)
+- Rollup (сборка: UMD + ESM + d.ts)
+- TSLint (линтер)
 
-## Code Style
-
-- **All comments and documentation must be in English**, regardless of the conversation language
-- **Prefer alignment** of values in configuration files, JSON, TypeScript configs, and other structured data for better readability
-- Align colons, values, and comments vertically when listing multiple key-value pairs
-- Preserve existing alignment when editing files — do not collapse or reformat aligned code
-
-## Project Map
-
-### Overview
-Library for data models and UI interactions built on MobX. Version: 0.3.3
-
-### Directory Structure
+## Architecture
 
 ```
 src/
-├── index.ts                  # Entry point (re-exports all modules)
-├── config.ts                 # Global config (page size, debounce, URL, cookies)
-├── object.ts                 # Destroyable interface
-├── cache.ts                  # Cache<M> - model objects cache (Map<ID, M>)
-├── repository.ts             # Repository<M> - CRUD operations and queries
-├── utils.ts                  # Utilities (waitIsTrue, waitIsFalse, timeout)
+├── index.ts                    # Точка входа, реэкспорт всех модулей
+├── config.ts                   # Глобальные настройки (page size, debounce, URL, cookie)
+├── utils.ts                    # waitIsTrue, waitIsFalse, timeout
+├── cache.ts                    # Cache<M> — Observable Map<ID, M>
+├── object.ts                   # Destroyable interface
 │
-├── model/                    # Models module
-│   ├── model.ts              # Abstract class Model - base class for all models
-│   ├── model-decorator.ts    # @model - class decorator for model registration
-│   ├── model-descriptor.ts   # ModelDescriptor, ModelFieldDescriptor - model metadata
-│   └── models.ts             # Singleton Map of all registered models
+├── model/
+│   ├── model.ts                # Model — абстрактный базовый класс
+│   ├── model-decorator.ts      # @model — декоратор класса
+│   ├── model-descriptor.ts     # ModelDescriptor — метаданные модели
+│   └── models.ts               # Map всех зарегистрированных моделей
 │
-├── fields/                   # Model fields
-│   ├── field.ts              # Base field decorator
-│   ├── id.ts                 # ID field (unique identifier)
-│   ├── foreign.ts            # Foreign key relation
-│   ├── one.ts                # One-to-one relation
-│   └── many.ts               # One-to-many relation
+├── fields/
+│   ├── id.ts                   # @id — идентификатор модели
+│   ├── field.ts                # @field — скалярное поле
+│   ├── foreign.ts              # @foreign — many-to-one связь
+│   ├── one.ts                  # @one — one-to-one inverse
+│   └── many.ts                 # @many — one-to-many inverse
 │
-├── types/                    # Field data types
-│   ├── type.ts               # Base TypeDescriptor
-│   ├── string.ts, number.ts, boolean.ts, date.ts, datetime.ts, array.ts, order-by.ts
+├── repository.ts               # Repository<M> — CRUD + фабрики запросов
 │
-├── queries/                  # Query system
-│   ├── query.ts              # Query<M> - base query class
-│   ├── query-page.ts         # QueryPage<M> - paginated query
-│   ├── query-raw.ts          # QueryRaw<M> - raw query
-│   ├── query-raw-page.ts     # QueryRawPage<M> - raw paginated query
-│   ├── query-cache-sync.ts   # QueryCacheSync<M> - cache synchronization
-│   ├── query-stream.ts       # QueryStream<M> - streaming query
-│   └── query-distinct.ts     # QueryDistinct - distinct values by field
+├── adapters/
+│   ├── adapter.ts              # Adapter<M> — абстрактный интерфейс
+│   ├── local.ts                # LocalAdapter — in-memory с фильтрацией
+│   ├── read-only.ts            # ReadOnlyAdapter — запрет мутаций
+│   └── constant.ts             # ConstantAdapter — фиксированные данные
 │
-├── filters/                  # Query filters
-│   ├── Filter.ts             # Base Filter class
-│   ├── SingleFilter.ts       # Single filter
-│   └── ComboFilter.ts        # Combined filter
+├── queries/
+│   ├── query.ts                # Query<M> — базовый наблюдаемый запрос
+│   ├── query-page.ts           # QueryPage — пагинация
+│   ├── query-stream.ts         # QueryStream — infinite scroll
+│   ├── query-cache-sync.ts     # QueryCacheSync — real-time sync с кешем
+│   ├── query-raw.ts            # QueryRaw — сырые данные (без моделей)
+│   ├── query-raw-page.ts       # QueryRawPage — сырые + пагинация
+│   └── query-distinct.ts       # QueryDistinct — distinct значения
 │
-├── adapters/                 # Data adapters
-│   ├── adapter.ts            # Adapter<M> - base adapter interface
-│   ├── read-only.ts          # ReadOnlyAdapter - read only
-│   ├── local.ts              # LocalAdapter - local storage
-│   └── constant.ts           # ConstantAdapter - constant data
+├── filters/
+│   ├── Filter.ts               # Filter — абстрактный базовый класс
+│   ├── SingleFilter.ts         # SingleFilter — фильтр по одному полю
+│   └── ComboFilter.ts          # ComboFilter / AND — комбинация фильтров
 │
-├── inputs/                   # UI input/state management
-│   ├── Variable.ts           # Variable - reactive variable
-│   ├── ObjectInput.ts        # ObjectInput - object input
-│   ├── handlers/             # State sync handlers (URL, localStorage, cookie)
-│   └── auto-reset/           # Auto-reset logic
+├── inputs/
+│   ├── Variable.ts             # Variable<T> / Input<T> — наблюдаемое значение
+│   ├── ObjectInput.ts          # ObjectInput<M> — выбор модели по ID
+│   ├── auto-reset/
+│   │   └── autoResetId.ts      # autoResetId — сброс при удалении объекта
+│   └── handlers/
+│       ├── syncURL.ts          # syncURLHandler — URL search params
+│       ├── syncLocalStorage.ts # syncLocalStorageHandler — localStorage
+│       └── syncCookie.ts       # syncCookieHandler — cookie
 │
-└── forms/                    # UI forms
-    ├── Form.ts               # Form - base form
-    ├── ActionForm.ts         # ActionForm - form with actions
-    └── ObjectForm/           # Object forms
-        ├── ObjectForm.ts
-        ├── SaveObjectForm.ts
-        ├── ActionObjectForm.ts
-        └── DeleteObjectForm.ts
+├── forms/
+│   ├── Form.ts                 # Form — абстрактная форма
+│   ├── ActionForm.ts           # ActionForm — вызов modelAction
+│   └── ObjectForm/
+│       ├── ObjectForm.ts       # ObjectForm — форма для объекта
+│       ├── SaveObjectForm.ts   # SaveObjectForm — сохранение объекта
+│       ├── ActionObjectForm.ts # ActionObjectForm — action на объекте
+│       └── DeleteObjectForm.ts # DeleteObjectForm — удаление объекта
+│
+├── types/
+│   ├── index.ts                # ID = string | number
+│   ├── type.ts                 # TypeDescriptor<T> — абстрактный базовый тип
+│   ├── string.ts               # STRING() — строковый тип
+│   ├── number.ts               # NUMBER() — числовой тип
+│   ├── boolean.ts              # BOOLEAN() — булев тип
+│   ├── date.ts                 # DATE() — тип даты
+│   ├── datetime.ts             # DATETIME() — тип даты-времени (ISO string)
+│   ├── array.ts                # ARRAY(type) — тип массива
+│   └── order-by.ts             # ORDER_BY() — сортировка (ASC/DESC tuple)
+│
+└── test.utils.ts               # TestCache, TestAdapter, TestRepository — моки для тестов
 ```
 
-### Class Hierarchies
+## Patterns
 
-**Forms:**
-```
-Form
-├── ActionForm
-└── ObjectForm
-    ├── SaveObjectForm
-    ├── ActionObjectForm
-    └── DeleteObjectForm
-```
+- **Class Decorators**: модели регистрируются через `@model`, поля — через `@field`, `@id`, связи — через `@foreign`, `@one`, `@many`. Декораторы мутируют prototype и добавляют метаданные в ModelDescriptor.
+- **Repository Pattern**: каждая модель имеет Repository, который делегирует persistence в Adapter. CRUD методы возвращают результаты адаптера, но работают через кеш.
+- **Adapter Pattern**: абстрактный Adapter определяет контракт (create/update/delete/get/find/load/…), конкретные реализации переключаются декораторами (`@local()`, `@constant()`).
+- **Query Objects**: каждый запрос — это observable-объект с собственным состоянием (`isLoading`, `isReady`, `error`, `items`). Параметры запроса — экземпляры Variable.
+- **Variable Pattern**: любое наблюдаемое значение (фильтр, параметр запроса, поле формы) — Variable<T>. Поддерживает debounce, disabled, ошибки, синхронизацию.
+- **Form Lifecycle**: `submit()` → валидация → вызов repository → `errorHandler()` маппит ошибки → разблокировка формы. cancel() сбрасывает изменения.
+- **Error Handling**: `errorHandler()` в Form различает field errors (`{fieldName: "message"}`) и non-field errors по ключу из конфига. Unknown errors маппятся в стандартное сообщение.
+- **Naming**:
+  - Файлы: kebab-case (`query-page.ts`, `auto-reset/`, `syncURL.ts`)
+  - Классы: PascalCase
+  - Методы/функции: camelCase
+  - Файл теста: `<module>.spec.ts`, co-located с исходником
 
-**Queries:**
-```
-Query<M>
-├── QueryPage<M>
-├── QueryRaw<M>
-├── QueryRawPage<M>
-├── QueryCacheSync<M>
-├── QueryStream<M>
-└── QueryDistinct
-```
+## Non-Obvious Rules
 
-**Adapters:**
-```
-Adapter<M>
-├── ReadOnlyAdapter
-├── LocalAdapter
-└── ConstantAdapter
-```
+- **useDefineForClassFields: true** — обязателен. Декораторы полей не могут полагаться на `[[Set]]` и используют `Object.defineProperty` для установки дескрипторов. Без этого флага MobX makeAutoObservable может не распознать поля.
+- **Конструктор Model** всегда выполняет: `updateFromRaw(raw)` → `refreshInitData()` строго в этом порядке. `updateFromRaw` устанавливает все поля из raw-объекта, `refreshInitData` фиксирует слепок начального состояния для отслеживания изменений.
+- **@model декоратор** подменяет конструктор класса: он вызывает `updateFromRaw` и `refreshInitData` после применения field/relation декораторов.
+- **Cache через ObservableMap с intercept/observe**: @id декоратор ставит intercept на `set` для вызова `cache.eject()` старого ID и `cache.inject()` нового ID. observe ловит `delete` для вызова `destroy()` на модели.
+- **Relation reaction'ы — ручная очистка**: @foreign, @one, @many создают MobX reaction. Все они собираются в массиве `disposers` и удаляются в `destroy()`. Утечка реакций — частая ошибка.
+- **Query.autoupdate** использует MobX `when()` с debounce из config (100ms по умолчанию). При изменении любого dependency-Variable выставляется `isNeedToUpdate`, и `when()` запускает `load()` после debounce.
+- **SingleFilter `__` (double underscore)** — разделитель для вложенных полей. Пример: `user__name` фильтрует по полю `name` связанной модели `user`. Это соглашение на уровне строк, без проверки типов.
+- **Config — mutable singleton**. Глобальный объект config можно изменить в рантайме (например, `config.UPDATE_SEARCH_PARAMS = myFn` для React Router). Это единственный способ кастомизации без наследования.
+- **E2E тесты импортят из dist/** (собранный бандл), unit тесты импортят исходники напрямую. E2E проверяют, что публичный API работает через собранный пакет.
+- **TestUtils** (src/test.utils.ts): TestCache, TestAdapter, TestRepository оборачивают каждый метод в `jest.fn()` — это позволяет verify вызовов, но не даёт реального поведения.
 
-**Filters:**
-```
-Filter
-├── SingleFilter
-└── ComboFilter
-```
+## Verification
 
-**Types:**
-```
-TypeDescriptor
-├── StringType
-├── NumberType
-├── BooleanType
-├── DateType
-├── DateTimeType
-├── ArrayType
-└── OrderBy
-```
-
-**Fields:**
-```
-field (base)
-├── id
-├── foreign
-├── one
-└── many
-```
-
-### Dependencies
-- **runtime:** mobx ~6.7.0
-- **dev:** typescript ^5.6.3, jest ^29.7.0, rollup ^2.75.5, tslint ^6.1.3
+- **Unit-тесты** (Jest, jsdom): файлы `*.spec.ts` co-located с исходниками. Покрывают каждый модуль изолированно. Запуск: `jest --testMatch='**/src/**/*.spec.ts'`.
+- **E2E-тесты** (Jest): файлы в `e2e/`. Импортируют собранный бандл из `dist/`. Проверяют сценарии использования через публичный API. Запуск: `jest --testMatch='**/e2e/**/*.ts'`.
+- **Моки**: TestCache, TestAdapter, TestRepository из `src/test.utils.ts` для изоляции модулей.
+- **CI**: GitHub Actions — сборка Docker → линтер → unit-тесты → e2e-тесты на каждый push в main и каждый PR.
+- **Критерий готовности**: тест считается покрывающим модуль, если он проверяет публичный контракт (не internal-методы) и проходит изолированно.
