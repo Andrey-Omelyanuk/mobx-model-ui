@@ -112,9 +112,9 @@ describe('QueryRaw', () => {
     describe('Destructor', () => {
         it('should clean up disposers', async () => {
             const query = new QueryRaw<A>({ repository: repositoryA, autoupdate: false }) as any
-            expect(query.disposers.length).toBe(1)
+            expect(query.disposers.size).toBe(1)
             query.destroy()
-            expect(query.disposers.length).toBe(0)
+            expect(query.disposers.size).toBe(0)
         })
     })
 })

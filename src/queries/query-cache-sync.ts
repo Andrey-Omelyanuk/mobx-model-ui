@@ -9,7 +9,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     constructor(props: QueryProps<M>) {
         super(props)
         // watch the cache for changes, and update items if needed
-        this.disposers.push(observe(props.repository.modelDescriptor.cache.store, 
+        this.disposers.set('cacheSync', observe(props.repository.modelDescriptor.cache.store,
             action('MO: Query - update from cache changes',
             (change: any) => {
                 if (change.type == 'add') {
@@ -19,8 +19,9 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
                     let id = change.name
                     let obj = change.oldValue
 
-                    this.disposerObjects[id]()
-                    delete this.disposerObjects[id]
+                    const key = `obj:${id}`
+                    this.disposers.get(key)?.()
+                    this.disposers.delete(key)
 
                     let i = this.__items.indexOf(obj)
                     if (i != -1) {
@@ -77,8 +78,9 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     }
 
     __watch_obj(obj: M) {
-        if (this.disposerObjects[obj.ID as string]) this.disposerObjects[obj.ID as string]()
-        this.disposerObjects[obj.ID as string] = reaction(
+        const key = `obj:${obj.ID}`
+        if (this.disposers.get(key)) this.disposers.get(key)()
+        this.disposers.set(key, reaction(
             () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',
             (should: boolean) => {
@@ -92,6 +94,6 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
                     this.total = this.__items.length
             }),
             { fireImmediately: true }
-        )
+        ))
     }
 }

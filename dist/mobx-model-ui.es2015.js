@@ -218,7 +218,9 @@ const syncCookieHandler = (paramName, input) => {
     // watch for Input changes and update cookie
     input.__disposers.push(reaction(() => input.toString(), (value) => {
         if (value === undefined)
-            document.cookie = `${paramName}=; path=/; domain=${config.COOKIE_DOMAIN}`;
+            // expire the cookie: `max-age=0` plus a past `expires` so every
+            // browser actually removes it instead of keeping an empty value
+            document.cookie = `${paramName}=; path=/; domain=${config.COOKIE_DOMAIN}; max-age=0; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
         else
             document.cookie = `${paramName}=${value}; path=/; domain=${config.COOKIE_DOMAIN}`;
     }, { fireImmediately: true }));
@@ -803,8 +805,10 @@ class Query {
     error; // error message
     get items() { return this.__items; } // the items can be changed after the load (post processing)
     controller;
-    disposers = [];
-    disposerObjects = {};
+    // Named disposers for mobx reactions/observers, unified on the same
+    // `Map<string, () => void>` shape as `Model.disposers`. Per-object
+    // reactions (e.g. in QueryCacheSync) use the `obj:<ID>` key convention.
+    disposers = new Map();
     constructor(props) {
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
         this.repository = repository;
@@ -817,9 +821,9 @@ class Query {
         this.omit = omit ? omit : new Variable(ARRAY(STRING()));
         this.autoupdate = autoupdate;
         makeObservable(this);
-        this.disposers.push(reaction(
+        this.disposers.set('isNeedToUpdate', reaction(
         // watch the dependenciesAreReady and value only
-        // because isNeedToUpdate should be set to true 
+        // because isNeedToUpdate should be set to true
         // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
         () => {
             return { dependenciesAreReady: this.dependenciesAreReady, value: this.toString() };
@@ -830,18 +834,20 @@ class Query {
     }
     destroy() {
         this.controller?.abort();
-        while (this.disposers.length) {
-            this.disposers.pop()();
-        }
-        for (const __id of Object.keys(this.disposerObjects)) {
-            this.disposerObjects[__id]();
-            delete this.disposerObjects[__id];
-        }
+        // Snapshot the keys before disposing: a disposer may register a new
+        // disposer while running, which would spin a live `while(size)` loop.
+        const keys = [...this.disposers.keys()];
+        keys.forEach(key => {
+            const disposer = this.disposers.get(key);
+            if (disposer)
+                disposer();
+            this.disposers.delete(key);
+        });
     }
     async loading() { return waitIsFalse(this, 'isLoading'); }
     async ready() { return waitIsFalse(this, 'isReady'); }
     get autoupdate() {
-        return !!this.disposerObjects[DISPOSER_AUTOUPDATE];
+        return this.disposers.has(DISPOSER_AUTOUPDATE);
     }
     // Note: autoupdate trigger always the load(),
     // shadowLoad() is not make sense to trigger by autoupdate
@@ -851,20 +857,20 @@ class Query {
         if (value !== this.autoupdate) { // idempotent guarantee
             // on 
             if (value) {
-                this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt, old) => {
+                this.disposers.set(DISPOSER_AUTOUPDATE, reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt, old) => {
                     if (updateIt && updateIt !== old) {
                         // run the load() in the next tick
                         setTimeout(() => this.load());
                         // }, config.AUTO_UPDATE_DELAY)
                     }
-                }, { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY });
+                }, { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }));
             }
             // off
             else {
-                const disposer = this.disposerObjects[DISPOSER_AUTOUPDATE];
+                const disposer = this.disposers.get(DISPOSER_AUTOUPDATE);
                 if (disposer) {
                     disposer();
-                    delete this.disposerObjects[DISPOSER_AUTOUPDATE];
+                    this.disposers.delete(DISPOSER_AUTOUPDATE);
                 }
             }
         }
@@ -1031,15 +1037,16 @@ class QueryCacheSync extends Query {
     constructor(props) {
         super(props);
         // watch the cache for changes, and update items if needed
-        this.disposers.push(observe(props.repository.modelDescriptor.cache.store, action('MO: Query - update from cache changes', (change) => {
+        this.disposers.set('cacheSync', observe(props.repository.modelDescriptor.cache.store, action('MO: Query - update from cache changes', (change) => {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
             if (change.type == 'delete') {
                 let id = change.name;
                 let obj = change.oldValue;
-                this.disposerObjects[id]();
-                delete this.disposerObjects[id];
+                const key = `obj:${id}`;
+                this.disposers.get(key)?.();
+                this.disposers.delete(key);
                 let i = this.__items.indexOf(obj);
                 if (i != -1) {
                     this.__items.splice(i, 1);
@@ -1099,9 +1106,10 @@ class QueryCacheSync extends Query {
         return __items;
     }
     __watch_obj(obj) {
-        if (this.disposerObjects[obj.ID])
-            this.disposerObjects[obj.ID]();
-        this.disposerObjects[obj.ID] = reaction(() => !this.filter || this.filter.isMatch(obj), action('MO: Query - obj was changed', (should) => {
+        const key = `obj:${obj.ID}`;
+        if (this.disposers.get(key))
+            this.disposers.get(key)();
+        this.disposers.set(key, reaction(() => !this.filter || this.filter.isMatch(obj), action('MO: Query - obj was changed', (should) => {
             let i = this.__items.indexOf(obj);
             // should be in the items and it is not in the items? add it to the items
             if (should && i == -1)
@@ -1111,7 +1119,7 @@ class QueryCacheSync extends Query {
                 this.__items.splice(i, 1);
             if (this.total != this.__items.length)
                 this.total = this.__items.length;
-        }), { fireImmediately: true });
+        }), { fireImmediately: true }));
     }
 }
 __decorate([
@@ -1334,13 +1342,19 @@ class Repository {
 const models = new Map();
 function clearModels() {
     for (let [modelName, modelDescriptor] of models) {
-        modelDescriptor.idFieldDescriptors.disposers.forEach(disposer => disposer());
+        // Descriptor-level disposers (e.g. the cache-store observers registered
+        // by `one`/`many` relations). The id decorator does not register any
+        // descriptor-level disposers — its interceptors live on each instance's
+        // `obj.disposers` and are released by `obj.destroy()` below.
         for (let fieldName in modelDescriptor.fields) {
             modelDescriptor.fields[fieldName].disposers.forEach(disposer => disposer());
         }
         for (let fieldName in modelDescriptor.relations) {
             modelDescriptor.relations[fieldName].disposers.forEach(disposer => disposer());
         }
+        // Clear the cache: destroys every cached object (releasing its own
+        // disposers) and drops the references so objects don't leak.
+        modelDescriptor.cache.clear();
     }
     models.clear();
 }
@@ -1399,12 +1413,16 @@ class Model {
     destroy() {
         // trigger in id fields will eject the object from cache
         this[this.modelDescriptor.id] = undefined;
-        while (this.disposers.size) {
-            this.disposers.forEach((disposer, key) => {
+        // Snapshot the keys before disposing: a disposer may register new
+        // disposers while running, and iterating a live `while(size)` loop over
+        // them could never terminate.
+        const keys = [...this.disposers.keys()];
+        keys.forEach(key => {
+            const disposer = this.disposers.get(key);
+            if (disposer)
                 disposer();
-                this.disposers.delete(key);
-            });
-        }
+            this.disposers.delete(key);
+        });
     }
     get model() {
         return this.constructor.__proto__;

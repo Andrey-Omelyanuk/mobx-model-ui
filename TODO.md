@@ -44,7 +44,16 @@
 **Проблема**: Есть только `AND_Filter`. Для полноценной фильтрации нужен `OR_Filter` (и, возможно, `NOT`).
 **Фикс**: добавить `OR_Filter` и `OR()` фабрику.
 
-### 2.3 `disposers` — разная семантика именования
+### 2.3 `disposers` — разная семантика именования ✅ ИСПРАВЛЕНО (Query)
+
+**Сделано**: `Query.disposers` (`[]`) + `disposerObjects` (`Record`) объединены в единый
+`Map<string, () => void>`, как у `Model.disposers`. Ключи: `isNeedToUpdate`, `cacheSync`,
+`__autoupdate` (`DISPOSER_AUTOUPDATE`), пер-объектные — `obj:<ID>`. `destroy()` использует
+тот же безопасный снимок ключей, что и `Model.destroy()`.
+**Осталось (по желанию)**: `ModelFieldDescriptor.disposers`, `Variable.__disposers`,
+`SingleFilter.__disposers` — остаются массивами анонимных teardown'ов (не участвуют в
+путанице Model/Query, конверсия ломает one/many/foreign/Variable спеки).
+
 
 **Проблема**: `Model.disposers` — `Map`, `Query.disposers` — `[]`, `disposerObjects` — `Record`. Сбивает с толку.
 **Фикс**: унифицировать на `Map<string, () => void>` везде.

@@ -38,7 +38,7 @@ describe('QueryCacheSync', () => {
 
         // QueryCacheSync constructor iterates cache.store and calls __watch_obj for each
         // Bug: __watch_obj uses obj.id (undefined when id field is 'key') instead of obj.ID
-        // Both reactions are stored under disposerObjects['undefined']
+        // Both reactions are stored under disposers['obj:undefined']
         // Second call overwrites first — obj1's reaction is LOST
         const query = new QueryCacheSync<QCS_CustomID>({
             repository: repo,

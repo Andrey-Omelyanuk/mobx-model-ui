@@ -45,7 +45,8 @@ describe('Query', () => {
                 // limit          : undefined,
                 // offset         : undefined,
             })
-            expect((query as any).disposers.length).toBe(1)
+            // isNeedToUpdate reaction + autoupdate reaction (autoupdate defaults to true)
+            expect((query as any).disposers.size).toBe(2)
         })
         it('some values', async ()=> {
             const filter    = EQ('name', new Variable(STRING(), {value: 'test'}))
@@ -84,17 +85,17 @@ describe('Query', () => {
                 timestamp       : undefined,
                 error           : undefined,
             })
-            expect((query as any).disposers.length).toBe(1)
+            // isNeedToUpdate reaction + autoupdate reaction (autoupdate defaults to true)
+            expect((query as any).disposers.size).toBe(2)
         })
     })
 
     describe('Destructor', () => {
         it('default', async ()=> {
             const query = new Query<A>({repository: repositoryA, autoupdate: false }) as any
-            query.disposers.push(        reaction(() => query.isLoading, () => null));  expect(query.disposers.length).toBe(2)
-            query.disposerObjects['x'] = reaction(() => query.isLoading, () => null );  expect(Object.keys(query.disposerObjects).length).toBe(1)
-            query.destroy();                                                            expect(query.disposers.length).toBe(0)
-                                                                                        expect(Object.keys(query.disposerObjects).length).toBe(0)
+            query.disposers.set('a', reaction(() => query.isLoading, () => null));      expect(query.disposers.size).toBe(2)
+            query.disposers.set('x', reaction(() => query.isLoading, () => null));      expect(query.disposers.size).toBe(3)
+            query.destroy();                                                            expect(query.disposers.size).toBe(0)
         })
 
         it('should not iterate over prototype chain properties', async ()=> {
@@ -107,7 +108,7 @@ describe('Query', () => {
 
             const query = new Query<A>({repository: repositoryA, autoupdate: false }) as any
             const mockDisposer = jest.fn()
-            query.disposerObjects['x'] = mockDisposer
+            query.disposers.set('x', mockDisposer)
 
             // Should not throw — pollutedProperty from prototype chain must be ignored
             expect(() => query.destroy()).not.toThrow()
@@ -182,18 +183,18 @@ describe('Query', () => {
         it('on/off', () => {
             const query = new Query<A>({repository: repositoryA, autoupdate: false }) as any
                                         expect(query.autoupdate).toBe(false)
-                                        expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)
-            query.autoupdate = true                    
+                                        expect(query.disposers.has(DISPOSER_AUTOUPDATE)).toBe(false)
+            query.autoupdate = true
             jest.runAllTimers();        expect(query.autoupdate).toBe(true)
-                                        expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).not.toBe(undefined)                     
+                                        expect(query.disposers.has(DISPOSER_AUTOUPDATE)).toBe(true)
             query.autoupdate = false;   expect(query.autoupdate).toBe(false)
-                                        expect(query.disposerObjects[DISPOSER_AUTOUPDATE]).toBe(undefined)                     
+                                        expect(query.disposers.has(DISPOSER_AUTOUPDATE)).toBe(false)
         })
 
         it('should not throw when autoupdate setter called but disposer is missing', () => {
             const query = new Query<A>({repository: repositoryA, autoupdate: true }) as any
             // Simulate corrupted state — disposer removed manually
-            delete query.disposerObjects[DISPOSER_AUTOUPDATE]
+            query.disposers.delete(DISPOSER_AUTOUPDATE)
             // Should not throw TypeError: undefined is not a function
             expect(() => { query.autoupdate = false }).not.toThrow()
         })

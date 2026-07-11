@@ -70,8 +70,10 @@ export class Query <M extends Model> implements Destroyable {
     get items       () { return this.__items }      // the items can be changed after the load (post processing)
 
     protected controller        : AbortController | undefined
-    protected disposers         : (()=>void)[] = []
-    protected disposerObjects   : {[field: string]: ()=>void} = {}
+    // Named disposers for mobx reactions/observers, unified on the same
+    // `Map<string, () => void>` shape as `Model.disposers`. Per-object
+    // reactions (e.g. in QueryCacheSync) use the `obj:<ID>` key convention.
+    protected disposers         : Map<string, () => void> = new Map()
 
     constructor(props: QueryProps<M>) {
         let {
@@ -91,12 +93,12 @@ export class Query <M extends Model> implements Destroyable {
         this.autoupdate = autoupdate
         makeObservable(this)
 
-        this.disposers.push(reaction(
+        this.disposers.set('isNeedToUpdate', reaction(
             // watch the dependenciesAreReady and value only
-            // because isNeedToUpdate should be set to true 
+            // because isNeedToUpdate should be set to true
             // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
             () => {
-                return {dependenciesAreReady: this.dependenciesAreReady, value: this.toString()} 
+                return {dependenciesAreReady: this.dependenciesAreReady, value: this.toString()}
             },
             ({dependenciesAreReady, value}) => {
                 if(dependenciesAreReady && !this.isNeedToUpdate)
@@ -108,20 +110,21 @@ export class Query <M extends Model> implements Destroyable {
 
     destroy() {
         this.controller?.abort()
-        while(this.disposers.length) {
-            this.disposers.pop()()
-        }
-        for(const __id of Object.keys(this.disposerObjects)) {
-            this.disposerObjects[__id]()
-            delete this.disposerObjects[__id]
-        } 
+        // Snapshot the keys before disposing: a disposer may register a new
+        // disposer while running, which would spin a live `while(size)` loop.
+        const keys = [...this.disposers.keys()]
+        keys.forEach(key => {
+            const disposer = this.disposers.get(key)
+            if (disposer) disposer()
+            this.disposers.delete(key)
+        })
     }
 
     async loading() { return waitIsFalse(this, 'isLoading') }
     async ready()   { return waitIsFalse(this, 'isReady') }
 
     get autoupdate() : boolean {
-        return !! this.disposerObjects[DISPOSER_AUTOUPDATE]
+        return this.disposers.has(DISPOSER_AUTOUPDATE)
     }
 
     // Note: autoupdate trigger always the load(),
@@ -132,7 +135,7 @@ export class Query <M extends Model> implements Destroyable {
         if (value !== this.autoupdate) {  // idempotent guarantee
             // on 
             if (value) {
-                this.disposerObjects[DISPOSER_AUTOUPDATE] = reaction(
+                this.disposers.set(DISPOSER_AUTOUPDATE, reaction(
                     () => this.isNeedToUpdate && this.dependenciesAreReady,
                     (updateIt, old) => {
                         if(updateIt && updateIt !== old) {
@@ -143,14 +146,14 @@ export class Query <M extends Model> implements Destroyable {
 
                     },
                     { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }
-                )
+                ))
             }
             // off
             else {
-                const disposer = this.disposerObjects[DISPOSER_AUTOUPDATE]
+                const disposer = this.disposers.get(DISPOSER_AUTOUPDATE)
                 if (disposer) {
                     disposer()
-                    delete this.disposerObjects[DISPOSER_AUTOUPDATE]
+                    this.disposers.delete(DISPOSER_AUTOUPDATE)
                 }
             }
         }

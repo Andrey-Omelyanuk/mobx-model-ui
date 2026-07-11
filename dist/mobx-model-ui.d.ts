@@ -373,10 +373,7 @@ declare class Query<M extends Model> implements Destroyable {
     error: string | undefined;
     get items(): M[];
     protected controller: AbortController | undefined;
-    protected disposers: (() => void)[];
-    protected disposerObjects: {
-        [field: string]: () => void;
-    };
+    protected disposers: Map<string, () => void>;
     constructor(props: QueryProps<M>);
     destroy(): void;
     loading(): Promise<boolean>;
