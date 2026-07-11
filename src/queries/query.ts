@@ -64,7 +64,8 @@ export class Query <M extends Model> implements Destroyable {
     @observable total           : number | undefined    // total count of items on the server, useful for pagination
     @observable isLoading       : boolean = false       // query is loading the data
     @observable isNeedToUpdate  : boolean = true        // query was changed and we need to update the data
-    @observable timestamp       : number | undefined    // timestamp of the last update, useful to avoid triggering react hooks twice
+    @observable timestamp       : number | undefined    // monotonic counter of the last update, useful to avoid triggering react hooks twice
+    @observable lastUpdatedAt   : number | undefined    // wall-clock time (Date.now()) of the last update
     @observable error           : string | undefined    // error message
 
     // NOTE: returns the internal array intentionally so that external code can
@@ -214,12 +215,9 @@ export class Query <M extends Model> implements Destroyable {
             this.controller.abort()
         this.controller = new AbortController()
 
-        // NOTE: Date.now() is used to get the current timestamp
-        //       and it can be the same in the same tick 
-        //       in this case we should increase the timestamp by 1
-        const now = Date.now()
-        if (this.timestamp === now) this.timestamp += 1
-        else                        this.timestamp = now 
+        // monotonic counter: each shadowLoad increments timestamp irrespective of wall clock
+        this.timestamp = (this.timestamp ?? 0) + 1
+        this.lastUpdatedAt = Date.now()
 
         try {
             await this.__load()

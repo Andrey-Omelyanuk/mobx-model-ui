@@ -37,6 +37,7 @@ describe('Query', () => {
                 isLoading       : false,
                 isNeedToUpdate  : true,
                 timestamp       : undefined,
+                lastUpdatedAt   : undefined,
                 error           : undefined,
                 // relations       : [],
                 // fields          : [],
@@ -83,6 +84,7 @@ describe('Query', () => {
                 isLoading       : false,
                 isNeedToUpdate  : true,
                 timestamp       : undefined,
+                lastUpdatedAt   : undefined,
                 error           : undefined,
             })
             // isNeedToUpdate reaction + autoupdate reaction (autoupdate defaults to true)
@@ -143,6 +145,13 @@ describe('Query', () => {
             await query.load();                                         expect(query.timestamp !== undefined).toBe(true)
             timestamp = query.timestamp
             await query.load();                                         expect(query.timestamp).toBe(timestamp+1)
+        })
+
+        it('lastUpdatedAt', async () => {
+            const query = new Query<A>({repository: repositoryA});     expect(query.lastUpdatedAt === undefined).toBe(true)
+            await query.load();                                         expect(typeof query.lastUpdatedAt).toBe('number')
+            const prev = query.lastUpdatedAt!
+            await query.load();                                         expect(query.lastUpdatedAt).toBeGreaterThanOrEqual(prev)
         })
 
         it('error', async () => {
