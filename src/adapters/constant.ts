@@ -11,8 +11,7 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
     }
 
     async action (): Promise<any> {
-        console.warn('ConstantAdapter.action not implemented')
-        return {} 
+        throw new Error('ConstantAdapter.action should not be used.')
     }
 
     async create (): Promise<any> {

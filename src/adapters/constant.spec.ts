@@ -55,4 +55,16 @@ describe('ConstantAdapter', () => {
         const adapter = (A.defaultRepository.adapter as ConstantAdapter<A>)
         await expect(adapter.getDistinct()).rejects.toThrow('ConstantAdapter.getDistinct should not be used.')
     })
+
+    it('should throw error on action', async () => {
+        @constant(PAGE_SIZE) @model class A extends Model {}
+        const adapter = (A.defaultRepository.adapter as ConstantAdapter<A>)
+        await expect(adapter.action()).rejects.toThrow('ConstantAdapter.action should not be used.')
+    })
+
+    it('should throw error on modelAction', async () => {
+        @constant(PAGE_SIZE) @model class A extends Model {}
+        const adapter = (A.defaultRepository.adapter as ConstantAdapter<A>)
+        await expect(adapter.modelAction('test', {})).rejects.toThrow('ConstantAdapter.modelAction should not be used.')
+    })
 })
