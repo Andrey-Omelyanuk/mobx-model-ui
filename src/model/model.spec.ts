@@ -304,5 +304,33 @@ describe('Model', () => {
                                                 ; expect(a).toMatchObject({id: 1})
             runInAction(() => a.id = undefined) ; expect(A.getModelDescriptor().cache.store.size).toBe(0)
         })
-    }) 
+    })
+
+    describe('destroy', () => {
+        it('runs all disposers and ejects from cache', () => {
+            @model class A extends Model {
+                @id(NUMBER()) id: number
+            }
+            let a = new A({id: 1})              ; expect(A.getModelDescriptor().cache.store.size).toBe(1)
+                                                  expect(a.disposers.size).toBe(2)
+            a.destroy()                         ; expect(a.disposers.size).toBe(0)
+                                                ; expect(A.getModelDescriptor().cache.store.size).toBe(0)
+        })
+        it('does not loop forever when a disposer registers a new disposer', () => {
+            @model class A extends Model {
+                @id(NUMBER()) id: number
+            }
+            let a = new A({id: 1})
+            // a disposer that registers another disposer while being disposed:
+            // without snapshotting the keys, `while(size)` would never terminate
+            a.disposers.set('self-adding', () => {
+                a.disposers.set('added-during-destroy', () => {})
+            })
+            a.destroy()
+            // the disposers present at destroy time are removed; the one added
+            // during teardown survives but the loop terminated regardless
+            expect(a.disposers.has('self-adding')).toBe(false)
+            expect(a.disposers.has('added-during-destroy')).toBe(true)
+        })
+    })
 })

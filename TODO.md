@@ -2,20 +2,20 @@
 
 ## 1. Ошибки (Bugs)
 
-### 1.7 `Model.destroy()` — потенциальный бесконечный цикл
+### 1.7 `Model.destroy()` — потенциальный бесконечный цикл ✅ ИСПРАВЛЕНО
 
 **Файл**: `src/model/model.ts`, строка 73
 **Проблема**: `while(disposers.size)` + `forEach` — если disposer во время выполнения добавляет новый disposer, может начаться бесконечный цикл.
 **Фикс**: заменить на копирование ключей: `const keys = [...this.disposers.keys()]; keys.forEach(k => { ... })`.
 
-### 1.8 `clearModels()` не очищает Cache'ы
+### 1.8 `clearModels()` не очищает Cache'ы ✅ ИСПРАВЛЕНО
 
 **Файл**: `src/model/models.ts`, строки 14–25
 **Проблема**: `clearModels()` не вызывает `modelDescriptor.cache.clear()`. Объекты в Cache остаются в памяти с активными disposers.
 **Тест-ловушка**: `clearModels should clear all model caches` в `src/model/models.spec.ts`
 **Фикс**: перед `models.clear()` пройти по всем descriptor'ам и вызвать `cache.clear()`.
 
-### 1.9 `clearModels()` — `idFieldDescriptors.disposers` пуст
+### 1.9 `clearModels()` — `idFieldDescriptors.disposers` пуст ✅ ИСПРАВЛЕНО
 
 **Файл**: `src/fields/id.ts`
 **Проблема**: `disposers: []` — `clearModels()` итерирует пустой массив. Не ошибка выполнения, но вводит в заблуждение.

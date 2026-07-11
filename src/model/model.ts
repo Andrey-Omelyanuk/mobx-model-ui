@@ -70,12 +70,15 @@ export default abstract class Model implements Destroyable {
     @action destroy() {
         // trigger in id fields will eject the object from cache
         this[this.modelDescriptor.id] = undefined
-        while(this.disposers.size) {
-            this.disposers.forEach((disposer, key) => {
-                disposer()
-                this.disposers.delete(key)
-            })
-        }
+        // Snapshot the keys before disposing: a disposer may register new
+        // disposers while running, and iterating a live `while(size)` loop over
+        // them could never terminate.
+        const keys = [...this.disposers.keys()]
+        keys.forEach(key => {
+            const disposer = this.disposers.get(key)
+            if (disposer) disposer()
+            this.disposers.delete(key)
+        })
     }
 
     get model() : any {
