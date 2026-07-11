@@ -12,6 +12,14 @@ import { ModelDescriptor } from './model-descriptor'
 
 export default abstract class Model implements Destroyable {
     /**
+     * Fields are declared dynamically by the `@field`/`@id`/relation decorators,
+     * so the base class accesses them by string key (`this[fieldName]`).
+     * Explicitly declared members and subclass fields keep their real types;
+     * this index signature only covers genuinely dynamic access.
+     */
+    [key: string]: any
+
+    /**
      * Static version initializes in the id decorator.
      * Instance version initializes in the constructor that declare in model decorator.
      * It is used for registering the model in the models map.
@@ -88,7 +96,7 @@ export default abstract class Model implements Destroyable {
     /**
      * @returns {Object} - data only from fields (no id)
      */
-    get rawData() : Object {
+    get rawData() : Record<string, any> {
         let rawData: any = {}
         for (const fieldName in this.modelDescriptor.fields) {
             if(this[fieldName] !== undefined) {
@@ -101,7 +109,7 @@ export default abstract class Model implements Destroyable {
     /**
      * @returns {Object} - it is rawData + id field
      */
-    get rawObj() : Object {
+    get rawObj() : Record<string, any> {
         const idFieldName   = this.modelDescriptor.id
         const rawObj        = this.rawData
         rawObj[idFieldName] = this[idFieldName] 

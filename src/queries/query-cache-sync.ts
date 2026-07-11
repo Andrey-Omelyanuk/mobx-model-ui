@@ -44,8 +44,8 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
             // Query don't need to overide the __items,
             // query's items should be get only from the cache
         } catch (e) {
-            if (e.name !== 'AbortError')  throw e
-        } 
+            if (!(e instanceof Error) || e.name !== 'AbortError')  throw e
+        }
         // we have to wait the next tick
         // mobx should finished recalculation for model-objects
         await Promise.resolve()

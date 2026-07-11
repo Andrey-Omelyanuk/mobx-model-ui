@@ -41,11 +41,11 @@ export class ModelDescriptor<T extends Model> {
     /**
      * Return id value from object. Object can have id field with different name.
      */
-    getID(obj: Object): ID {
-        return obj[this.id] 
+    getID(obj: Record<string, any>): ID {
+        return obj[this.id]
     }
 
-    updateCachedObject(rawObj: Object) : T | undefined {
+    updateCachedObject(rawObj: Record<string, any>) : T | undefined {
         const rawObjID = this.getID(rawObj)
         const cachedObj = this.cache.get(rawObjID)
         if (cachedObj) {

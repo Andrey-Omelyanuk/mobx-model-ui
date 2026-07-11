@@ -8,6 +8,14 @@
 **Проблема**: `strictNullChecks: false`, `noImplicitAny: false`, `useUnknownInCatchVariables: false`, `strictPropertyInitialization: false`.
 **Фикс**: постепенно включать strict-режим, начиная с `noImplicitAny` и `useUnknownInCatchVariables`.
 
+**Готово (фаза 1)**: включены `noImplicitAny: true` и `useUnknownInCatchVariables: true`.
+Ключевое решение — индексная сигнатура `[key: string]: any` на базовом классе `Model`
+(объявленные поля подклассов сохраняют свои типы; сигнатура покрывает только
+динамический доступ по строковому ключу). `catch (e)` сужены через `instanceof Error`.
+`tsconfig.spec.json`/`tsconfig.e2e.json` оставлены с `noImplicitAny: false` (следующая фаза).
+**Осталось (фаза 2)**: `strictNullChecks` (~76 ошибок в исходниках) и затем
+`strictPropertyInitialization`.
+
 ### 2.2 Нет OR-фильтра
 
 **Файл**: `src/filters/ComboFilter.ts`

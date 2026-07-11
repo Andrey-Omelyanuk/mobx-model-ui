@@ -11,7 +11,7 @@ export class ActionObjectForm<M extends Model> extends ObjectForm<M> {
         action      : string,
         obj         : M,
         inputs      : {[key: string]: Variable<any> },
-        onSuccess  ?: (response?) => void,
+        onSuccess  ?: (response?: any) => void,
         onCancel   ?: () => void,
         repository ?: Repository<M>
     ) {

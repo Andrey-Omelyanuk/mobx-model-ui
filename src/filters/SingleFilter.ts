@@ -10,7 +10,7 @@ export class SingleFilter extends Filter {
     __disposers             : (()=>void)[] = []
 
     readonly getURIField : (field: string) => string 
-    readonly operator    : (value_a, value_b) => boolean 
+    readonly operator    : (value_a: any, value_b: any) => boolean
 
     constructor(
         field: string,
@@ -47,7 +47,7 @@ export class SingleFilter extends Filter {
 }
 
 
-function match(obj: any, field_name: string, filter_value: any, operator: (value_a, value_b) => boolean): boolean {
+function match(obj: any, field_name: string, filter_value: any, operator: (value_a: any, value_b: any) => boolean): boolean {
     let field_names = field_name.split('__')
     let current_field_name = field_names[0]
     let current_value = obj[current_field_name]

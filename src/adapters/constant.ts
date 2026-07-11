@@ -5,7 +5,7 @@ import { Adapter, RequestConfig } from './adapter'
 export class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[] 
 
-    constructor (constant) {
+    constructor (constant: any[]) {
         super()
         this.constant = constant
     }

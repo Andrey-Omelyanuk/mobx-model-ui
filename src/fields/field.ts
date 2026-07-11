@@ -14,7 +14,7 @@ export function field<T>(typeDescriptor?: TypeDescriptor<T>, observable: boolean
 
         let modelDescription = models.get(modelName)
         modelDescription.fields[fieldName] = {
-            decorator: (obj: T) => {
+            decorator: (obj: any) => {
                 if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })
             },
             disposers: [],

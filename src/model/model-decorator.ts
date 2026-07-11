@@ -8,7 +8,7 @@ import { Repository } from '../repository'
  * Model decorator.
  * Note: Class decorator has constructor of class as argument.
  */
-export default function model(constructor) {
+export default function model(constructor: any) {
     const modelName = constructor.name
 
     // check that class extends Model
@@ -28,8 +28,8 @@ export default function model(constructor) {
     // so, we cannot catch the case when we try to declare a model with the same name 
 
     // the new constructor
-    let f : any = function (...args) {
-        let c : any = class extends constructor { constructor (...args) { super(...args) } }
+    let f : any = function (...args: any[]) {
+        let c : any = class extends constructor { constructor (...args: any[]) { super(...args) } }
             c.__proto__ = constructor 
 
         let obj = new c()

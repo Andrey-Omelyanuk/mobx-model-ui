@@ -25,7 +25,7 @@ export class Variable<T> implements Destroyable {
                 readonly syncURL            ?: string
                 readonly syncLocalStorage   ?: string
                 readonly syncCookie         ?: string
-                         __disposers = [] 
+                         __disposers : (() => void)[] = []
     
     // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
     // it's look like a bug in the TypeScript
@@ -98,7 +98,7 @@ export class Variable<T> implements Destroyable {
             this.type.validate(this.value)
             this.errors = []
         } catch (e) {
-            this.errors = [e.message]
+            this.errors = [e instanceof Error ? e.message : String(e)]
         }
     }
 

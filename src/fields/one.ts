@@ -36,7 +36,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
 
         modelDescription.relations[field_name].disposers.push(
             observe(remoteModelDescriptor.cache.store, (change: any) => {
-                let remote_obj
+                let remote_obj: any
                 switch (change.type) {
                     case 'add':
                         remote_obj = change.newValue

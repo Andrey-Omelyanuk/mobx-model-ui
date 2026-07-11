@@ -304,7 +304,7 @@
                 this.errors = [];
             }
             catch (e) {
-                this.errors = [e.message];
+                this.errors = [e instanceof Error ? e.message : String(e)];
             }
         }
         setFromString(value) {
@@ -1076,7 +1076,7 @@
                 // query's items should be get only from the cache
             }
             catch (e) {
-                if (e.name !== 'AbortError')
+                if (!(e instanceof Error) || e.name !== 'AbortError')
                     throw e;
             }
             // we have to wait the next tick
@@ -2428,15 +2428,17 @@
                 if (!isKnownField(fieldName))
                     throw new Error(`ObjectForm error: object has no field ${fieldName}`);
             // move all values from inputs to obj
+            // cast to the non-generic Model so the index signature allows writes
+            const obj = this.obj;
             mobx.runInAction(() => {
                 for (let fieldName of Object.keys(this.inputs)) {
                     // correct fieldName if it is foreign obj to foreign id
                     if (modelDescriptor.relations[fieldName]) {
                         const idFieldName = modelDescriptor.relations[fieldName].settings.foreign_id;
-                        this.obj[idFieldName] = this.inputs[fieldName].value;
+                        obj[idFieldName] = this.inputs[fieldName].value;
                     }
                     else
-                        this.obj[fieldName] = this.inputs[fieldName].value;
+                        obj[fieldName] = this.inputs[fieldName].value;
                 }
             });
             return await (this.repository || this.obj.getDefaultRepository()).save(this.obj);

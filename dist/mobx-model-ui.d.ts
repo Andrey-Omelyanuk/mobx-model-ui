@@ -191,7 +191,7 @@ declare class Variable<T> implements Destroyable {
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
     readonly syncCookie?: string;
-    __disposers: any[];
+    __disposers: (() => void)[];
     constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
     destroy(): void;
     private debouncedValidation;
@@ -485,11 +485,18 @@ declare class ModelDescriptor<T extends Model> {
     /**
      * Return id value from object. Object can have id field with different name.
      */
-    getID(obj: Object): ID;
-    updateCachedObject(rawObj: Object): T | undefined;
+    getID(obj: Record<string, any>): ID;
+    updateCachedObject(rawObj: Record<string, any>): T | undefined;
 }
 
 declare abstract class Model implements Destroyable {
+    /**
+     * Fields are declared dynamically by the `@field`/`@id`/relation decorators,
+     * so the base class accesses them by string key (`this[fieldName]`).
+     * Explicitly declared members and subclass fields keep their real types;
+     * this index signature only covers genuinely dynamic access.
+     */
+    [key: string]: any;
     /**
      * Static version initializes in the id decorator.
      * Instance version initializes in the constructor that declare in model decorator.
@@ -537,11 +544,11 @@ declare abstract class Model implements Destroyable {
     /**
      * @returns {Object} - data only from fields (no id)
      */
-    get rawData(): Object;
+    get rawData(): Record<string, any>;
     /**
      * @returns {Object} - it is rawData + id field
      */
-    get rawObj(): Object;
+    get rawObj(): Record<string, any>;
     get only_changed_raw_data(): any;
     get is_changed(): boolean;
     refreshInitData(): void;
@@ -679,7 +686,7 @@ declare function local(store_name?: string): (cls: any) => void;
 
 declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[];
-    constructor(constant: any);
+    constructor(constant: any[]);
     action(): Promise<any>;
     create(): Promise<any>;
     update(): Promise<any>;

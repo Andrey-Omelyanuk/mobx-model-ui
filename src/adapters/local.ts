@@ -25,7 +25,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     init_local_data(data: any[]) {
-        let objs = {} 
+        let objs: Record<string, any> = {}
         for(let obj of data) {
             objs[obj.id] = obj
         }

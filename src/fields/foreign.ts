@@ -19,7 +19,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_id?: string
         foreign_id = foreign_id ?? `${field_name}_id`
 
         modelDescription.relations[field_name] = {
-            decorator: (obj: M) => {
+            decorator: (obj: any) => {
                 // make observable and set default value
                 extendObservable(obj, { [field_name]: undefined })
                 // watch on foreign id
