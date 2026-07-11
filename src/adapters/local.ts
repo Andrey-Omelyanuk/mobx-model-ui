@@ -70,9 +70,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     async action (_id: ID, _name: string, _kwargs: Record<string, any>) : Promise<any> {
-        console.error('Action method is not implemented for local adapter')
-        // ignore error
-        // throw(`Not implemented`)
+        throw new Error('Action method is not implemented for local adapter')
     }
 
     async get(id: ID, _config?: RequestConfig) : Promise<any> {
@@ -81,9 +79,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     async modelAction (_name: string, _kwargs: Record<string, any>, _config?: RequestConfig) : Promise<any> {
-        console.error('Model action method is not implemented for local adapter')
-        // ignore error
-        // throw(`Not implemented`)
+        throw new Error('Model action method is not implemented for local adapter')
     }
 
     async find(query: Query<M>) : Promise<any> {

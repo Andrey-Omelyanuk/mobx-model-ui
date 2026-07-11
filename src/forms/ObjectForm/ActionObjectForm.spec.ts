@@ -42,7 +42,8 @@ describe('ActionObjectForm', () => {
         const inputB = new Variable(NUMBER(), {value:  1 }) 
         const inputs = { a: inputA, b: inputB }
         const obj = new A()
-        const form = new ActionObjectForm('action', obj, inputs, onSuccess)
+        const repository = new TestRepository(A.getModelDescriptor(), { action: jest.fn(async (...args) => { }) })
+        const form = new ActionObjectForm('action', obj, inputs, onSuccess, undefined, repository)
         expect(form.isLoading).toBe(false)
         form.submit().finally(() => {
             expect(form.isLoading).toBe(false)

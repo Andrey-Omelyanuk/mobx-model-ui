@@ -113,13 +113,3 @@ export class Variable<T> implements Destroyable {
         return this.type.toString(this.value) as string
     }
 }
-
-/**
- * DEPRECATED: use Variable instead
- * Keep it for backward compatibility.
- */
-export class Input<T> extends Variable<T> {
-    constructor (type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>) {
-        super(type, args)
-    }
-}

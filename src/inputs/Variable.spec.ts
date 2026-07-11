@@ -6,7 +6,7 @@ import { Variable } from './Variable'
 
 jest.useFakeTimers()
 
-describe('Input', () => {
+describe('Variable', () => {
     const nameValue = 'test'
 
     beforeEach(() => {
