@@ -1,4 +1,4 @@
-import { action, makeObservable, observable, runInAction } from 'mobx'
+import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { syncCookieHandler, syncLocalStorageHandler, syncURLHandler } from './handlers'
 import { config } from '../config'
 import { TypeDescriptor } from '../types'
@@ -17,6 +17,7 @@ export interface VariableConstructorArgs<T> {
 export class Variable<T> implements Destroyable {
     type: TypeDescriptor<T>
     @observable          value               : T
+    @observable          initialValue        : T
     @observable          isDisabled          : boolean
     @observable          isDebouncing        : boolean          //  
     @observable          isNeedToUpdate      : boolean          //  
@@ -58,6 +59,23 @@ export class Variable<T> implements Destroyable {
         if (this.syncLocalStorage) syncLocalStorageHandler(this.syncLocalStorage, this)
         if (this.syncCookie) syncCookieHandler(this.syncCookie, this)
         if (this.syncURL) syncURLHandler(this.syncURL, this)
+        // capture the final initial value after all sync handlers may have modified it
+        this.initialValue = this.value
+    }
+
+    @computed
+    get isDirty(): boolean {
+        return this.value !== this.initialValue
+    }
+
+    @action
+    markClean(): void {
+        this.initialValue = this.value
+    }
+
+    @action
+    reset(): void {
+        this.value = this.initialValue
     }
 
     destroy () {

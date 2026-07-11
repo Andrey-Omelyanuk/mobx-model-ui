@@ -1,4 +1,4 @@
-import { makeObservable, observable, runInAction } from 'mobx'
+import { action, computed, makeObservable, observable, runInAction } from 'mobx'
 import { Variable } from '../inputs'
 import { config } from '../config'
 import { Destroyable } from '../object'
@@ -44,6 +44,20 @@ export abstract class Form implements Destroyable {
             || Object.values(this.inputs).some(input => input.errors.length > 0)
     }
 
+    @computed
+    get isDirty(): boolean {
+        return Object.values(this.inputs).some(input => input.isDirty)
+    }
+
+    markClean(): void {
+        Object.values(this.inputs).forEach(input => input.markClean())
+    }
+
+    @action
+    reset(): void {
+        Object.values(this.inputs).forEach(input => input.reset())
+    }
+
     abstract apply(): Promise<any>
 
     errorHandler(err: any) {
@@ -83,6 +97,7 @@ export abstract class Form implements Destroyable {
 
         try {
             const response = await this.apply()
+            this.markClean()
             if (this.onSuccess) this.onSuccess(response)
         }
         catch (err) {

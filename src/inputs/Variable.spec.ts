@@ -50,7 +50,62 @@ describe('Variable', () => {
         })
     })
 
-    // TODO:
+    describe('dirty state', () => {
+        it('initialValue matches value on construction', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            expect(input.initialValue).toBe('hello')
+            expect(input.value).toBe('hello')
+        })
+
+        it('isDirty is false initially', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            expect(input.isDirty).toBe(false)
+        })
+
+        it('isDirty becomes true after value change', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            runInAction(() => input.value = 'world')
+            expect(input.isDirty).toBe(true)
+        })
+
+        it('isDirty becomes false after markClean()', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            runInAction(() => input.value = 'world')
+            expect(input.isDirty).toBe(true)
+            input.markClean()
+            expect(input.isDirty).toBe(false)
+        })
+
+        it('reset() reverts value to initialValue', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            runInAction(() => input.value = 'world')
+            input.reset()
+            expect(input.value).toBe('hello')
+            expect(input.isDirty).toBe(false)
+        })
+
+        it('initialValue captures synced value from localStorage', () => {
+            localStorage.setItem('test_key', 'synced_val')
+            const input = new Variable(STRING(), { value: 'default', syncLocalStorage: 'test_key' })
+            expect(input.value).toBe('synced_val')
+            expect(input.initialValue).toBe('synced_val')
+            expect(input.isDirty).toBe(false)
+        })
+
+        it('set() makes variable dirty', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            input.set('world')
+            expect(input.isDirty).toBe(true)
+        })
+
+        it('setting back to initialValue makes isDirty false', () => {
+            const input = new Variable(STRING(), { value: 'hello' })
+            input.set('world')
+            expect(input.isDirty).toBe(true)
+            input.set('hello')
+            expect(input.isDirty).toBe(false)
+        })
+    })
     // it('isReady', async () => {
     //     const input = new Input(STRING())   ; expect(input.isReady).toBe(true)
     //     input.isRequired = true             ; expect(input.isReady).toBe(false)

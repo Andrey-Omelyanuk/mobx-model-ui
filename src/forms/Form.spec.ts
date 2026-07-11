@@ -84,19 +84,87 @@ describe('Form', () => {
         })
     })
 
+    describe('dirty state', () => {
+        it('isDirty is false initially', () => {
+            const form = new TestForm({
+                a: new Variable(STRING(), { value: 'hello' }),
+                b: new Variable(STRING(), { value: 'world' }),
+            })
+            expect(form.isDirty).toBe(false)
+        })
+
+        it('isDirty is true when any input changes', () => {
+            const form = new TestForm({
+                a: new Variable(STRING(), { value: 'hello' }),
+                b: new Variable(STRING(), { value: 'world' }),
+            })
+            runInAction(() => form.inputs.a.value = 'changed')
+            expect(form.isDirty).toBe(true)
+        })
+
+        it('isDirty is reactive', () => {
+            const form = new TestForm({
+                a: new Variable(STRING(), { value: 'hello' }),
+            })
+            let dirtyValue = form.isDirty
+            reaction(
+                () => form.isDirty,
+                (val) => { dirtyValue = val }
+            )
+            expect(dirtyValue).toBe(false)
+            runInAction(() => form.inputs.a.value = 'changed')
+            expect(dirtyValue).toBe(true)
+        })
+
+        it('markClean() resets all inputs dirty state', () => {
+            const form = new TestForm({
+                a: new Variable(STRING(), { value: 'hello' }),
+                b: new Variable(STRING(), { value: 'world' }),
+            })
+            runInAction(() => {
+                form.inputs.a.value = 'changed'
+                form.inputs.b.value = 'updated'
+            })
+            expect(form.isDirty).toBe(true)
+            form.markClean()
+            expect(form.isDirty).toBe(false)
+            expect(form.inputs.a.isDirty).toBe(false)
+            expect(form.inputs.b.isDirty).toBe(false)
+        })
+
+        it('reset() reverts all inputs to their initial values', () => {
+            const form = new TestForm({
+                a: new Variable(STRING(), { value: 'hello' }),
+                b: new Variable(STRING(), { value: 'world' }),
+            })
+            runInAction(() => {
+                form.inputs.a.value = 'changed'
+                form.inputs.b.value = 'updated'
+            })
+            form.reset()
+            expect(form.inputs.a.value).toBe('hello')
+            expect(form.inputs.b.value).toBe('world')
+            expect(form.isDirty).toBe(false)
+        })
+    })
+
     describe('submit', () => {
-        const inputs = {
-            a: new Variable(STRING()),
-            b: new Variable(STRING()), 
-            c: new Variable(STRING()),
-        }
         it('good request', (done)=> {
+            const inputs = {
+                a: new Variable(STRING()),
+                b: new Variable(STRING()),
+                c: new Variable(STRING()),
+            }
             const onSuccess = jest.fn(async () => {})
             const form = new TestForm(inputs, onSuccess )
             expect(form.isLoading).toBe(false)
+            runInAction(() => form.inputs.a.value = 'changed')
+            expect(form.isDirty).toBe(true)
             form.submit().then(() => {
                 expect(form.isLoading).toBe(false)
                 expect(onSuccess).toHaveBeenCalledTimes(1)
+                // form is marked clean after successful submit
+                expect(form.isDirty).toBe(false)
                 done()
             })
             expect(form.isLoading).toBe(true)
@@ -108,7 +176,14 @@ describe('Form', () => {
                     throw new Error('test error')
                 }
             }
+            const inputs = {
+                a: new Variable(STRING()),
+                b: new Variable(STRING()),
+                c: new Variable(STRING()),
+            }
             const form = new BadRequestForm(inputs)
+            runInAction(() => form.inputs.a.value = 'changed')
+            expect(form.isDirty).toBe(true)
             expect(form.isLoading).toBe(false)
             form.submit().then(() => {
                 expect(form).toMatchObject({
@@ -120,6 +195,8 @@ describe('Form', () => {
                         c: { errors: [] },
                     }
                 })
+                // dirty state persists after failed submit
+                expect(form.isDirty).toBe(true)
                 done()
             })
             expect(form.isLoading).toBe(true)
@@ -139,6 +216,11 @@ describe('Form', () => {
                         }
                     }
                 }
+            }
+            const inputs = {
+                a: new Variable(STRING()),
+                b: new Variable(STRING()),
+                c: new Variable(STRING()),
             }
             const form = new BadRequestForm(inputs)
             expect(form.isLoading).toBe(false)
