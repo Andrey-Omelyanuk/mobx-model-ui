@@ -21,6 +21,14 @@
   "main"        : "dist/mobx-model-ui.js",
   "module"      : "dist/mobx-model-ui.es2015.js",
   "typings"     : "dist/mobx-model-ui.d.ts",
+  "files": [
+    "dist",
+    "src",
+    "AGENTS.md",
+    "SKILL.md",
+    "README.md",
+    "LICENSE"
+  ],
   "dependencies": {
     "mobx"      : "~6.7.0"
   },

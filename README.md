@@ -7,6 +7,45 @@ Data and UI models based on [MobX](https://github.com/mobxjs/mobx)
 Inspired by [ember-data](https://github.com/emberjs/data) and [js-data](https://github.com/js-data/js-data).
 This library is another opinion (my personal) about what models should be on the front-end and how to work with them.
 
+Using with AI coding agents:
+---
+The package ships machine-readable docs so an AI assistant in **your** project
+knows how to use the library:
+
+- `SKILL.md` — quick start / recipes (also a valid Claude Code Skill, see below)
+- `AGENTS.md` — deep reference (architecture, API, conventions)
+- `dist/mobx-model-ui.d.ts` + `src/` (incl. `*.spec.ts` tests) — the API surface
+  and executable examples the agent can read directly
+
+Pick one of these to wire it into a consumer project (AI agents do **not**
+auto-read docs from `node_modules`, so you must point them at it):
+
+**1. Claude Code plugin (one command, recommended for Claude Code)**
+```
+/plugin marketplace add Andrey-Omelyanuk/mobx-model-ui
+/plugin install mobx-model-ui@omelyanuk-plugins
+```
+The Skill then auto-activates whenever you work on models/queries/forms.
+
+**2. Copy the Skill into your project (any Claude Code project)**
+```
+mkdir -p .claude/skills/mobx-model-ui
+cp node_modules/mobx-model-ui/SKILL.md .claude/skills/mobx-model-ui/SKILL.md
+```
+Or into `~/.claude/skills/mobx-model-ui/` to enable it for all your projects.
+
+**3. Pointer in your root `AGENTS.md` / `CLAUDE.md` (works with any tool: Cursor, opencode, …)**
+```markdown
+## mobx-model-ui
+This project uses `mobx-model-ui`. Before writing models, queries, filters,
+forms or adapters, read `./node_modules/mobx-model-ui/SKILL.md` (quick start)
+or `./node_modules/mobx-model-ui/AGENTS.md` (deep reference).
+```
+
+> Note: the library uses TypeScript decorators. The consumer `tsconfig.json`
+> needs `"experimentalDecorators": true` and `"useDefineForClassFields": true`
+> (see `AGENTS.md` → Tech Stack for the full list).
+
 Introduction:
 ---
 The library contains these entities:

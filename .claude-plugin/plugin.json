@@ -1,0 +1,11 @@
+{
+  "name": "mobx-model-ui",
+  "description": "Skill + reference docs so AI agents know how to build models, queries, filters, forms and adapters with the mobx-model-ui library.",
+  "version": "0.3.3",
+  "author": {
+    "name": "Andrey Omelyanuk"
+  },
+  "homepage": "https://github.com/Andrey-Omelyanuk/mobx-model-ui#readme",
+  "repository": "https://github.com/Andrey-Omelyanuk/mobx-model-ui",
+  "license": "MIT"
+}

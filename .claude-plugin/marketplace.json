@@ -1,0 +1,15 @@
+{
+  "name": "omelyanuk-plugins",
+  "owner": {
+    "name": "Andrey Omelyanuk"
+  },
+  "plugins": [
+    {
+      "name": "mobx-model-ui",
+      "source": "./",
+      "description": "Skill + reference docs so AI agents know how to use the mobx-model-ui library.",
+      "homepage": "https://github.com/Andrey-Omelyanuk/mobx-model-ui#readme",
+      "license": "MIT"
+    }
+  ]
+}

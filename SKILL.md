@@ -1,3 +1,16 @@
+---
+name: mobx-model-ui
+description: >-
+  Build data models, queries, filters, forms and adapters with the
+  mobx-model-ui library. Use in any project that depends on mobx-model-ui
+  when defining @model classes, wiring @id/@field/@foreign/@one/@many
+  relations, setting up Repository/Adapter, building Query lists with
+  filtering, sorting, pagination or infinite scroll, syncing state to
+  URL/localStorage/cookies, or building forms with validation and
+  server-side errors.
+license: MIT
+---
+
 # MobX-Model-UI
 
 A library for data management and UI interactions built on MobX. Provides reactive model management, caching, queries, filters, and forms.
