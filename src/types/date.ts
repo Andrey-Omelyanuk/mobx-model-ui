@@ -2,17 +2,20 @@ import { TypeDescriptor, TypeDescriptorProps } from './type'
 
 
 export interface DateDescriptorProps extends TypeDescriptorProps {
-    min?: Date 
-    max?: Date 
+    min?: Date
+    max?: Date
+    defaultDate?: Date
 }
 
 export class DateDescriptor extends TypeDescriptor<Date> {
-    min: Date 
-    max: Date 
+    min: Date
+    max: Date
+    defaultDate?: Date
     constructor(props?: DateDescriptorProps) {
         super(props)
         this.min = props?.min ?? new Date(0)
         this.max = props?.max ?? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) // + 100 years
+        this.defaultDate = props?.defaultDate
     }
     toString(value: Date): string {
         if (value === undefined) return undefined
@@ -32,7 +35,9 @@ export class DateDescriptor extends TypeDescriptor<Date> {
             throw new Error('Date should be earlier than ' + this.max.toISOString())
     }
     default(): Date {
-        return new Date()
+        // Return a fresh copy so instances can't mutate the shared default.
+        // Without `defaultDate` fall back to "now" (current behaviour).
+        return this.defaultDate ? new Date(this.defaultDate) : new Date()
     }
 }
 

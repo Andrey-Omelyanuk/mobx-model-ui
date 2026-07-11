@@ -42,7 +42,7 @@ export class Variable<T> implements Destroyable {
         this.syncCookie         = args?.syncCookie
         makeObservable(this)
         if (this.debounce) {
-            this.stopDebouncing = config.DEBOUNCE(
+            this.debouncedValidation = config.DEBOUNCE(
                 () => runInAction(() => {
                     // the debounced value has settled: clear the pending-update
                     // flag and validate together, once
@@ -64,14 +64,16 @@ export class Variable<T> implements Destroyable {
         this.__disposers.forEach(disposer => disposer())
     }
 
-    private stopDebouncing: () => void
+    // runs validation once the debounce window settles (not a "stop" — it
+    // fires the pending validation after `debounce` ms of no changes)
+    private debouncedValidation: () => void
 
     @action
     public set (value: T) {
         this.value = value
         if (this.debounce) {
             this.isDebouncing = true
-            this.stopDebouncing()       // clears isNeedToUpdate and validates after debounce
+            this.debouncedValidation()  // clears isNeedToUpdate and validates after debounce
         }
         else {
             // no debounce: the value is settled immediately

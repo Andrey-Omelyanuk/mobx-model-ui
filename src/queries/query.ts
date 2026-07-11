@@ -139,13 +139,13 @@ export class Query <M extends Model> implements Destroyable {
                     () => this.isNeedToUpdate && this.dependenciesAreReady,
                     (updateIt, old) => {
                         if(updateIt && updateIt !== old) {
-                            // run the load() in the next tick
-                            setTimeout(() => this.load())
-                            // }, config.AUTO_UPDATE_DELAY)
+                            // debounce the reload by AUTO_UPDATE_DELAY so rapid
+                            // filter/input changes don't fire a request each
+                            setTimeout(() => this.load(), config.AUTO_UPDATE_DELAY)
                         }
 
                     },
-                    { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }
+                    { fireImmediately: true }
                 ))
             }
             // off

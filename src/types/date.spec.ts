@@ -16,6 +16,23 @@ describe('DateDescriptor', () => {
         it('undefined => undefined'         , () => { expect(desc.fromString(undefined)).toBe(undefined) })
     })
 
+    describe('default', () => {
+        it('without defaultDate => current time', () => {
+            const desc = new DateDescriptor()
+            const before = Date.now()
+            const result = desc.default().getTime()
+            const after = Date.now()
+            expect(result).toBeGreaterThanOrEqual(before)
+            expect(result).toBeLessThanOrEqual(after)
+        })
+        it('with defaultDate => a fresh copy of it', () => {
+            const fixed = new Date(2000, 0, 1)
+            const desc = new DateDescriptor({defaultDate: fixed})
+            expect(desc.default()).toEqual(fixed)         // equal by value
+            expect(desc.default()).not.toBe(fixed)        // but not the same reference
+        })
+    })
+
     describe('validate', () => {
         it('min', async () => {
             const desc = new DateDescriptor({min: new Date(2020, 0, 1)})

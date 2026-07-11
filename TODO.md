@@ -20,18 +20,6 @@
 **Проблема**: Каждый `new Model()` создаёт новый класс через `class extends constructor`.
 **Фикс**: создать прокси-класс один раз при декорировании и кешировать.
 
-### 2.6 `Variable.stopDebouncing` — неправильное имя
-
-**Файл**: `src/inputs/Variable.ts`, строка 64
-**Проблема**: `stopDebouncing` на самом деле запускает валидацию после debounce, а не останавливает её.
-**Фикс**: переименовать в `debouncedValidation` или `debouncedFn`.
-
-### 2.7 `DateDescriptor.default()` возвращает новый `Date()` всегда
-
-**Файл**: `src/types/date.ts`, строка 35
-**Проблема**: Каждый вызов `default()` даёт текущее время момента вызова. Для `date_of_birth` это странно.
-**Фикс**: опциональный параметр `defaultDate` в конструкторе.
-
 ### 2.8 `ReadOnlyAdapter` не блокирует `action`, `modelAction`, `getDistinct`
 
 **Файл**: `src/adapters/read-only.ts`
@@ -61,12 +49,6 @@
 **Файл**: `dockerfile`
 **Проблема**: Копируется только `package.json`, всё остальное — при запуске. Образ не кеширует `node_modules`.
 **Фикс**: добавить `COPY yarn.lock .` и `RUN yarn install` в образ.
-
-### 2.13 `config.AUTO_UPDATE_DELAY` закомментирован
-
-**Файл**: `src/queries/query.ts`, строка 138–139
-**Проблема**: `setTimeout(() => this.load())` без задержки, хотя конфиг задаёт `AUTO_UPDATE_DELAY = 100`.
-**Фикс**: раскомментировать `config.AUTO_UPDATE_DELAY`.
 
 ---
 
@@ -123,7 +105,3 @@
 ### 3.13 Конфигурация через декораторы
 
 **Описание**: Сейчас `@local()`, `@constant()` без параметров. Нужна возможность `@local({storeName, delay})`.
-
-### 3.14 Debounce в Query.autoupdate (исправить закомментированный код)
-
-**Описание**: Раскомментировать `config.AUTO_UPDATE_DELAY` — баг-фикс, выделен отдельно от 2.13.

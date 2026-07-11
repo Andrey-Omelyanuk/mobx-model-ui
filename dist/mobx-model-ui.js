@@ -257,7 +257,7 @@
             this.syncCookie = args?.syncCookie;
             mobx.makeObservable(this);
             if (this.debounce) {
-                this.stopDebouncing = config.DEBOUNCE(() => mobx.runInAction(() => {
+                this.debouncedValidation = config.DEBOUNCE(() => mobx.runInAction(() => {
                     // the debounced value has settled: clear the pending-update
                     // flag and validate together, once
                     this.isNeedToUpdate = false;
@@ -274,12 +274,14 @@
         destroy() {
             this.__disposers.forEach(disposer => disposer());
         }
-        stopDebouncing;
+        // runs validation once the debounce window settles (not a "stop" — it
+        // fires the pending validation after `debounce` ms of no changes)
+        debouncedValidation;
         set(value) {
             this.value = value;
             if (this.debounce) {
                 this.isDebouncing = true;
-                this.stopDebouncing(); // clears isNeedToUpdate and validates after debounce
+                this.debouncedValidation(); // clears isNeedToUpdate and validates after debounce
             }
             else {
                 // no debounce: the value is settled immediately
@@ -541,10 +543,12 @@
     class DateDescriptor extends TypeDescriptor {
         min;
         max;
+        defaultDate;
         constructor(props) {
             super(props);
             this.min = props?.min ?? new Date(0);
             this.max = props?.max ?? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000); // + 100 years
+            this.defaultDate = props?.defaultDate;
         }
         toString(value) {
             if (value === undefined)
@@ -568,7 +572,9 @@
                 throw new Error('Date should be earlier than ' + this.max.toISOString());
         }
         default() {
-            return new Date();
+            // Return a fresh copy so instances can't mutate the shared default.
+            // Without `defaultDate` fall back to "now" (current behaviour).
+            return this.defaultDate ? new Date(this.defaultDate) : new Date();
         }
     }
     function DATE(props) {
@@ -863,11 +869,11 @@
                 if (value) {
                     this.disposers.set(DISPOSER_AUTOUPDATE, mobx.reaction(() => this.isNeedToUpdate && this.dependenciesAreReady, (updateIt, old) => {
                         if (updateIt && updateIt !== old) {
-                            // run the load() in the next tick
-                            setTimeout(() => this.load());
-                            // }, config.AUTO_UPDATE_DELAY)
+                            // debounce the reload by AUTO_UPDATE_DELAY so rapid
+                            // filter/input changes don't fire a request each
+                            setTimeout(() => this.load(), config.AUTO_UPDATE_DELAY);
                         }
-                    }, { fireImmediately: true, delay: config.AUTO_UPDATE_DELAY }));
+                    }, { fireImmediately: true }));
                 }
                 // off
                 else {

@@ -87,10 +87,12 @@ declare function BOOLEAN(props?: BooleanDescriptorProps): BooleanDescriptor;
 interface DateDescriptorProps extends TypeDescriptorProps {
     min?: Date;
     max?: Date;
+    defaultDate?: Date;
 }
 declare class DateDescriptor extends TypeDescriptor<Date> {
     min: Date;
     max: Date;
+    defaultDate?: Date;
     constructor(props?: DateDescriptorProps);
     toString(value: Date): string;
     fromString(value: string): Date | null | undefined;
@@ -192,7 +194,7 @@ declare class Variable<T> implements Destroyable {
     __disposers: any[];
     constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
     destroy(): void;
-    private stopDebouncing;
+    private debouncedValidation;
     set(value: T): void;
     get isReady(): boolean;
     validate(): void;
