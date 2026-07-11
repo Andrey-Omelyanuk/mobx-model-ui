@@ -183,6 +183,7 @@ interface VariableConstructorArgs<T> {
 declare class Variable<T> implements Destroyable {
     type: TypeDescriptor<T>;
     value: T;
+    initialValue: T;
     isDisabled: boolean;
     isDebouncing: boolean;
     isNeedToUpdate: boolean;
@@ -193,6 +194,9 @@ declare class Variable<T> implements Destroyable {
     readonly syncCookie?: string;
     __disposers: (() => void)[];
     constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
+    get isDirty(): boolean;
+    markClean(): void;
+    reset(): void;
     destroy(): void;
     private debouncedValidation;
     set(value: T | undefined): void;
@@ -200,13 +204,6 @@ declare class Variable<T> implements Destroyable {
     validate(): void;
     setFromString(value: string | null): void;
     toString(): string;
-}
-/**
- * DEPRECATED: use Variable instead
- * Keep it for backward compatibility.
- */
-declare class Input<T> extends Variable<T> {
-    constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
 }
 
 declare class SingleFilter extends Filter {
@@ -372,6 +369,7 @@ declare class Query<M extends Model> implements Destroyable {
     isLoading: boolean;
     isNeedToUpdate: boolean;
     timestamp: number | undefined;
+    lastUpdatedAt: number | undefined;
     error: string | undefined;
     get items(): M[];
     protected controller: AbortController | undefined;
@@ -702,10 +700,24 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
 declare function constant(constant: any[]): (cls: any) => void;
 
 /**
+ * A map of field names to their validation error messages.
+ * Key is an input name (or FORM_NON_FIELD_ERRORS_KEY for form-level errors).
+ * Value is an array of error messages for that field.
+ */
+type ValidationErrors = Record<string, string[]> | null | undefined;
+/**
+ * A validator function that checks cross-field constraints.
+ * Receives the form's inputs map and returns either:
+ * - null/undefined: the field(s) are valid
+ * - Record<string, string[]>: field-level errors keyed by input name.
+ *   Use `FORM_NON_FIELD_ERRORS_KEY` for form-level errors.
+ */
+type Validator = (inputs: Record<string, Variable<any>>) => ValidationErrors;
+/**
  * Base abstract class for all forms.
  *
  * Form is an object that contains inputs and methods to work with them.
- * Also it controls loading state and errors.
+ * Also it controls loading state, cross-field validation, and errors.
  *
  */
 declare abstract class Form implements Destroyable {
@@ -716,12 +728,30 @@ declare abstract class Form implements Destroyable {
     };
     readonly onSuccess?: (this: Form, response?: any) => void;
     readonly onCancel?: (this: Form) => void;
+    /**
+     * Array of cross-field validators.
+     * Subclasses can push validators in their constructor or override `validate()`.
+     */
+    validators: Validator[];
     constructor(inputs: {
         [key: string]: Variable<any>;
     }, onSuccess?: (this: Form, response?: any) => void, onCancel?: (this: Form) => void);
     destroy(): void;
     get isReady(): boolean;
     get isError(): boolean;
+    get isDirty(): boolean;
+    markClean(): void;
+    reset(): void;
+    /**
+     * Run all cross-field validators and return aggregated errors.
+     * Returns null when valid, or a map of field→messages when invalid.
+     * Can be overridden by subclasses for custom validation logic.
+     */
+    validate(): ValidationErrors;
+    /**
+     * Clear all errors on the form and all its inputs.
+     */
+    clearErrors(): void;
     abstract apply(): Promise<any>;
     errorHandler(err: any): void;
     submit(): Promise<void>;
@@ -786,5 +816,5 @@ declare function waitIsTrue(obj: any, field: string): Promise<boolean>;
 declare function waitIsFalse(obj: any, field: string): Promise<boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
-export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, EnumDescriptorProps, EnumOption, ID, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, VariableConstructorArgs };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, EnumDescriptorProps, EnumOption, ID, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, ValidationErrors, Validator, VariableConstructorArgs };

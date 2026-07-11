@@ -2,11 +2,11 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.3.3
+   * mobx-model-ui.js v0.4.0
    * Released under the MIT license.
    */
 
-import { observable, action, makeObservable, autorun, reaction, runInAction, computed, observe, extendObservable, intercept } from 'mobx';
+import { observable, action, makeObservable, autorun, reaction, computed, runInAction, observe, extendObservable, intercept } from 'mobx';
 
 // Global config of Mobx-ORM
 const config = {
@@ -229,6 +229,7 @@ const syncCookieHandler = (paramName, input) => {
 class Variable {
     type;
     value;
+    initialValue;
     isDisabled;
     isDebouncing; //  
     isNeedToUpdate; //  
@@ -269,6 +270,17 @@ class Variable {
             syncCookieHandler(this.syncCookie, this);
         if (this.syncURL)
             syncURLHandler(this.syncURL, this);
+        // capture the final initial value after all sync handlers may have modified it
+        this.initialValue = this.value;
+    }
+    get isDirty() {
+        return this.value !== this.initialValue;
+    }
+    markClean() {
+        this.initialValue = this.value;
+    }
+    reset() {
+        this.value = this.initialValue;
     }
     destroy() {
         this.__disposers.forEach(disposer => disposer());
@@ -323,6 +335,10 @@ __decorate([
 ], Variable.prototype, "value", void 0);
 __decorate([
     observable,
+    __metadata("design:type", Object)
+], Variable.prototype, "initialValue", void 0);
+__decorate([
+    observable,
     __metadata("design:type", Boolean)
 ], Variable.prototype, "isDisabled", void 0);
 __decorate([
@@ -338,6 +354,23 @@ __decorate([
     __metadata("design:type", Array)
 ], Variable.prototype, "errors", void 0);
 __decorate([
+    computed,
+    __metadata("design:type", Boolean),
+    __metadata("design:paramtypes", [])
+], Variable.prototype, "isDirty", null);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Variable.prototype, "markClean", null);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Variable.prototype, "reset", null);
+__decorate([
     action,
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
@@ -349,15 +382,6 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], Variable.prototype, "validate", null);
-/**
- * DEPRECATED: use Variable instead
- * Keep it for backward compatibility.
- */
-class Input extends Variable {
-    constructor(type, args) {
-        super(type, args);
-    }
-}
 
 class ObjectInput extends Variable {
     options;
@@ -816,9 +840,13 @@ class Query {
     total; // total count of items on the server, useful for pagination
     isLoading = false; // query is loading the data
     isNeedToUpdate = true; // query was changed and we need to update the data
-    timestamp; // timestamp of the last update, useful to avoid triggering react hooks twice
+    timestamp; // monotonic counter of the last update, useful to avoid triggering react hooks twice
+    lastUpdatedAt; // wall-clock time (Date.now()) of the last update
     error; // error message
-    get items() { return this.__items; } // the items can be changed after the load (post processing)
+    // NOTE: returns the internal array intentionally so that external code can
+    //       observe mutations via mobx (push/splice on the returned array are
+    //       tracked by @observable). Do not replace the array — mutate in place.
+    get items() { return this.__items; }
     controller;
     // Named disposers for mobx reactions/observers, unified on the same
     // `Map<string, () => void>` shape as `Model.disposers`. Per-object
@@ -934,14 +962,9 @@ class Query {
         if (this.controller)
             this.controller.abort();
         this.controller = new AbortController();
-        // NOTE: Date.now() is used to get the current timestamp
-        //       and it can be the same in the same tick 
-        //       in this case we should increase the timestamp by 1
-        const now = Date.now();
-        if (this.timestamp === now)
-            this.timestamp += 1;
-        else
-            this.timestamp = now;
+        // monotonic counter: each shadowLoad increments timestamp irrespective of wall clock
+        this.timestamp = (this.timestamp ?? 0) + 1;
+        this.lastUpdatedAt = Date.now();
         try {
             await this.__load();
         }
@@ -981,6 +1004,10 @@ __decorate([
     observable,
     __metadata("design:type", Object)
 ], Query.prototype, "timestamp", void 0);
+__decorate([
+    observable,
+    __metadata("design:type", Object)
+], Query.prototype, "lastUpdatedAt", void 0);
 __decorate([
     observable,
     __metadata("design:type", Object)
@@ -1443,7 +1470,7 @@ class Model {
         });
     }
     get model() {
-        return this.constructor.__proto__;
+        return Object.getPrototypeOf(this.constructor);
     }
     /**
      * @returns {Object} - data only from fields (no id)
@@ -1469,7 +1496,7 @@ class Model {
     get only_changed_raw_data() {
         const raw_data = {};
         for (const field_name in this.modelDescriptor.fields) {
-            if (this[field_name] != this.init_data[field_name]) {
+            if (this[field_name] !== this.init_data[field_name]) {
                 raw_data[field_name] = this[field_name];
             }
         }
@@ -1477,7 +1504,7 @@ class Model {
     }
     get is_changed() {
         for (const field_name in this.modelDescriptor.fields) {
-            if (this[field_name] != this.init_data[field_name]) {
+            if (this[field_name] !== this.init_data[field_name]) {
                 return true;
             }
         }
@@ -2155,9 +2182,7 @@ class LocalAdapter extends Adapter {
         delete local_store[this.store_name][id];
     }
     async action(_id, _name, _kwargs) {
-        console.error('Action method is not implemented for local adapter');
-        // ignore error
-        // throw(`Not implemented`)
+        throw new Error('Action method is not implemented for local adapter');
     }
     async get(id, _config) {
         if (this.delay)
@@ -2165,9 +2190,7 @@ class LocalAdapter extends Adapter {
         return local_store[this.store_name][id];
     }
     async modelAction(_name, _kwargs, _config) {
-        console.error('Model action method is not implemented for local adapter');
-        // ignore error
-        // throw(`Not implemented`)
+        throw new Error('Model action method is not implemented for local adapter');
     }
     async find(query) {
         if (this.delay)
@@ -2311,7 +2334,7 @@ function constant(constant) {
  * Base abstract class for all forms.
  *
  * Form is an object that contains inputs and methods to work with them.
- * Also it controls loading state and errors.
+ * Also it controls loading state, cross-field validation, and errors.
  *
  */
 class Form {
@@ -2320,6 +2343,11 @@ class Form {
     inputs;
     onSuccess;
     onCancel;
+    /**
+     * Array of cross-field validators.
+     * Subclasses can push validators in their constructor or override `validate()`.
+     */
+    validators = [];
     constructor(inputs, onSuccess, onCancel) {
         makeObservable(this);
         this.inputs = inputs;
@@ -2337,6 +2365,43 @@ class Form {
     get isError() {
         return this.errors.length > 0
             || Object.values(this.inputs).some(input => input.errors.length > 0);
+    }
+    get isDirty() {
+        return Object.values(this.inputs).some(input => input.isDirty);
+    }
+    markClean() {
+        Object.values(this.inputs).forEach(input => input.markClean());
+    }
+    reset() {
+        Object.values(this.inputs).forEach(input => input.reset());
+    }
+    /**
+     * Run all cross-field validators and return aggregated errors.
+     * Returns null when valid, or a map of field→messages when invalid.
+     * Can be overridden by subclasses for custom validation logic.
+     */
+    validate() {
+        const allErrors = {};
+        for (const validator of this.validators) {
+            const errors = validator(this.inputs);
+            if (errors) {
+                for (const [key, msgs] of Object.entries(errors)) {
+                    if (!allErrors[key])
+                        allErrors[key] = [];
+                    allErrors[key].push(...msgs);
+                }
+            }
+        }
+        return Object.keys(allErrors).length ? allErrors : null;
+    }
+    /**
+     * Clear all errors on the form and all its inputs.
+     */
+    clearErrors() {
+        this.errors = [];
+        for (const input of Object.values(this.inputs)) {
+            input.errors = [];
+        }
     }
     errorHandler(err) {
         runInAction(() => {
@@ -2367,12 +2432,32 @@ class Form {
             // silently resolving. `async` turns this throw into a rejected Promise.
             throw new Error('Form is not ready to be submitted');
         }
+        // Clear all previous errors before running cross-field validation
+        this.clearErrors();
+        // Run cross-field validation
+        const validationErrors = this.validate();
+        if (validationErrors) {
+            runInAction(() => {
+                for (const [key, msgs] of Object.entries(validationErrors)) {
+                    if (key === config.FORM_NON_FIELD_ERRORS_KEY) {
+                        this.errors.push(...msgs);
+                    }
+                    else if (this.inputs[key]) {
+                        this.inputs[key].errors = msgs;
+                    }
+                    else {
+                        this.errors.push(...msgs);
+                    }
+                }
+            });
+            throw new Error('Form validation failed');
+        }
         runInAction(() => {
             this.isLoading = true;
-            this.errors = [];
         });
         try {
             const response = await this.apply();
+            this.markClean();
             if (this.onSuccess)
                 this.onSuccess(response);
         }
@@ -2405,6 +2490,23 @@ __decorate([
     observable,
     __metadata("design:type", Array)
 ], Form.prototype, "errors", void 0);
+__decorate([
+    computed,
+    __metadata("design:type", Boolean),
+    __metadata("design:paramtypes", [])
+], Form.prototype, "isDirty", null);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Form.prototype, "reset", null);
+__decorate([
+    action,
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], Form.prototype, "clearErrors", null);
 
 /**
  * Form to run an action in the repository.
@@ -2496,5 +2598,5 @@ class DeleteObjectForm extends ObjectForm {
     }
 }
 
-export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, Input, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
+export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
 //# sourceMappingURL=mobx-model-ui.es2015.js.map
