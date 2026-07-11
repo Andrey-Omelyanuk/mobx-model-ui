@@ -158,12 +158,16 @@ describe('Form', () => {
         })
 
         it('do not submit when the form is not ready yet', (done)=> {
-            // nothing should happen
+            // submit() must reject instead of silently resolving
             const onSuccess = jest.fn(async () => {})
             const form = new TestForm({a: new Variable(STRING())}, onSuccess )
             runInAction(() => form.inputs.a.isNeedToUpdate = true)
             expect(form).toMatchObject({isReady: false, isLoading: false})
             form.submit().then(() => {
+                done(new Error('submit() should have rejected'))
+            }).catch((err) => {
+                expect(err).toBeInstanceOf(Error)
+                expect(err.message).toBe('Form is not ready to be submitted')
                 expect(form).toMatchObject({isReady: false, isLoading: false})
                 expect(onSuccess).toHaveBeenCalledTimes(0)
                 done()

@@ -71,8 +71,9 @@ export abstract class Form implements Destroyable {
 
     async submit() {
         if (!this.isReady) {
-            console.error('Form is not ready')
-            return  // just ignore
+            // Reject so the caller can react to a blocked submit instead of it
+            // silently resolving. `async` turns this throw into a rejected Promise.
+            throw new Error('Form is not ready to be submitted')
         }
 
         runInAction(() => {

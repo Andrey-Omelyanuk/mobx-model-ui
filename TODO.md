@@ -1,35 +1,5 @@
 # TODO — mobx-model-ui
 
-## 1. Ошибки (Bugs)
-
-### 1.7 `Model.destroy()` — потенциальный бесконечный цикл ✅ ИСПРАВЛЕНО
-
-**Файл**: `src/model/model.ts`, строка 73
-**Проблема**: `while(disposers.size)` + `forEach` — если disposer во время выполнения добавляет новый disposer, может начаться бесконечный цикл.
-**Фикс**: заменить на копирование ключей: `const keys = [...this.disposers.keys()]; keys.forEach(k => { ... })`.
-
-### 1.8 `clearModels()` не очищает Cache'ы ✅ ИСПРАВЛЕНО
-
-**Файл**: `src/model/models.ts`, строки 14–25
-**Проблема**: `clearModels()` не вызывает `modelDescriptor.cache.clear()`. Объекты в Cache остаются в памяти с активными disposers.
-**Тест-ловушка**: `clearModels should clear all model caches` в `src/model/models.spec.ts`
-**Фикс**: перед `models.clear()` пройти по всем descriptor'ам и вызвать `cache.clear()`.
-
-### 1.9 `clearModels()` — `idFieldDescriptors.disposers` пуст ✅ ИСПРАВЛЕНО
-
-**Файл**: `src/fields/id.ts`
-**Проблема**: `disposers: []` — `clearModels()` итерирует пустой массив. Не ошибка выполнения, но вводит в заблуждение.
-**Фикс**: убрать `idFieldDescriptors.disposers` из `clearModels()` или синхронизировать с реальными disposers.
-
-### 1.10 `syncCookieHandler` неправильно удаляет cookie ✅ ИСПРАВЛЕНО
-
-**Файл**: `src/inputs/handlers/syncCookie.ts`, строка 16
-**Проблема**: Не устанавливает `max-age=0` или `expires` в прошлом. Некоторые браузеры могут не удалить cookie.
-**Тест-ловушка**: `should properly delete cookie when value becomes undefined` в `src/inputs/handlers/syncCookie.spec.ts`
-**Фикс**: добавить `max-age=0` при удалении.
-
----
-
 ## 2. Улучшения (Improvements)
 
 ### 2.1 Нет строгих типов TypeScript
@@ -44,31 +14,11 @@
 **Проблема**: Есть только `AND_Filter`. Для полноценной фильтрации нужен `OR_Filter` (и, возможно, `NOT`).
 **Фикс**: добавить `OR_Filter` и `OR()` фабрику.
 
-### 2.3 `disposers` — разная семантика именования ✅ ИСПРАВЛЕНО (Query)
-
-**Сделано**: `Query.disposers` (`[]`) + `disposerObjects` (`Record`) объединены в единый
-`Map<string, () => void>`, как у `Model.disposers`. Ключи: `isNeedToUpdate`, `cacheSync`,
-`__autoupdate` (`DISPOSER_AUTOUPDATE`), пер-объектные — `obj:<ID>`. `destroy()` использует
-тот же безопасный снимок ключей, что и `Model.destroy()`.
-**Осталось (по желанию)**: `ModelFieldDescriptor.disposers`, `Variable.__disposers`,
-`SingleFilter.__disposers` — остаются массивами анонимных teardown'ов (не участвуют в
-путанице Model/Query, конверсия ломает one/many/foreign/Variable спеки).
-
-
-**Проблема**: `Model.disposers` — `Map`, `Query.disposers` — `[]`, `disposerObjects` — `Record`. Сбивает с толку.
-**Фикс**: унифицировать на `Map<string, () => void>` везде.
-
 ### 2.4 `model-decorator.ts` создаёт прокси-класс на каждый инстанс
 
 **Файл**: `src/model/model-decorator.ts`, строка 32
 **Проблема**: Каждый `new Model()` создаёт новый класс через `class extends constructor`.
 **Фикс**: создать прокси-класс один раз при декорировании и кешировать.
-
-### 2.5 `Form.submit()` молча игнорирует неготовую форму
-
-**Файл**: `src/forms/Form.ts`, строка 73–76
-**Проблема**: `!isReady` → `console.error + return`. Вызывающий код не узнаёт, что submit не выполнен.
-**Фикс**: возвращать rejected Promise с информативной ошибкой.
 
 ### 2.6 `Variable.stopDebouncing` — неправильное имя
 
