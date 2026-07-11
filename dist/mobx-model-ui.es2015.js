@@ -90,7 +90,7 @@ class Cache {
      */
     inject(obj) {
         if (obj.ID === undefined || obj.ID === null || obj.ID === '')
-            throw new Error(`Object should have id!`);
+            throw new Error('Object should have id!');
         const exist_obj = this.store.get(obj.ID);
         if (exist_obj && exist_obj !== obj)
             throw new Error(`Object with ID ${obj.ID} already exist in the cache.`);
@@ -107,7 +107,7 @@ class Cache {
      * Clear the cache
      */
     clear() {
-        for (let obj of this.store.values())
+        for (const obj of this.store.values())
             obj.destroy();
         this.store.clear();
     }
@@ -194,13 +194,13 @@ const syncURLHandler = (paramName, input) => {
 const syncLocalStorageHandler = (paramName, input) => {
     // init value from localStorage
     if (paramName in localStorage) {
-        let raw_value = localStorage.getItem(paramName);
+        const raw_value = localStorage.getItem(paramName);
         const exist_raw_value = input.toString();
         if (exist_raw_value !== raw_value)
             input.setFromString(raw_value);
     }
     // watch for changes and save to localStorage
-    input.__disposers.push(reaction(() => input.value, (value, previousValue) => {
+    input.__disposers.push(reaction(() => input.value, (value, _previousValue) => {
         // WARNING: input should return 'null' if value is null
         // because localStorage cannot store null
         if (value !== undefined)
@@ -263,9 +263,12 @@ class Variable {
         }
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
-        this.syncLocalStorage && syncLocalStorageHandler(this.syncLocalStorage, this);
-        this.syncCookie && syncCookieHandler(this.syncCookie, this);
-        this.syncURL && syncURLHandler(this.syncURL, this);
+        if (this.syncLocalStorage)
+            syncLocalStorageHandler(this.syncLocalStorage, this);
+        if (this.syncCookie)
+            syncCookieHandler(this.syncCookie, this);
+        if (this.syncURL)
+            syncURLHandler(this.syncURL, this);
     }
     destroy() {
         this.__disposers.forEach(disposer => disposer());
@@ -365,7 +368,8 @@ class ObjectInput extends Variable {
             this.__disposers.push(reaction(() => this.options.isReady, (isReady, previousValue) => {
                 if (isReady && !previousValue) {
                     runInAction(() => this.isNeedToUpdate = true);
-                    args?.autoReset && args.autoReset(this);
+                    if (args?.autoReset)
+                        args.autoReset(this);
                 }
             }));
         }
@@ -821,7 +825,7 @@ class Query {
     // reactions (e.g. in QueryCacheSync) use the `obj:<ID>` key convention.
     disposers = new Map();
     constructor(props) {
-        let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
+        const { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
         this.repository = repository; // required in practice; always set by the Repository factory methods
         this.filter = filter; // optional at runtime; guarded everywhere it is read
         this.orderBy = orderBy ? orderBy : new Variable(ARRAY(ORDER_BY()));
@@ -838,7 +842,7 @@ class Query {
         // if dependenciesAreReady or/and value are triggered and isNeedToUpdate is false
         () => {
             return { dependenciesAreReady: this.dependenciesAreReady, value: this.toString() };
-        }, ({ dependenciesAreReady, value }) => {
+        }, ({ dependenciesAreReady, value: _value }) => {
             if (dependenciesAreReady && !this.isNeedToUpdate)
                 runInAction(() => this.isNeedToUpdate = true);
         }, { fireImmediately: true }));
@@ -856,7 +860,7 @@ class Query {
         });
     }
     async loading() { return waitIsFalse(this, 'isLoading'); }
-    async ready() { return waitIsFalse(this, 'isReady'); }
+    async ready() { return waitIsTrue(this, 'isReady'); }
     get autoupdate() {
         return this.disposers.has(DISPOSER_AUTOUPDATE);
     }
@@ -1053,12 +1057,12 @@ class QueryCacheSync extends Query {
                 this.__watch_obj(change.newValue);
             }
             if (change.type == 'delete') {
-                let id = change.name;
-                let obj = change.oldValue;
+                const id = change.name;
+                const obj = change.oldValue;
                 const key = `obj:${id}`;
                 this.disposers.get(key)?.();
                 this.disposers.delete(key);
-                let i = this.__items.indexOf(obj);
+                const i = this.__items.indexOf(obj);
                 if (i != -1) {
                     this.__items.splice(i, 1);
                     this.total = this.__items.length;
@@ -1066,7 +1070,7 @@ class QueryCacheSync extends Query {
             }
         })));
         // ch all exist objects of model 
-        for (let [id, obj] of this.repository.modelDescriptor.cache.store) {
+        for (const [, obj] of this.repository.modelDescriptor.cache.store) {
             this.__watch_obj(obj);
         }
     }
@@ -1085,9 +1089,9 @@ class QueryCacheSync extends Query {
         await Promise.resolve();
     }
     get items() {
-        let __items = [...this.__items];
+        const __items = [...this.__items];
         if (this.orderBy.value && this.orderBy.value.length) {
-            let compare = (a, b) => {
+            const compare = (a, b) => {
                 for (const [key, value] of this.orderBy.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null))
@@ -1120,7 +1124,7 @@ class QueryCacheSync extends Query {
         const key = `obj:${obj.ID}`;
         this.disposers.get(key)?.();
         this.disposers.set(key, reaction(() => !this.filter || this.filter.isMatch(obj), action('MO: Query - obj was changed', (should) => {
-            let i = this.__items.indexOf(obj);
+            const i = this.__items.indexOf(obj);
             // should be in the items and it is not in the items? add it to the items
             if (should && i == -1)
                 this.__items.push(obj);
@@ -1257,7 +1261,7 @@ class Repository {
      * Create the object.
      */
     async create(obj, config) {
-        let raw_obj = await this.adapter.create(obj.rawObj, config); // Id can be defined in the frontend => id should be passed to the create method if they exist
+        const raw_obj = await this.adapter.create(obj.rawObj, config); // Id can be defined in the frontend => id should be passed to the create method if they exist
         const rawObjID = this.modelDescriptor.getID(raw_obj);
         const cachedObj = this.modelDescriptor.cache.get(rawObjID);
         if (cachedObj)
@@ -1270,7 +1274,7 @@ class Repository {
      * Update the object.
      */
     async update(obj, config) {
-        let raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config);
+        const raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config);
         obj.updateFromRaw(raw_obj);
         obj.refreshInitData();
         return obj;
@@ -1305,22 +1309,22 @@ class Repository {
      * Returns ONE object by id.
      */
     async get(id, config) {
-        let raw_obj = await this.adapter.get(id, config);
+        const raw_obj = await this.adapter.get(id, config);
         return this.modelDescriptor.updateCachedObject(raw_obj);
     }
     /**
      * Returns ONE object by query.
      */
     async find(query, config) {
-        let raw_obj = await this.adapter.find(query, config);
+        const raw_obj = await this.adapter.find(query, config);
         return this.modelDescriptor.updateCachedObject(raw_obj);
     }
     /**
      * Returns MANY objects by query.
      */
     async load(query, config) {
-        let raw_objs = await this.adapter.load(query, config);
-        let objs = [];
+        const raw_objs = await this.adapter.load(query, config);
+        const objs = [];
         runInAction(() => {
             for (const raw_obj of raw_objs) {
                 objs.push(this.modelDescriptor.updateCachedObject(raw_obj));
@@ -1355,15 +1359,15 @@ class Repository {
  */
 const models = new Map();
 function clearModels() {
-    for (let [modelName, modelDescriptor] of models) {
+    for (const [_modelName, modelDescriptor] of models) {
         // Descriptor-level disposers (e.g. the cache-store observers registered
         // by `one`/`many` relations). The id decorator does not register any
         // descriptor-level disposers — its interceptors live on each instance's
         // `obj.disposers` and are released by `obj.destroy()` below.
-        for (let fieldName in modelDescriptor.fields) {
+        for (const fieldName in modelDescriptor.fields) {
             modelDescriptor.fields[fieldName].disposers.forEach(disposer => disposer());
         }
-        for (let fieldName in modelDescriptor.relations) {
+        for (const fieldName in modelDescriptor.relations) {
             modelDescriptor.relations[fieldName].disposers.forEach(disposer => disposer());
         }
         // Clear the cache: destroys every cached object (releasing its own
@@ -1398,7 +1402,7 @@ class Model {
     /**
      * @param init - initial data of the object
      */
-    constructor(init) { }
+    constructor(_init) { }
     /**
      * @returns {ModelDescriptor} - model descriptor
      */
@@ -1445,7 +1449,7 @@ class Model {
      * @returns {Object} - data only from fields (no id)
      */
     get rawData() {
-        let rawData = {};
+        const rawData = {};
         for (const fieldName in this.modelDescriptor.fields) {
             if (this[fieldName] !== undefined) {
                 rawData[fieldName] = this[fieldName];
@@ -1463,8 +1467,8 @@ class Model {
         return rawObj;
     }
     get only_changed_raw_data() {
-        let raw_data = {};
-        for (let field_name in this.modelDescriptor.fields) {
+        const raw_data = {};
+        for (const field_name in this.modelDescriptor.fields) {
             if (this[field_name] != this.init_data[field_name]) {
                 raw_data[field_name] = this[field_name];
             }
@@ -1472,7 +1476,7 @@ class Model {
         return raw_data;
     }
     get is_changed() {
-        for (let field_name in this.modelDescriptor.fields) {
+        for (const field_name in this.modelDescriptor.fields) {
             if (this[field_name] != this.init_data[field_name]) {
                 return true;
             }
@@ -1482,12 +1486,12 @@ class Model {
     refreshInitData() {
         if (this.init_data === undefined)
             this.init_data = {};
-        for (let field_name in this.modelDescriptor.fields) {
+        for (const field_name in this.modelDescriptor.fields) {
             this.init_data[field_name] = this[field_name];
         }
     }
     cancelLocalChanges() {
-        for (let field_name in this.modelDescriptor.fields) {
+        for (const field_name in this.modelDescriptor.fields) {
             if (this[field_name] !== this.init_data[field_name]) {
                 this[field_name] = this.init_data[field_name];
             }
@@ -1506,13 +1510,13 @@ class Model {
             this[idField] = rawObj[idField];
         }
         // update the fields if the raw data is exist and it is different
-        for (let fieldName in this.modelDescriptor.fields) {
+        for (const fieldName in this.modelDescriptor.fields) {
             if (rawObj[fieldName] !== undefined && rawObj[fieldName] !== this[fieldName]) {
                 this[fieldName] = rawObj[fieldName];
             }
         }
         // update related objects 
-        for (let relation in this.modelDescriptor.relations) {
+        for (const relation in this.modelDescriptor.relations) {
             const settings = this.modelDescriptor.relations[relation].settings;
             if (settings.foreign_model && rawObj[relation]) {
                 settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation]);
@@ -1623,8 +1627,8 @@ function model(constructor) {
     };
     proxy.__proto__ = constructor;
     // the new constructor
-    let f = function (...args) {
-        let obj = new proxy();
+    const f = function (...args) {
+        const obj = new proxy();
         obj.modelName = modelName;
         makeObservable(obj);
         const descriptor = obj.modelDescriptor;
@@ -1709,7 +1713,7 @@ function field(typeDescriptor, observable = true) {
         const modelName = cls.constructor.name;
         if (!models.has(modelName))
             throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`);
-        let modelDescription = models.get(modelName);
+        const modelDescription = models.get(modelName);
         modelDescription.fields[fieldName] = {
             decorator: (obj) => {
                 if (observable)
@@ -1779,7 +1783,7 @@ function one(remote_model, remote_foreign_id) {
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 let foreignObj = undefined;
-                for (let [_, cacheObj] of remoteModelDescriptor.cache.store) {
+                for (const [_, cacheObj] of remoteModelDescriptor.cache.store) {
                     const ID = cacheObj[remote_foreign_id_field];
                     if (obj.ID === ID && ID !== undefined) {
                         foreignObj = cacheObj;
@@ -1809,17 +1813,18 @@ function one(remote_model, remote_foreign_id) {
                             _new.obj[field_name] = remote_obj;
                     }), { fireImmediately: true }));
                     break;
-                case 'delete':
+                case 'delete': {
                     remote_obj = change.oldValue;
                     if (remote_obj.disposers.get(disposer_name)) {
                         remote_obj.disposers.get(disposer_name)();
                         remote_obj.disposers.delete(disposer_name);
                     }
                     const foreignID = remote_obj[remote_foreign_id_field];
-                    let obj = modelDescription.cache.get(foreignID);
+                    const obj = modelDescription.cache.get(foreignID);
                     if (obj)
                         runInAction(() => { obj[field_name] = undefined; });
                     break;
+                }
             }
         }));
     };
@@ -1869,19 +1874,20 @@ function many(remote_model, remote_foreign_id) {
                         }
                     }), { fireImmediately: true }));
                     break;
-                case 'delete':
+                case 'delete': {
                     remote_obj = remote_change.oldValue;
                     if (remote_obj.disposers.get(disposer_name)) {
                         remote_obj.disposers.get(disposer_name)();
                         remote_obj.disposers.delete(disposer_name);
                     }
-                    let obj = modelDescription.cache.get(remote_obj[remote_foreign_id_field]);
+                    const obj = modelDescription.cache.get(remote_obj[remote_foreign_id_field]);
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj);
                         if (i > -1)
                             runInAction(() => { obj[field_name].splice(i, 1); });
                     }
                     break;
+                }
             }
         }));
     };
@@ -1911,14 +1917,14 @@ function id(typeDescriptor, observable = true) {
                 if (observable)
                     extendObservable(obj, { [fieldName]: obj[fieldName] });
                 obj.disposers.set('before changes', intercept(obj, fieldName, (change) => {
-                    let oldValue = obj[fieldName];
+                    const oldValue = obj[fieldName];
                     if (change.newValue !== undefined && oldValue !== undefined)
                         throw new Error(`You cannot change id field: ${oldValue} to ${change.newValue}`);
                     if (change.newValue === undefined && oldValue !== undefined)
                         modelDescription.cache.eject(obj);
                     return change;
                 }));
-                obj.disposers.set('after changes', observe(obj, fieldName, (change) => {
+                obj.disposers.set('after changes', observe(obj, fieldName, (_change) => {
                     if (obj.ID !== undefined)
                         modelDescription.cache.inject(obj);
                 }));
@@ -1952,9 +1958,11 @@ class SingleFilter extends Filter {
         return this.input.isReady;
     }
     get URLSearchParams() {
-        let search_params = new URLSearchParams();
-        let value = this.input.toString();
-        !this.input.isDisabled && value !== undefined && search_params.set(this.getURIField(this.field), value);
+        const search_params = new URLSearchParams();
+        const value = this.input.toString();
+        if (!this.input.isDisabled && value !== undefined) {
+            search_params.set(this.getURIField(this.field), value);
+        }
         return search_params;
     }
     isMatch(obj) {
@@ -1969,13 +1977,13 @@ __decorate([
     __metadata("design:type", Variable)
 ], SingleFilter.prototype, "input", void 0);
 function match(obj, field_name, filter_value, operator) {
-    let field_names = field_name.split('__');
-    let current_field_name = field_names[0];
-    let current_value = obj[current_field_name];
+    const field_names = field_name.split('__');
+    const current_field_name = field_names[0];
+    const current_value = obj[current_field_name];
     if (field_names.length === 1)
         return operator(current_value, filter_value);
     else if (field_names.length > 1) {
-        let next_field_name = field_name.substring(field_names[0].length + 2);
+        const next_field_name = field_name.substring(field_names[0].length + 2);
         // we have object relation
         if (typeof current_value === 'object' && current_value !== null) {
             if (Array.isArray(current_value)) {
@@ -2015,17 +2023,25 @@ function LTE(field, input) {
     return new SingleFilter(field, input, (field) => `${field}__lte`, (a, b) => a <= b);
 }
 function LIKE(field, input) {
-    return new SingleFilter(field, input, (field) => `${field}__contains`, (a, b) => a.includes(b));
+    return new SingleFilter(field, input, (field) => `${field}__contains`, (a, b) => {
+        if (typeof a !== 'string')
+            return false;
+        return a.includes(b);
+    });
 }
 function ILIKE(field, input) {
-    return new SingleFilter(field, input, (field) => `${field}__icontains`, (a, b) => a.toLowerCase().includes(b.toLowerCase()));
+    return new SingleFilter(field, input, (field) => `${field}__icontains`, (a, b) => {
+        if (typeof a !== 'string')
+            return false;
+        return a.toLowerCase().includes(b.toLowerCase());
+    });
 }
 function IN(field, input) {
     return new SingleFilter(field, input, (field) => `${field}__in`, (a, b) => {
         // it's always match if value of filter is empty []
         if (b.length === 0)
             return true;
-        for (let v of b) {
+        for (const v of b) {
             if (v === a)
                 return true;
         }
@@ -2040,15 +2056,15 @@ class ComboFilter extends Filter {
         this.filters = filters;
     }
     get isReady() {
-        for (let filter of this.filters) {
+        for (const filter of this.filters) {
             if (!filter.isReady)
                 return false;
         }
         return true;
     }
     get URLSearchParams() {
-        let search_params = new URLSearchParams();
-        for (let filter of this.filters) {
+        const search_params = new URLSearchParams();
+        for (const filter of this.filters) {
             filter.URLSearchParams.forEach((value, key) => search_params.set(key, value));
         }
         return search_params;
@@ -2056,7 +2072,7 @@ class ComboFilter extends Filter {
 }
 class AND_Filter extends ComboFilter {
     isMatch(obj) {
-        for (let filter of this.filters) {
+        for (const filter of this.filters) {
             if (!filter.isMatch(obj)) {
                 return false;
             }
@@ -2077,15 +2093,15 @@ class Adapter {
  * ReadOnlyAdapter not allow to create, update or delete objects.
  */
 class ReadOnlyAdapter extends Adapter {
-    async create() { throw (`You cannot create using READ ONLY adapter.`); }
-    async update() { throw (`You cannot update using READ ONLY adapter.`); }
-    async delete() { throw (`You cannot delete using READ ONLY adapter.`); }
+    async create() { throw ('You cannot create using READ ONLY adapter.'); }
+    async update() { throw ('You cannot update using READ ONLY adapter.'); }
+    async delete() { throw ('You cannot delete using READ ONLY adapter.'); }
 }
 
 /**
  * Local storage.
  */
-let local_store = {};
+const local_store = {};
 /**
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
@@ -2096,8 +2112,8 @@ class LocalAdapter extends Adapter {
         local_store[this.store_name] = {};
     }
     init_local_data(data) {
-        let objs = {};
-        for (let obj of data) {
+        const objs = {};
+        for (const obj of data) {
             objs[obj.id] = obj;
         }
         local_store[this.store_name] = objs;
@@ -2112,13 +2128,13 @@ class LocalAdapter extends Adapter {
             await timeout(this.delay);
         // calculate and set new ID
         // skip non-numeric IDs (e.g. UUID/string) so parseInt's NaN can't poison Math.max
-        let ids = [0];
-        for (let id of Object.keys(local_store[this.store_name])) {
-            let parsed = parseInt(id);
+        const ids = [0];
+        for (const id of Object.keys(local_store[this.store_name])) {
+            const parsed = parseInt(id);
             if (!isNaN(parsed))
                 ids.push(parsed);
         }
-        let max = Math.max(...ids);
+        const max = Math.max(...ids);
         // copy before mutating so we don't modify the caller's object
         raw_data = { ...raw_data, id: max + 1 };
         local_store[this.store_name][raw_data.id] = raw_data;
@@ -2127,8 +2143,8 @@ class LocalAdapter extends Adapter {
     async update(id, only_changed_raw_data) {
         if (this.delay)
             await timeout(this.delay);
-        let raw_obj = local_store[this.store_name][id];
-        for (let field of Object.keys(only_changed_raw_data)) {
+        const raw_obj = local_store[this.store_name][id];
+        for (const field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field];
         }
         return raw_obj;
@@ -2138,17 +2154,17 @@ class LocalAdapter extends Adapter {
             await timeout(this.delay);
         delete local_store[this.store_name][id];
     }
-    async action(id, name, kwargs) {
+    async action(_id, _name, _kwargs) {
         console.error('Action method is not implemented for local adapter');
         // ignore error
         // throw(`Not implemented`)
     }
-    async get(id, config) {
+    async get(id, _config) {
         if (this.delay)
             await timeout(this.delay);
         return local_store[this.store_name][id];
     }
-    async modelAction(name, kwargs, config) {
+    async modelAction(_name, _kwargs, _config) {
         console.error('Model action method is not implemented for local adapter');
         // ignore error
         // throw(`Not implemented`)
@@ -2156,7 +2172,7 @@ class LocalAdapter extends Adapter {
     async find(query) {
         if (this.delay)
             await timeout(this.delay);
-        for (let raw_obj of Object.values(local_store[this.store_name])) {
+        for (const raw_obj of Object.values(local_store[this.store_name])) {
             if (!query.filter || query.filter.isMatch(raw_obj)) {
                 return raw_obj;
             }
@@ -2168,7 +2184,7 @@ class LocalAdapter extends Adapter {
             await timeout(this.delay);
         let raw_objs = [];
         if (query.filter) {
-            for (let raw_obj of Object.values(local_store[this.store_name])) {
+            for (const raw_obj of Object.values(local_store[this.store_name])) {
                 if (query.filter.isMatch(raw_obj)) {
                     raw_objs.push(raw_obj);
                 }
@@ -2180,7 +2196,7 @@ class LocalAdapter extends Adapter {
         // order_by (sort)
         if (query.orderBy.value) {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
-                for (let sort_by_field of query.orderBy.value) {
+                for (const sort_by_field of query.orderBy.value) {
                     if (sort_by_field[1] === ASC) {
                         if (obj_a[sort_by_field[0]] < obj_b[sort_by_field[0]])
                             return -1;
@@ -2233,7 +2249,7 @@ class LocalAdapter extends Adapter {
         }
         return Array.from(values);
     }
-    getURLSearchParams(query) {
+    getURLSearchParams(_query) {
         return new URLSearchParams();
     }
 }
@@ -2251,8 +2267,7 @@ class ConstantAdapter extends Adapter {
         this.constant = constant;
     }
     async action() {
-        console.warn('ConstantAdapter.action not implemented');
-        return {};
+        throw new Error('ConstantAdapter.action should not be used.');
     }
     async create() {
         throw new Error('ConstantAdapter.create should not be used.');
@@ -2266,7 +2281,7 @@ class ConstantAdapter extends Adapter {
     async get() {
         throw new Error('ConstantAdapter.get should not be used.');
     }
-    async modelAction(name, kwargs, config) {
+    async modelAction(_name, _kwargs, _config) {
         throw new Error('ConstantAdapter.modelAction should not be used.');
     }
     async find() {
@@ -2358,7 +2373,8 @@ class Form {
         });
         try {
             const response = await this.apply();
-            this.onSuccess && this.onSuccess(response);
+            if (this.onSuccess)
+                this.onSuccess(response);
         }
         catch (err) {
             this.errorHandler(err);
@@ -2368,14 +2384,15 @@ class Form {
         }
     }
     cancel() {
-        this.onCancel && this.onCancel();
+        if (this.onCancel)
+            this.onCancel();
     }
     /**
      * Convert inputs to simple key-value object.
      */
     getKeyValueInputs() {
         const inputs = {};
-        for (let fieldName of Object.keys(this.inputs))
+        for (const fieldName of Object.keys(this.inputs))
             inputs[fieldName] = this.inputs[fieldName].value;
         return inputs;
     }
@@ -2434,14 +2451,14 @@ class SaveObjectForm extends ObjectForm {
             || !!modelDescriptor.relations[name]
             || name === modelDescriptor.id;
         // check if all fields from inputs are in obj
-        for (let fieldName of Object.keys(this.inputs))
+        for (const fieldName of Object.keys(this.inputs))
             if (!isKnownField(fieldName))
                 throw new Error(`ObjectForm error: object has no field ${fieldName}`);
         // move all values from inputs to obj
         // cast to the non-generic Model so the index signature allows writes
         const obj = this.obj;
         runInAction(() => {
-            for (let fieldName of Object.keys(this.inputs)) {
+            for (const fieldName of Object.keys(this.inputs)) {
                 // correct fieldName if it is foreign obj to foreign id
                 if (modelDescriptor.relations[fieldName]) {
                     const idFieldName = modelDescriptor.relations[fieldName].settings.foreign_id;

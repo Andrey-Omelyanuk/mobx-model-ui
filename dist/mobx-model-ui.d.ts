@@ -5,7 +5,7 @@ declare const config: {
     FORM_UNKNOWN_ERROR_MESSAGE: string;
     UPDATE_SEARCH_PARAMS: (search_params: URLSearchParams) => void;
     WATCH_URL_CHANGES: (callback: any) => () => void;
-    DEBOUNCE: (func: Function, debounce: number) => (this: any, ...args: any[]) => void;
+    DEBOUNCE: (func: (...args: any[]) => any, debounce: number) => (this: any, ...args: any[]) => void;
     COOKIE_DOMAIN: string;
 };
 
@@ -517,7 +517,7 @@ declare abstract class Model implements Destroyable {
     /**
      * @param init - initial data of the object
      */
-    constructor(init?: {});
+    constructor(_init?: Record<string, any>);
     /**
      * @returns {ModelDescriptor} - model descriptor
      */
@@ -624,18 +624,18 @@ declare function field<T>(typeDescriptor?: TypeDescriptor<T>, observable?: boole
 /**
  * Decorator for foreign fields
  */
-declare function foreign<M extends Model>(foreign_model: any, foreign_id?: string): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+declare function foreign<_M extends Model>(foreign_model: any, foreign_id?: string): <M extends Model>(cls: M | ((new (...args: any[]) => M) & {
     modelName?: string;
 }), field_name: string) => void;
 
-declare function one<M extends Model>(remote_model: any, remote_foreign_id?: string): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+declare function one<_M extends Model>(remote_model: any, remote_foreign_id?: string): <M extends Model>(cls: M | ((new (...args: any[]) => M) & {
     modelName?: string;
 }), field_name: string) => void;
 
 /**
  * Decorator for many fields
  */
-declare function many<M extends Model>(remote_model: any, remote_foreign_id?: string): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+declare function many<_M extends Model>(remote_model: any, remote_foreign_id?: string): <M extends Model>(cls: M | ((new (...args: any[]) => M) & {
     modelName?: string;
 }), field_name: string) => void;
 
@@ -644,7 +644,7 @@ declare function many<M extends Model>(remote_model: any, remote_foreign_id?: st
  * Only id field can register model in models map,
  * because it invoke before a model decorator.
  */
-declare function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable?: boolean): <M_1 extends Model>(cls: M_1 | ((new (...args: any[]) => M_1) & {
+declare function id<_M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable?: boolean): <M extends Model>(cls: M | ((new (...args: any[]) => M) & {
     modelName?: string;
 }), fieldName: string) => void;
 
@@ -660,7 +660,7 @@ declare abstract class ReadOnlyAdapter<M extends Model> extends Adapter<M> {
 /**
  * Local storage.
  */
-declare let local_store: Record<string, Record<string, any>>;
+declare const local_store: Record<string, Record<string, any>>;
 /**
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
@@ -673,14 +673,14 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     create(raw_data: any): Promise<any>;
     update(id: ID, only_changed_raw_data: any): Promise<any>;
     delete(id: ID): Promise<void>;
-    action(id: ID, name: string, kwargs: Record<string, any>): Promise<any>;
-    get(id: ID, config?: RequestConfig): Promise<any>;
-    modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
+    action(_id: ID, _name: string, _kwargs: Record<string, any>): Promise<any>;
+    get(id: ID, _config?: RequestConfig): Promise<any>;
+    modelAction(_name: string, _kwargs: Record<string, any>, _config?: RequestConfig): Promise<any>;
     find(query: Query<M>): Promise<any>;
     load(query: Query<M>): Promise<any[]>;
     getTotalCount(filter?: Filter): Promise<number>;
     getDistinct(filter: Filter, field: string): Promise<any[]>;
-    getURLSearchParams(query: Query<M>): URLSearchParams;
+    getURLSearchParams(_query: Query<M>): URLSearchParams;
 }
 declare function local(store_name?: string): (cls: any) => void;
 
@@ -692,7 +692,7 @@ declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     update(): Promise<any>;
     delete(): Promise<void>;
     get(): Promise<any>;
-    modelAction(name: string, kwargs: Record<string, any>, config?: RequestConfig): Promise<any>;
+    modelAction(_name: string, _kwargs: Record<string, any>, _config?: RequestConfig): Promise<any>;
     find(): Promise<any>;
     load(): Promise<any[]>;
     getTotalCount(): Promise<number>;
