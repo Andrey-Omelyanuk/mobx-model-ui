@@ -1,5 +1,31 @@
 # TODO — mobx-model-ui
 
+## 1. Баги (Bugs)
+
+### 1.1 `ready()` ждёт ложь вместо готовности
+
+**Файл**: `src/queries/query.ts`, строка 124
+**Проблема**: `ready()` вызывает `waitIsFalse(this, 'isReady')` — резолвится, когда `isReady` становится **ложным**, хотя по смыслу должно ждать готовности (`isReady === true`).
+**Фикс**: заменить на `waitIsTrue(this, 'isReady')` (добавить импорт `waitIsTrue` из `../utils`).
+
+### 1.2 Raw-запросы кладут не-Model объекты в `M[]`
+
+**Файлы**: `src/queries/query-raw.ts` (строка 14), `src/queries/query-raw-page.ts` (строка 15)
+**Проблема**: `QueryRaw`/`QueryRawPage` присваивают сырые объекты в `__items: M[]` — нарушение типа: сырые данные не являются инстансами `Model`, а `items` наследуется от `Query<M>` и обещает `M[]`.
+**Фикс**: развести типы — либо отдельный `RawQuery<M>`, не наследующий `Query<M>`, либо отдельное хранилище для сырых элементов / union-тип.
+
+### 1.3 `LIKE`/`ILIKE` падают на нестроковых значениях
+
+**Файл**: `src/filters/SingleFilter.ts`, строки 97 и 101
+**Проблема**: `LIKE` — `a.includes(b)` бросает исключение, если `a` не строка (number, null); `ILIKE` — `a.toLowerCase()` так же.
+**Фикс**: добавить type-guard `if (typeof a !== 'string') return false` в оба оператора.
+
+### 1.4 `rawObj` мутирует результат `rawData` *(не критично)*
+
+**Файл**: `src/model/model.ts`, строки 112-117
+**Проблема**: геттер `rawObj` мутирует объект, полученный из `rawData` (`rawObj[idFieldName] = ...`). Сейчас не баг — `rawData` возвращает новый объект при каждом вызове, — но хрупко: сломается, если `rawData` станет `@computed`/мемоизированным.
+**Фикс**: не мутировать: `return { ...this.rawData, [idFieldName]: this[idFieldName] }`.
+
 ## 2. Улучшения (Improvements)
 
 ### 2.2 Нет OR-фильтра
@@ -50,6 +76,72 @@
 **Файл**: `src/queries/query-raw.spec.ts`, тест `timestamp` (строка ~84); причина в `src/queries/query.ts`, строка 218
 **Проблема**: Тест ожидает `query.timestamp === timestamp + 1` после двух подряд `load()`. `timestamp` строится на `Date.now()`: инкремент `+1` происходит, только если обе загрузки попали в одну миллисекунду. Если между ними прошла ≥1 мс, `timestamp` становится новым `now` (больше, чем `timestamp + 1`), и тест падает. Флакает и на неизменённом коде.
 **Фикс**: сделать `timestamp` монотонным счётчиком, не зависящим от `Date.now()` (например, всегда `timestamp = (this.timestamp ?? 0) + 1`), либо в тесте проверять `timestamp > previous`, а не точное `+1`.
+
+### 2.14 Включить полный strict-режим TypeScript
+
+**Файл**: `tsconfig.json`, строка 10
+**Проблема**: `strictNullChecks`, `noImplicitAny`, `strictPropertyInitialization`, `useUnknownInCatchVariables` уже включены по отдельности, но `"strict": true` закомментирован. Остаются выключенными `strictFunctionTypes`, `strictBindCallApply`, `noImplicitThis`, `alwaysStrict`.
+**Фикс**: включить `"strict": true` и починить возникшие ошибки.
+
+### 2.15 `get model()` использует `__proto__`
+
+**Файл**: `src/model/model.ts`, строки 92-94
+**Проблема**: используется устаревший `(<any>this.constructor).__proto__`.
+**Фикс**: `Object.getPrototypeOf(this.constructor)`.
+
+### 2.16 Нестрогое сравнение `!=` в `Model`
+
+**Файл**: `src/model/model.ts`, строки 122 и 131 (`only_changed_raw_data`, `is_changed`)
+**Проблема**: используется `!=` (loose equality) вместо `!==`.
+**Фикс**: заменить на `!==`.
+
+### 2.17 `local_store` — мутабельный глобал модуля
+
+**Файл**: `src/adapters/local.ts`, строка 13
+**Проблема**: `local_store` — глобальная мутабельная мапа уровня модуля, общая для всех инстансов адаптера. Тесты могут протекать состоянием между собой.
+**Фикс**: инкапсулировать стор в инстанс адаптера, либо экспортировать read-only с методами мутации + очистка в setup тестов.
+
+### 2.18 `get items()` возвращает внутренний массив
+
+**Файл**: `src/queries/query.ts`, строка 70
+**Проблема**: `get items()` возвращает `__items` напрямую — внешний код может мутировать внутреннее состояние. (`QueryCacheSync.items` уже возвращает копию.)
+**Фикс**: возвращать копию (`[...this.__items]`), либо явно задокументировать, что мутация допускается.
+
+### 2.19 `LocalAdapter` пишет `console.error` вместо ошибки
+
+**Файл**: `src/adapters/local.ts`, строки 73 и 84 (`action`, `modelAction`)
+**Проблема**: нереализованные методы делают `console.error` и молча возвращают `undefined` — тихие сбои в тестах.
+**Фикс**: бросать `Error('Not implemented')`.
+
+### 2.20 `setTimeout(() => this.load())` без обработки ошибки
+
+**Файл**: `src/queries/query.ts`, строка 144
+**Проблема**: в autoupdate `setTimeout(() => this.load(), ...)` — промис `load()` без `.catch()`, потенциальный unhandled rejection.
+**Фикс**: добавить `.catch()`.
+
+### 2.21 Удалить устаревший класс `Input`
+
+**Файл**: `src/inputs/Variable.ts`, строки 117-125
+**Проблема**: класс `Input` помечен DEPRECATED (замена — `Variable`), мёртвый код.
+**Фикс**: удалить в следующем major (сейчас уже есть `@deprecated`-комментарий).
+
+### 2.22 `Model` использует `export default`
+
+**Файл**: `src/model/model.ts`, строка 13
+**Проблема**: `export default abstract class Model`, тогда как все остальные модули используют именованные экспорты.
+**Фикс**: перейти на именованный экспорт для единообразия.
+
+### 2.23 `config` — мутабельный объект
+
+**Файл**: `src/config.ts`
+**Проблема**: `config` — обычный мутабельный объект, любой потребитель может перезаписать значения.
+**Фикс**: `Object.freeze()` или класс с приватными полями и сеттерами.
+
+### 2.24 Разнобой в нейминге (snake_case / UPPER_CASE / camelCase)
+
+**Файлы**: `src/model/model.ts` (`init_data`, `only_changed_raw_data`, `is_changed`), `src/config.ts` (`DEBOUNCE`, `UPDATE_SEARCH_PARAMS` — UPPER_CASE), `src/adapters/local.ts` (`init_local_data`, `store_name`), `src/queries/query-page.ts` (`is_first_page`/`isFirstPage` — оба стиля)
+**Проблема**: смешение snake_case, UPPER_CASE и camelCase. В `query-page.ts` camelCase-алиасы намеренны (совместимость с JS-стилем), остальное — исторический разнобой.
+**Фикс**: выбрать camelCase как основной для TS/JS, snake_case-имена задепрекейтить (breaking change — планировать на major).
 
 ---
 
