@@ -49,10 +49,6 @@
 
 **Описание**: `ComboFilter` поддерживает только `AND`. Нужен `OR` и `NOT`.
 
-### 3.3 Cross-field validation в Form
-
-**Описание**: Правила вида `end_date > start_date` требуют валидации на уровне формы, а не отдельных полей.
-
 ### 3.6 Batch / Transaction операции в Repository
 
 **Описание**: `saveAll()`, `deleteAll()`, `transaction()` для массовых операций.

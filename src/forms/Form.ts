@@ -4,10 +4,26 @@ import { config } from '../config'
 import { Destroyable } from '../object'
 
 /**
+ * A map of field names to their validation error messages.
+ * Key is an input name (or FORM_NON_FIELD_ERRORS_KEY for form-level errors).
+ * Value is an array of error messages for that field.
+ */
+export type ValidationErrors = Record<string, string[]> | null | undefined
+
+/**
+ * A validator function that checks cross-field constraints.
+ * Receives the form's inputs map and returns either:
+ * - null/undefined: the field(s) are valid
+ * - Record<string, string[]>: field-level errors keyed by input name.
+ *   Use `FORM_NON_FIELD_ERRORS_KEY` for form-level errors.
+ */
+export type Validator = (inputs: Record<string, Variable<any>>) => ValidationErrors
+
+/**
  * Base abstract class for all forms.
  * 
  * Form is an object that contains inputs and methods to work with them.
- * Also it controls loading state and errors.
+ * Also it controls loading state, cross-field validation, and errors.
  * 
  */
 export abstract class Form implements Destroyable {
@@ -17,6 +33,12 @@ export abstract class Form implements Destroyable {
     readonly inputs    : { [key: string]: Variable<any> }
     readonly onSuccess?: (this: Form, response?: any) => void
     readonly onCancel ?: (this: Form) => void
+
+    /**
+     * Array of cross-field validators.
+     * Subclasses can push validators in their constructor or override `validate()`.
+     */
+    validators: Validator[] = []
 
     constructor(
         inputs   : { [key: string]: Variable<any> },
@@ -58,6 +80,36 @@ export abstract class Form implements Destroyable {
         Object.values(this.inputs).forEach(input => input.reset())
     }
 
+    /**
+     * Run all cross-field validators and return aggregated errors.
+     * Returns null when valid, or a map of field→messages when invalid.
+     * Can be overridden by subclasses for custom validation logic.
+     */
+    validate(): ValidationErrors {
+        const allErrors: Record<string, string[]> = {}
+        for (const validator of this.validators) {
+            const errors = validator(this.inputs)
+            if (errors) {
+                for (const [key, msgs] of Object.entries(errors)) {
+                    if (!allErrors[key]) allErrors[key] = []
+                    allErrors[key].push(...msgs)
+                }
+            }
+        }
+        return Object.keys(allErrors).length ? allErrors : null
+    }
+
+    /**
+     * Clear all errors on the form and all its inputs.
+     */
+    @action
+    clearErrors(): void {
+        this.errors = []
+        for (const input of Object.values(this.inputs)) {
+            input.errors = []
+        }
+    }
+
     abstract apply(): Promise<any>
 
     errorHandler(err: any) {
@@ -90,9 +142,28 @@ export abstract class Form implements Destroyable {
             throw new Error('Form is not ready to be submitted')
         }
 
+        // Clear all previous errors before running cross-field validation
+        this.clearErrors()
+
+        // Run cross-field validation
+        const validationErrors = this.validate()
+        if (validationErrors) {
+            runInAction(() => {
+                for (const [key, msgs] of Object.entries(validationErrors)) {
+                    if (key === config.FORM_NON_FIELD_ERRORS_KEY) {
+                        this.errors.push(...msgs)
+                    } else if (this.inputs[key]) {
+                        this.inputs[key].errors = msgs
+                    } else {
+                        this.errors.push(...msgs)
+                    }
+                }
+            })
+            throw new Error('Form validation failed')
+        }
+
         runInAction(() => {
             this.isLoading = true
-            this.errors = []
         })
 
         try {
