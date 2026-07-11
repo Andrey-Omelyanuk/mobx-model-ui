@@ -177,6 +177,17 @@ describe('Query', () => {
                 done()
             });                                                         expect(query.isLoading).toBe(false)
         })
+
+        it('ready() resolves when isReady becomes true after load', async () => {
+            const query = new Query<A>({repository: repositoryA})
+            expect(query.isReady).toBe(false) // isNeedToUpdate starts as true
+
+            await query.load()
+            expect(query.isReady).toBe(true)
+
+            // After load, ready() should resolve immediately (not wait for false)
+            await expect(query.ready()).resolves.toBe(true)
+        })
     })
 
     describe('autoupdate', () => {

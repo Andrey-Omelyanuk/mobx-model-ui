@@ -2,7 +2,7 @@ import { action, makeObservable, observable, reaction, runInAction } from 'mobx'
 import { Repository } from '../repository'
 import { Model } from '../model'
 import { Filter } from '../filters/Filter'
-import { waitIsFalse } from '../utils'
+import { waitIsFalse, waitIsTrue } from '../utils'
 import { Variable } from '../inputs'
 import { config } from '../config'
 import { ARRAY, NUMBER, STRING, ORDER_BY, ID } from '../types'
@@ -121,7 +121,7 @@ export class Query <M extends Model> implements Destroyable {
     }
 
     async loading() { return waitIsFalse(this, 'isLoading') }
-    async ready()   { return waitIsFalse(this, 'isReady') }
+    async ready()   { return waitIsTrue(this, 'isReady') }
 
     get autoupdate() : boolean {
         return this.disposers.has(DISPOSER_AUTOUPDATE)
