@@ -1617,15 +1617,18 @@
         // set default repository
         constructor.defaultRepository = new Repository(modelDescriptor);
         // the field decorators run first, then the model decorator
-        // id decorator creates the model descriptor and registers it in models 
-        // so, we cannot catch the case when we try to declare a model with the same name 
+        // id decorator creates the model descriptor and registers it in models
+        // so, we cannot catch the case when we try to declare a model with the same name
+        // Proxy class created once per model (not per instance): its `__proto__`
+        // points at the original class so `Model.model` (`this.constructor.__proto__`)
+        // resolves to the user's class instead of the base `Model`.
+        const proxy = class extends constructor {
+            constructor(...args) { super(...args); }
+        };
+        proxy.__proto__ = constructor;
         // the new constructor
         let f = function (...args) {
-            let c = class extends constructor {
-                constructor(...args) { super(...args); }
-            };
-            c.__proto__ = constructor;
-            let obj = new c();
+            let obj = new proxy();
             obj.modelName = modelName;
             mobx.makeObservable(obj);
             const descriptor = obj.modelDescriptor;
