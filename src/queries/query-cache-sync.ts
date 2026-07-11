@@ -11,29 +11,29 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         // watch the cache for changes, and update items if needed
         this.disposers.set('cacheSync', observe(this.repository.modelDescriptor.cache.store,
             action('MO: Query - update from cache changes',
-            (change: any) => {
-                if (change.type == 'add') {
-                    this.__watch_obj(change.newValue)
-                }
-                if (change.type == 'delete') {
-                    let id = change.name
-                    let obj = change.oldValue
-
-                    const key = `obj:${id}`
-                    this.disposers.get(key)?.()
-                    this.disposers.delete(key)
-
-                    let i = this.__items.indexOf(obj)
-                    if (i != -1) {
-                        this.__items.splice(i, 1)
-                        this.total = this.__items.length
+                (change: any) => {
+                    if (change.type == 'add') {
+                        this.__watch_obj(change.newValue)
                     }
-                }
-            })
+                    if (change.type == 'delete') {
+                        const id = change.name
+                        const obj = change.oldValue
+
+                        const key = `obj:${id}`
+                        this.disposers.get(key)?.()
+                        this.disposers.delete(key)
+
+                        const i = this.__items.indexOf(obj)
+                        if (i != -1) {
+                            this.__items.splice(i, 1)
+                            this.total = this.__items.length
+                        }
+                    }
+                })
         ))
 
         // ch all exist objects of model 
-        for(let [id, obj] of this.repository.modelDescriptor.cache.store) {
+        for(const [, obj] of this.repository.modelDescriptor.cache.store) {
             this.__watch_obj(obj)
         }
     }
@@ -53,9 +53,9 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
 
     @computed
     get items() { 
-        let __items = [...this.__items]
+        const __items = [...this.__items]
         if (this.orderBy.value && this.orderBy.value.length) {
-            let compare = (a: M, b: M) => {
+            const compare = (a: M, b: M) => {
                 for(const [key, value] of this.orderBy.value) {
                     if (value === ASC) {
                         if ((a[key] === undefined || a[key] === null) && (b[key] !== undefined && b[key] !== null)) return  1
@@ -83,16 +83,16 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         this.disposers.set(key, reaction(
             () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',
-            (should: boolean) => {
-                let i = this.__items.indexOf(obj)
-                // should be in the items and it is not in the items? add it to the items
-                if ( should && i == -1) this.__items.push(obj)
-                // should not be in the items and it is in the items? remove it from the items
-                if (!should && i != -1) this.__items.splice(i, 1)
+                (should: boolean) => {
+                    const i = this.__items.indexOf(obj)
+                    // should be in the items and it is not in the items? add it to the items
+                    if ( should && i == -1) this.__items.push(obj)
+                    // should not be in the items and it is in the items? remove it from the items
+                    if (!should && i != -1) this.__items.splice(i, 1)
 
-                if (this.total != this.__items.length) 
-                    this.total = this.__items.length
-            }),
+                    if (this.total != this.__items.length) 
+                        this.total = this.__items.length
+                }),
             { fireImmediately: true }
         ))
     }

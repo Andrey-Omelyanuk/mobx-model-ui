@@ -1,5 +1,4 @@
 import { Cache } from '../cache'
-import { Repository } from '../repository' 
 import { ID, TypeDescriptor } from '../types'
 import Model from './model'
 

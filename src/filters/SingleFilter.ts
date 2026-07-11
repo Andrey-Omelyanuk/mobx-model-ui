@@ -31,9 +31,11 @@ export class SingleFilter extends Filter {
     }
 
     get URLSearchParams(): URLSearchParams {
-        let search_params = new URLSearchParams()
-        let value = this.input.toString()
-        !this.input.isDisabled && value !== undefined && search_params.set(this.getURIField(this.field), value)
+        const search_params = new URLSearchParams()
+        const value = this.input.toString()
+        if (!this.input.isDisabled && value !== undefined) {
+            search_params.set(this.getURIField(this.field), value)
+        }
         return search_params
     }
 
@@ -48,13 +50,13 @@ export class SingleFilter extends Filter {
 
 
 function match(obj: any, field_name: string, filter_value: any, operator: (value_a: any, value_b: any) => boolean): boolean {
-    let field_names = field_name.split('__')
-    let current_field_name = field_names[0]
-    let current_value = obj[current_field_name]
+    const field_names = field_name.split('__')
+    const current_field_name = field_names[0]
+    const current_value = obj[current_field_name]
 
-         if (field_names.length === 1) return operator(current_value, filter_value)
+    if (field_names.length === 1) return operator(current_value, filter_value)
     else if (field_names.length   > 1) {
-        let next_field_name = field_name.substring(field_names[0].length+2)
+        const next_field_name = field_name.substring(field_names[0].length+2)
         // we have object relation
         if (typeof current_value === 'object' && current_value !== null) {
             if (Array.isArray(current_value)) {
@@ -115,7 +117,7 @@ export function IN(field: string, input: Variable<any>) : SingleFilter {
             // it's always match if value of filter is empty []
             if (b.length === 0)
                 return true
-            for (let v of b) {
+            for (const v of b) {
                 if (v === a)
                     return true
             }

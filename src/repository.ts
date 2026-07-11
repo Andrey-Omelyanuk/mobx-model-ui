@@ -25,7 +25,7 @@ export class  Repository<M extends Model> {
      * Create the object. 
      */
     async create(obj: M, config?: RequestConfig) : Promise<M> {
-        let raw_obj = await this.adapter.create(obj.rawObj, config) // Id can be defined in the frontend => id should be passed to the create method if they exist
+        const raw_obj = await this.adapter.create(obj.rawObj, config) // Id can be defined in the frontend => id should be passed to the create method if they exist
         const rawObjID = this.modelDescriptor.getID(raw_obj)
         const cachedObj = this.modelDescriptor.cache.get(rawObjID)
         if (cachedObj) obj = cachedObj
@@ -38,7 +38,7 @@ export class  Repository<M extends Model> {
      * Update the object.
      */
     async update(obj: M, config?: RequestConfig) : Promise<M> {
-        let raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config)
+        const raw_obj = await this.adapter.update(obj.ID, obj.only_changed_raw_data, config)
         obj.updateFromRaw(raw_obj)
         obj.refreshInitData()
         return obj
@@ -78,7 +78,7 @@ export class  Repository<M extends Model> {
      * Returns ONE object by id.
      */
     async get(id: ID, config?: RequestConfig): Promise<M> {
-        let raw_obj = await this.adapter.get(id, config)
+        const raw_obj = await this.adapter.get(id, config)
         return this.modelDescriptor.updateCachedObject(raw_obj)
     }
 
@@ -86,7 +86,7 @@ export class  Repository<M extends Model> {
      * Returns ONE object by query.
      */
     async find(query: Query<M>, config?: RequestConfig): Promise<M> {
-        let raw_obj = await this.adapter.find(query, config)
+        const raw_obj = await this.adapter.find(query, config)
         return this.modelDescriptor.updateCachedObject(raw_obj)
     }
 
@@ -94,8 +94,8 @@ export class  Repository<M extends Model> {
      * Returns MANY objects by query. 
      */
     async load(query: Query<M>, config?: RequestConfig):Promise<M[]> {
-        let raw_objs = await this.adapter.load(query, config)
-        let objs: M[] = []
+        const raw_objs = await this.adapter.load(query, config)
+        const objs: M[] = []
         runInAction(() => {
             for (const raw_obj of raw_objs) {
                 objs.push(this.modelDescriptor.updateCachedObject(raw_obj))

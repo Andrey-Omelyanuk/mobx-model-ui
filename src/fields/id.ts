@@ -8,7 +8,7 @@ import { Model, ModelDescriptor, models } from '../model'
  * Only id field can register model in models map,
  * because it invoke before a model decorator.
  */
-export function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable: boolean = true) {
+export function id<_M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observable: boolean = true) {
     return <M extends Model>(cls: M | ((new (...args: any[]) => M) & { modelName?: string }), fieldName: string) => {
         const modelName = (cls as any).modelName ?? cls.constructor.name
         let modelDescription = models.get(modelName)
@@ -30,7 +30,7 @@ export function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observa
                 if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })
                 obj.disposers.set('before changes',
                     intercept(obj as any, fieldName, (change) => {
-                        let oldValue = obj[fieldName]
+                        const oldValue = obj[fieldName]
                         if (change.newValue !== undefined && oldValue !== undefined)
                             throw new Error(`You cannot change id field: ${oldValue} to ${change.newValue}`)
                         if (change.newValue === undefined && oldValue !== undefined)
@@ -39,7 +39,7 @@ export function id<M extends Model>(typeDescriptor?: TypeDescriptor<ID>, observa
                     })
                 )
                 obj.disposers.set('after changes',
-                    observe(obj as any, fieldName, (change) => {
+                    observe(obj as any, fieldName, (_change) => {
                         if (obj.ID !== undefined)
                             modelDescription.cache.inject(obj)
                     })

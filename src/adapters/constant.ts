@@ -30,7 +30,7 @@ export class ConstantAdapter<M extends Model> extends Adapter<M> {
         throw new Error('ConstantAdapter.get should not be used.')
     }
 
-    async modelAction (name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> {
+    async modelAction (_name: string, _kwargs: Record<string, any>, _config?: RequestConfig) : Promise<any> {
         throw new Error('ConstantAdapter.modelAction should not be used.')
     }
 

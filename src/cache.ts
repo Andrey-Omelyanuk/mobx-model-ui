@@ -24,7 +24,7 @@ export class Cache<M extends Model> {
      */
     @action inject(obj: M) {
         if (obj.ID === undefined || obj.ID === null || obj.ID === '')
-            throw new Error(`Object should have id!`)
+            throw new Error('Object should have id!')
 
         const exist_obj = this.store.get(obj.ID)
         if (exist_obj && exist_obj !== obj)
@@ -45,7 +45,7 @@ export class Cache<M extends Model> {
      * Clear the cache
      */
     @action clear() {
-        for (let obj of this.store.values()) obj.destroy()
+        for (const obj of this.store.values()) obj.destroy()
         this.store.clear()
     }
 }

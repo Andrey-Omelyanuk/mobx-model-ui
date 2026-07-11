@@ -15,7 +15,7 @@ export const config = {
         return () => { window.removeEventListener('popstate', callback) }
     },
 
-    DEBOUNCE: (func: Function, debounce: number) => {
+    DEBOUNCE: (func: (...args: any[]) => any, debounce: number) => {
         let timeoutId: ReturnType<typeof setTimeout> | null = null
         return function(this: any, ...args: any[]) {
             if (timeoutId !== null) {

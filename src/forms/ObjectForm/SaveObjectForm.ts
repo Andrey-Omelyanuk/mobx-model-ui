@@ -13,18 +13,18 @@ export class SaveObjectForm<M extends Model> extends ObjectForm<M> {
         // internal props (init_data, disposers, modelName, ...), which would let an
         // input silently overwrite the object's internal state.
         const isKnownField = (name: string) =>
-               !!modelDescriptor.fields[name]
+            !!modelDescriptor.fields[name]
             || !!modelDescriptor.relations[name]
             || name === modelDescriptor.id
         // check if all fields from inputs are in obj
-        for (let fieldName of Object.keys(this.inputs))
+        for (const fieldName of Object.keys(this.inputs))
             if (!isKnownField(fieldName))
                 throw new Error(`ObjectForm error: object has no field ${fieldName}`)
         // move all values from inputs to obj
         // cast to the non-generic Model so the index signature allows writes
         const obj = this.obj as Model
         runInAction(()=> {
-            for (let fieldName of Object.keys(this.inputs)) {
+            for (const fieldName of Object.keys(this.inputs)) {
                 // correct fieldName if it is foreign obj to foreign id
                 if (modelDescriptor.relations[fieldName]) {
                     const idFieldName = modelDescriptor.relations[fieldName].settings.foreign_id

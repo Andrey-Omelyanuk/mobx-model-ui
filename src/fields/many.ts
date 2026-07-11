@@ -4,7 +4,7 @@ import { Model, models } from '../model'
 /**
  * Decorator for many fields
  */
-export function many<M extends Model>(remote_model: any, remote_foreign_id?: string) {
+export function many<_M extends Model>(remote_model: any, remote_foreign_id?: string) {
     return function <M extends Model>(cls: M | ((new (...args: any[]) => M) & { modelName?: string }), field_name: string) {
         const modelName = (cls as any).modelName ?? cls.constructor.name
         if (!modelName)
@@ -36,40 +36,41 @@ export function many<M extends Model>(remote_model: any, remote_foreign_id?: str
             observe(remoteModelDescriptor.cache.store, (remote_change: any) => {
                 let remote_obj: any
                 switch (remote_change.type) {
-                    case 'add':
-                        remote_obj = remote_change.newValue
-                        remote_obj.disposers.set(disposer_name , reaction(
-                            () => {
-                                return modelDescription.cache.get(remote_obj[remote_foreign_id_field])
-                            },
-                            action(disposer_name, (_new: any, _old: any) => {
-                                if (_old) {
-                                    const i = _old[field_name].indexOf(remote_obj)
-                                    if (i > -1)
-                                        _old[field_name].splice(i, 1)
-                                }
-                                if (_new) {
-                                    const i = _new[field_name].indexOf(remote_obj)
-                                    if (i === -1)
-                                        _new[field_name].push(remote_obj)
-                                } 
-                            }),
-                            {fireImmediately: true}
-                        ))
-                        break
-                    case 'delete':
-                        remote_obj = remote_change.oldValue
-                        if (remote_obj.disposers.get(disposer_name)) {
-                            remote_obj.disposers.get(disposer_name)()
-                            remote_obj.disposers.delete(disposer_name)
-                        }
-                        let obj = modelDescription.cache.get(remote_obj[remote_foreign_id_field])
-                        if (obj) {
-                            const i = obj[field_name].indexOf(remote_obj)
-                            if (i > -1)
-                                runInAction(() => { obj[field_name].splice(i, 1) })
-                        } 
-                        break
+                case 'add':
+                    remote_obj = remote_change.newValue
+                    remote_obj.disposers.set(disposer_name , reaction(
+                        () => {
+                            return modelDescription.cache.get(remote_obj[remote_foreign_id_field])
+                        },
+                        action(disposer_name, (_new: any, _old: any) => {
+                            if (_old) {
+                                const i = _old[field_name].indexOf(remote_obj)
+                                if (i > -1)
+                                    _old[field_name].splice(i, 1)
+                            }
+                            if (_new) {
+                                const i = _new[field_name].indexOf(remote_obj)
+                                if (i === -1)
+                                    _new[field_name].push(remote_obj)
+                            } 
+                        }),
+                        {fireImmediately: true}
+                    ))
+                    break
+                case 'delete': {
+                    remote_obj = remote_change.oldValue
+                    if (remote_obj.disposers.get(disposer_name)) {
+                        remote_obj.disposers.get(disposer_name)()
+                        remote_obj.disposers.delete(disposer_name)
+                    }
+                    const obj = modelDescription.cache.get(remote_obj[remote_foreign_id_field])
+                    if (obj) {
+                        const i = obj[field_name].indexOf(remote_obj)
+                        if (i > -1)
+                            runInAction(() => { obj[field_name].splice(i, 1) })
+                    }
+                    break
+                }
                 }
             })
         )

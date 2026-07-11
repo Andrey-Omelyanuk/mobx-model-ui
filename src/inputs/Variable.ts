@@ -21,11 +21,11 @@ export class Variable<T> implements Destroyable {
     @observable          isDebouncing        : boolean          //  
     @observable          isNeedToUpdate      : boolean          //  
     @observable          errors              : string[] = []    // validations or backend errors put here
-                readonly debounce           ?: number
-                readonly syncURL            ?: string
-                readonly syncLocalStorage   ?: string
-                readonly syncCookie         ?: string
-                         __disposers : (() => void)[] = []
+    readonly debounce           ?: number
+    readonly syncURL            ?: string
+    readonly syncLocalStorage   ?: string
+    readonly syncCookie         ?: string
+    __disposers : (() => void)[] = []
     
     // TODO: fix any, it should be InputConstructorArgs<T> but it is not working
     // it's look like a bug in the TypeScript
@@ -55,9 +55,9 @@ export class Variable<T> implements Destroyable {
         }
         // the order is important, because syncURL has more priority under syncLocalStorage
         // i.e. init from syncURL can overwrite value from syncLocalStorage
-        this.syncLocalStorage   && syncLocalStorageHandler(this.syncLocalStorage, this)
-        this.syncCookie         && syncCookieHandler(this.syncCookie, this)
-        this.syncURL            && syncURLHandler(this.syncURL, this)
+        if (this.syncLocalStorage) syncLocalStorageHandler(this.syncLocalStorage, this)
+        if (this.syncCookie) syncCookieHandler(this.syncCookie, this)
+        if (this.syncURL) syncURLHandler(this.syncURL, this)
     }
 
     destroy () {

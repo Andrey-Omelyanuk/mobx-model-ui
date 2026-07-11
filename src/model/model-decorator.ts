@@ -31,11 +31,11 @@ export default function model(constructor: any) {
     // points at the original class so `Model.model` (`this.constructor.__proto__`)
     // resolves to the user's class instead of the base `Model`.
     const proxy : any = class extends constructor { constructor (...args: any[]) { super(...args) } }
-        proxy.__proto__ = constructor
+    proxy.__proto__ = constructor
 
     // the new constructor
-    let f : any = function (...args: any[]) {
-        let obj = new proxy()
+    const f : any = function (...args: any[]) {
+        const obj = new proxy()
         obj.modelName = modelName
         makeObservable(obj)
 

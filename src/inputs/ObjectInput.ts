@@ -2,7 +2,7 @@ import { reaction, runInAction } from 'mobx'
 import { Query } from '../queries'
 import { Model } from '../model'
 import { Variable, VariableConstructorArgs } from './Variable'
-import { ID, STRING, TypeDescriptor } from '../types'
+import { ID, TypeDescriptor } from '../types'
 
 
 export interface ObjectInputConstructorArgs<M extends Model> extends VariableConstructorArgs<ID> {
@@ -22,7 +22,7 @@ export class ObjectInput<M extends Model> extends Variable<ID> {
                 (isReady, previousValue) => {
                     if(isReady && !previousValue) {
                         runInAction(() => this.isNeedToUpdate = true)
-                        args?.autoReset && args.autoReset(this)
+                        if (args?.autoReset) args.autoReset(this)
                     }
                 }
             ))

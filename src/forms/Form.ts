@@ -83,7 +83,7 @@ export abstract class Form implements Destroyable {
 
         try {
             const response = await this.apply()
-            this.onSuccess && this.onSuccess(response)
+            if (this.onSuccess) this.onSuccess(response)
         }
         catch (err) {
             this.errorHandler(err)
@@ -94,7 +94,7 @@ export abstract class Form implements Destroyable {
     }
 
     cancel() {
-        this.onCancel && this.onCancel()
+        if (this.onCancel) this.onCancel()
     }
 
     /**
@@ -102,7 +102,7 @@ export abstract class Form implements Destroyable {
      */
     getKeyValueInputs() {
         const inputs: any = {}
-        for (let fieldName of Object.keys(this.inputs))
+        for (const fieldName of Object.keys(this.inputs))
             inputs[fieldName] = this.inputs[fieldName].value
         return inputs
     }

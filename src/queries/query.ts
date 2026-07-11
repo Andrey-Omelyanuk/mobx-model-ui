@@ -76,7 +76,7 @@ export class Query <M extends Model> implements Destroyable {
     protected disposers         : Map<string, () => void> = new Map()
 
     constructor(props: QueryProps<M>) {
-        let {
+        const {
             repository, filter, orderBy, offset, limit,
             relations, fields, omit,
             autoupdate = true 
@@ -100,7 +100,7 @@ export class Query <M extends Model> implements Destroyable {
             () => {
                 return {dependenciesAreReady: this.dependenciesAreReady, value: this.toString()}
             },
-            ({dependenciesAreReady, value}) => {
+            ({dependenciesAreReady, value: _value}) => {
                 if(dependenciesAreReady && !this.isNeedToUpdate)
                     runInAction(() => this.isNeedToUpdate = true)
             },

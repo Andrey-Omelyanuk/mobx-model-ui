@@ -1,11 +1,11 @@
-import { Model, ModelDescriptor, models } from '../model'
+import { Model, models } from '../model'
 import {extendObservable, reaction, action} from 'mobx'
 
 
 /**
  * Decorator for foreign fields
  */
-export function foreign<M extends Model>(foreign_model: any, foreign_id?: string) {
+export function foreign<_M extends Model>(foreign_model: any, foreign_id?: string) {
     return function <M extends Model>(cls: M | ((new (...args: any[]) => M) & { modelName?: string }), field_name: string) {
         const modelName = (cls as any).modelName ?? cls.constructor.name
         if (!modelName)

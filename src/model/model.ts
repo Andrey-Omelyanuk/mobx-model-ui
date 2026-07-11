@@ -45,7 +45,7 @@ export default abstract class Model implements Destroyable {
     /**
      * @param init - initial data of the object 
      */
-    constructor (init?: {}) {}
+    constructor (_init?: Record<string, any>) {}
     /**
      * @returns {ModelDescriptor} - model descriptor
      */
@@ -97,7 +97,7 @@ export default abstract class Model implements Destroyable {
      * @returns {Object} - data only from fields (no id)
      */
     get rawData() : Record<string, any> {
-        let rawData: any = {}
+        const rawData: any = {}
         for (const fieldName in this.modelDescriptor.fields) {
             if(this[fieldName] !== undefined) {
                 rawData[fieldName] = this[fieldName]
@@ -117,8 +117,8 @@ export default abstract class Model implements Destroyable {
     }
 
     get only_changed_raw_data() : any {
-        let raw_data: any = {}
-        for(let field_name in this.modelDescriptor.fields) {
+        const raw_data: any = {}
+        for(const field_name in this.modelDescriptor.fields) {
             if(this[field_name] != this.init_data[field_name]) {
                 raw_data[field_name] = this[field_name]
             }
@@ -127,7 +127,7 @@ export default abstract class Model implements Destroyable {
     }
 
     get is_changed() : boolean {
-        for(let field_name in this.modelDescriptor.fields) {
+        for(const field_name in this.modelDescriptor.fields) {
             if (this[field_name] != this.init_data[field_name]) {
                 return true
             }
@@ -137,13 +137,13 @@ export default abstract class Model implements Destroyable {
 
     @action refreshInitData() {
         if(this.init_data === undefined) this.init_data = {}
-        for (let field_name in this.modelDescriptor.fields) {
+        for (const field_name in this.modelDescriptor.fields) {
             this.init_data[field_name] = this[field_name]
         }
     }
 
     @action cancelLocalChanges() {
-        for (let field_name in this.modelDescriptor.fields) {
+        for (const field_name in this.modelDescriptor.fields) {
             if (this[field_name] !== this.init_data[field_name]) {
                 this[field_name] = this.init_data[field_name]
             }
@@ -164,14 +164,14 @@ export default abstract class Model implements Destroyable {
         }
 
         // update the fields if the raw data is exist and it is different
-        for(let fieldName in this.modelDescriptor.fields) {
+        for(const fieldName in this.modelDescriptor.fields) {
             if (rawObj[fieldName] !== undefined && rawObj[fieldName] !== this[fieldName]) {
                 this[fieldName] = rawObj[fieldName]
             }
         }
 
         // update related objects 
-        for (let relation in this.modelDescriptor.relations) {
+        for (const relation in this.modelDescriptor.relations) {
             const settings = this.modelDescriptor.relations[relation].settings
             if (settings.foreign_model && rawObj[relation]) {
                 settings.foreign_model.getModelDescriptor().updateCachedObject(rawObj[relation])

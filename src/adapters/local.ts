@@ -10,7 +10,7 @@ import { ASC, ID } from '../types'
 /**
  * Local storage. 
  */
-export let local_store: Record<string, Record<string, any>> = {}
+export const local_store: Record<string, Record<string, any>> = {}
 
 /**
  * LocalAdapter connects to the local storage.
@@ -25,8 +25,8 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
     }
 
     init_local_data(data: any[]) {
-        let objs: Record<string, any> = {}
-        for(let obj of data) {
+        const objs: Record<string, any> = {}
+        for(const obj of data) {
             objs[obj.id] = obj
         }
         local_store[this.store_name] = objs
@@ -43,12 +43,12 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
         // calculate and set new ID
         // skip non-numeric IDs (e.g. UUID/string) so parseInt's NaN can't poison Math.max
-        let ids = [0]
-        for(let id of Object.keys(local_store[this.store_name])) {
-            let parsed = parseInt(id)
+        const ids = [0]
+        for(const id of Object.keys(local_store[this.store_name])) {
+            const parsed = parseInt(id)
             if (!isNaN(parsed)) ids.push(parsed)
         }
-        let max = Math.max(...ids)
+        const max = Math.max(...ids)
         // copy before mutating so we don't modify the caller's object
         raw_data = {...raw_data, id: max + 1}
         local_store[this.store_name][raw_data.id] = raw_data
@@ -57,8 +57,8 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     async update (id: ID, only_changed_raw_data: any): Promise<any> {
         if (this.delay) await timeout(this.delay) 
-        let raw_obj = local_store[this.store_name][id] 
-        for(let field of Object.keys(only_changed_raw_data)) {
+        const raw_obj = local_store[this.store_name][id] 
+        for(const field of Object.keys(only_changed_raw_data)) {
             raw_obj[field] = only_changed_raw_data[field]
         }
         return raw_obj 
@@ -69,18 +69,18 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         delete local_store[this.store_name][id]
     }
 
-    async action (id: ID, name: string, kwargs: Record<string, any>) : Promise<any> {
+    async action (_id: ID, _name: string, _kwargs: Record<string, any>) : Promise<any> {
         console.error('Action method is not implemented for local adapter')
         // ignore error
         // throw(`Not implemented`)
     }
 
-    async get(id: ID, config?: RequestConfig) : Promise<any> {
+    async get(id: ID, _config?: RequestConfig) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
         return local_store[this.store_name][id]
     }
 
-    async modelAction (name: string, kwargs: Record<string, any>, config?: RequestConfig) : Promise<any> {
+    async modelAction (_name: string, _kwargs: Record<string, any>, _config?: RequestConfig) : Promise<any> {
         console.error('Model action method is not implemented for local adapter')
         // ignore error
         // throw(`Not implemented`)
@@ -88,7 +88,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
     async find(query: Query<M>) : Promise<any> {
         if (this.delay) await timeout(this.delay) 
-        for(let raw_obj of Object.values(local_store[this.store_name])) {
+        for(const raw_obj of Object.values(local_store[this.store_name])) {
             if (!query.filter || query.filter.isMatch(raw_obj)) {
                 return raw_obj
             }
@@ -101,7 +101,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         let raw_objs = []
 
         if (query.filter) {
-            for(let raw_obj of Object.values(local_store[this.store_name])) {
+            for(const raw_obj of Object.values(local_store[this.store_name])) {
                 if (query.filter.isMatch(raw_obj)) {
                     raw_objs.push(raw_obj)
                 }
@@ -114,7 +114,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         // order_by (sort)
         if (query.orderBy.value) {
             raw_objs = raw_objs.sort((obj_a, obj_b) => {
-                for(let sort_by_field of query.orderBy.value) {
+                for(const sort_by_field of query.orderBy.value) {
                     if (sort_by_field[1] === ASC) {
                         if (obj_a[sort_by_field[0]] < obj_b[sort_by_field[0]]) return -1
                         if (obj_a[sort_by_field[0]] > obj_b[sort_by_field[0]]) return 1
@@ -165,7 +165,7 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
         return Array.from(values)
     }
 
-    getURLSearchParams(query: Query<M>): URLSearchParams {
+    getURLSearchParams(_query: Query<M>): URLSearchParams {
         return new URLSearchParams()
     }
 }

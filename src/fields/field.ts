@@ -12,7 +12,7 @@ export function field<T>(typeDescriptor?: TypeDescriptor<T>, observable: boolean
         if (!models.has(modelName))
             throw new Error(`Model "${modelName}" should be registered in models. Did you forget to declare any id?`)
 
-        let modelDescription = models.get(modelName)!
+        const modelDescription = models.get(modelName)!
         modelDescription.fields[fieldName] = {
             decorator: (obj: any) => {
                 if (observable) extendObservable(obj, { [fieldName]: obj[fieldName] })

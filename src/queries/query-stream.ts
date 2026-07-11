@@ -1,8 +1,7 @@
 import { action, observable, runInAction } from 'mobx'
 import { Model } from '../model'
-import { Query, QueryProps } from './query'
 import { config } from '../config'
-import { ID } from '../types'
+import { Query, QueryProps } from './query'
 
 
 export class QueryStream <M extends Model> extends Query<M> {

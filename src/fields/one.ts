@@ -2,7 +2,7 @@ import { observe, extendObservable, runInAction, reaction, action } from 'mobx'
 import { Model, models } from '../model'
 
 
-export function one<M extends Model>(remote_model: any, remote_foreign_id?: string) {
+export function one<_M extends Model>(remote_model: any, remote_foreign_id?: string) {
     return function <M extends Model>(cls: M | ((new (...args: any[]) => M) & { modelName?: string }), field_name: string) {
 
         const modelName = (cls as any).modelName ?? cls.constructor.name
@@ -22,7 +22,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
         modelDescription.relations[field_name] = {
             decorator: (obj: M) => {
                 let foreignObj = undefined
-                for(let [_, cacheObj] of remoteModelDescriptor.cache.store) {
+                for(const [_, cacheObj] of remoteModelDescriptor.cache.store) {
                     const ID = cacheObj[remote_foreign_id_field]
                     if (obj.ID === ID && ID !== undefined) {
                         foreignObj = cacheObj
@@ -39,34 +39,35 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
             observe(remoteModelDescriptor.cache.store, (change: any) => {
                 let remote_obj: any
                 switch (change.type) {
-                    case 'add':
-                        remote_obj = change.newValue
-                        remote_obj.disposers.set(disposer_name, reaction(
-                            () => {
-                                const foreignID = remote_obj[remote_foreign_id_field]
-                                return { 
-                                    id: foreignID, 
-                                    obj: modelDescription.cache.get(foreignID) 
-                                }
-                            },
-                            action(disposer_name, (_new: any, _old: any) => {
-                                if (_old?.obj) _old.obj[field_name] = _new.id ? undefined : null
-                                if (_new?.obj) _new.obj[field_name] = remote_obj
-                            }),
-                            {fireImmediately: true}
-                        ))
-                        break
-                    case 'delete':
-                        remote_obj = change.oldValue
-                        if (remote_obj.disposers.get(disposer_name)) {
-                            remote_obj.disposers.get(disposer_name)()
-                            remote_obj.disposers.delete(disposer_name)
-                        }
-                        const foreignID = remote_obj[remote_foreign_id_field]
-                        let obj = modelDescription.cache.get(foreignID)
-                        if (obj) 
-                            runInAction(() => { obj[field_name] = undefined })
-                        break
+                case 'add':
+                    remote_obj = change.newValue
+                    remote_obj.disposers.set(disposer_name, reaction(
+                        () => {
+                            const foreignID = remote_obj[remote_foreign_id_field]
+                            return { 
+                                id: foreignID, 
+                                obj: modelDescription.cache.get(foreignID) 
+                            }
+                        },
+                        action(disposer_name, (_new: any, _old: any) => {
+                            if (_old?.obj) _old.obj[field_name] = _new.id ? undefined : null
+                            if (_new?.obj) _new.obj[field_name] = remote_obj
+                        }),
+                        {fireImmediately: true}
+                    ))
+                    break
+                case 'delete': {
+                    remote_obj = change.oldValue
+                    if (remote_obj.disposers.get(disposer_name)) {
+                        remote_obj.disposers.get(disposer_name)()
+                        remote_obj.disposers.delete(disposer_name)
+                    }
+                    const foreignID = remote_obj[remote_foreign_id_field]
+                    const obj = modelDescription.cache.get(foreignID)
+                    if (obj) 
+                        runInAction(() => { obj[field_name] = undefined })
+                    break
+                }
                 }
             })
         )
