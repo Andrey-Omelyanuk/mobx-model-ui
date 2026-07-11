@@ -16,17 +16,6 @@
 **Проблема**: Блокирует только `create/update/delete`, но не `action`/`modelAction`.
 **Фикс**: переопределить `action`, `modelAction`, `getDistinct` с выбрасыванием ошибки.
 
-### 2.9 `ConstantAdapter` — неединообразное поведение
-
-**Файл**: `src/adapters/constant.ts`
-**Проблема**: `action()` возвращает `{}` с `console.warn`, остальные методы бросают `Error`.
-**Фикс**: либо все кидают ошибки, либо все возвращают `undefined`.
-
-### 2.11 Нет тестов для `@model` с нестандартным ID-полем
-
-**Файл**: `src/model/model-decorator.spec.ts`
-**Проблема**: Все тесты используют `@id(NUMBER())` или `@id()` (числовой по умолчанию).
-**Фикс**: добавить тесты для `@id(STRING())` и `@id(UUID())`.
 
 ### 2.13 Нестабильный (flaky) тест `timestamp`
 
