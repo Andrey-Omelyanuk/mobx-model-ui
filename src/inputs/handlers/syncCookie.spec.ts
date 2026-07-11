@@ -42,7 +42,8 @@ describe('syncCookieHandler', () => {
         const testInput = new Variable(STRING(), { syncCookie: 'test'})
                                       expect(document.cookie).toBe('test=')
         testInput.set('test')       ; expect(document.cookie).toBe('test=test')
-        testInput.set(undefined)    ; expect(document.cookie).toBe('test=')
+        // undefined removes the cookie entirely rather than leaving `test=`
+        testInput.set(undefined)    ; expect(document.cookie).toBe('')
     })
 
     it('should properly delete cookie when value becomes undefined', async () => {

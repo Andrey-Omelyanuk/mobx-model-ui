@@ -21,7 +21,7 @@
 **Проблема**: `disposers: []` — `clearModels()` итерирует пустой массив. Не ошибка выполнения, но вводит в заблуждение.
 **Фикс**: убрать `idFieldDescriptors.disposers` из `clearModels()` или синхронизировать с реальными disposers.
 
-### 1.10 `syncCookieHandler` неправильно удаляет cookie
+### 1.10 `syncCookieHandler` неправильно удаляет cookie ✅ ИСПРАВЛЕНО
 
 **Файл**: `src/inputs/handlers/syncCookie.ts`, строка 16
 **Проблема**: Не устанавливает `max-age=0` или `expires` в прошлом. Некоторые браузеры могут не удалить cookie.
