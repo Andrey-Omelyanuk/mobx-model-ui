@@ -2,29 +2,11 @@
 
 ## 1. Баги (Bugs)
 
-### 1.1 `ready()` ждёт ложь вместо готовности
-
-**Файл**: `src/queries/query.ts`, строка 124
-**Проблема**: `ready()` вызывает `waitIsFalse(this, 'isReady')` — резолвится, когда `isReady` становится **ложным**, хотя по смыслу должно ждать готовности (`isReady === true`).
-**Фикс**: заменить на `waitIsTrue(this, 'isReady')` (добавить импорт `waitIsTrue` из `../utils`).
-
-### 1.2 Raw-запросы кладут не-Model объекты в `M[]`
-
-**Файлы**: `src/queries/query-raw.ts` (строка 14), `src/queries/query-raw-page.ts` (строка 15)
-**Проблема**: `QueryRaw`/`QueryRawPage` присваивают сырые объекты в `__items: M[]` — нарушение типа: сырые данные не являются инстансами `Model`, а `items` наследуется от `Query<M>` и обещает `M[]`.
-**Фикс**: развести типы — либо отдельный `RawQuery<M>`, не наследующий `Query<M>`, либо отдельное хранилище для сырых элементов / union-тип.
-
 ### 1.3 `LIKE`/`ILIKE` падают на нестроковых значениях
 
 **Файл**: `src/filters/SingleFilter.ts`, строки 97 и 101
 **Проблема**: `LIKE` — `a.includes(b)` бросает исключение, если `a` не строка (number, null); `ILIKE` — `a.toLowerCase()` так же.
 **Фикс**: добавить type-guard `if (typeof a !== 'string') return false` в оба оператора.
-
-### 1.4 `rawObj` мутирует результат `rawData` *(не критично)*
-
-**Файл**: `src/model/model.ts`, строки 112-117
-**Проблема**: геттер `rawObj` мутирует объект, полученный из `rawData` (`rawObj[idFieldName] = ...`). Сейчас не баг — `rawData` возвращает новый объект при каждом вызове, — но хрупко: сломается, если `rawData` станет `@computed`/мемоизированным.
-**Фикс**: не мутировать: `return { ...this.rawData, [idFieldName]: this[idFieldName] }`.
 
 ## 2. Улучшения (Improvements)
 
@@ -33,13 +15,6 @@
 **Файл**: `src/filters/ComboFilter.ts`
 **Проблема**: Есть только `AND_Filter`. Для полноценной фильтрации нужен `OR_Filter` (и, возможно, `NOT`).
 **Фикс**: добавить `OR_Filter` и `OR()` фабрику.
-
-### 2.4 `model-decorator.ts` создаёт прокси-класс на каждый инстанс ✅ Done
-
-**Файл**: `src/model/model-decorator.ts`, строка 32
-**Проблема**: Каждый `new Model()` создаёт новый класс через `class extends constructor`.
-**Фикс**: создать прокси-класс один раз при декорировании и кешировать.
-**Сделано**: прокси-класс создаётся один раз при декорировании (`proxy`), инстансы его переиспользуют. Регрессионный тест в `model-decorator.spec.ts`.
 
 ### 2.8 `ReadOnlyAdapter` не блокирует `action`, `modelAction`, `getDistinct`
 

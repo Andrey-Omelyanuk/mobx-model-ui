@@ -158,6 +158,12 @@ describe('SingleFilter', () => {
             expect(filter.operator('test one', 'two' )).toBe(false)
             expect(filter.operator('test one', ''    )).toBe(true)
         })
+        it('does not throw on non-string values', async () => {
+            expect(filter.operator(null    , 'test')).toBe(false)
+            expect(filter.operator(undefined, 'test')).toBe(false)
+            expect(filter.operator(123     , 'test')).toBe(false)
+            expect(filter.operator(true    , 'test')).toBe(false)
+        })
     })
 
     describe('ILIKE', () => {
@@ -172,6 +178,12 @@ describe('SingleFilter', () => {
             expect(filter.operator('test one', 'o'   )).toBe(true)
             expect(filter.operator('test one', 'two' )).toBe(false)
             expect(filter.operator('test one', ''    )).toBe(true)
+        })
+        it('does not throw on non-string values', async () => {
+            expect(filter.operator(null    , 'test')).toBe(false)
+            expect(filter.operator(undefined, 'test')).toBe(false)
+            expect(filter.operator(123     , 'test')).toBe(false)
+            expect(filter.operator(true    , 'test')).toBe(false)
         })
     })
 

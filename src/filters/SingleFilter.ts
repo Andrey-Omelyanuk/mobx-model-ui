@@ -94,11 +94,19 @@ export function LTE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__lte`, (a: any, b: any) => a <= b)
 }
 export function LIKE(field: string, input: Variable<any>) : SingleFilter {
-    return new SingleFilter(field, input, (field: string) => `${field}__contains`, (a: any, b: any) => a.includes(b))
+    return new SingleFilter(field, input, (field: string) => `${field}__contains`,
+        (a: any, b: any) => {
+            if (typeof a !== 'string') return false
+            return a.includes(b)
+        }
+    )
 }
 export function ILIKE(field: string, input: Variable<any>) : SingleFilter {
     return new SingleFilter(field, input, (field: string) => `${field}__icontains`,
-        (a: any, b: any) => a.toLowerCase().includes(b.toLowerCase())
+        (a: any, b: any) => {
+            if (typeof a !== 'string') return false
+            return a.toLowerCase().includes(b.toLowerCase())
+        }
     )
 }
 export function IN(field: string, input: Variable<any>) : SingleFilter { 
