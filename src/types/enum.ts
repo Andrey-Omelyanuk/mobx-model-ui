@@ -60,13 +60,13 @@ export class EnumDescriptor<T extends string | number> extends TypeDescriptor<T>
         }
     }
 
-    toString(value: T): string {
+    toString(value: T): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         return String(value)
     }
 
-    fromString(value: string): T {
+    fromString(value: string): T | null | undefined {
         if (value === undefined) return undefined
         if (value === 'null' || value === null) return null
         const parsed = this._values.find(v => String(v) === value)
@@ -79,7 +79,7 @@ export class EnumDescriptor<T extends string | number> extends TypeDescriptor<T>
             throw new Error('Value is not a valid enum option')
     }
 
-    default(): T {
+    default(): T | undefined {
         if (this.required && this._values.length > 0)
             return this._values[0]
         return undefined

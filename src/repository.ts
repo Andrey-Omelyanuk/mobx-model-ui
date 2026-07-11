@@ -9,10 +9,17 @@ import { Adapter, RequestConfig } from './adapters/adapter'
  * Repository class is responsible for CRUD operations on the model.
  */
 export class  Repository<M extends Model> {
+    // adapter is required before any CRUD call, but is usually assigned right
+    // after construction (e.g. by the @local/@constant decorators), so it is
+    // declared with a definite-assignment assertion rather than as optional.
+    public adapter!: Adapter<M>
+
     constructor(
         readonly modelDescriptor : ModelDescriptor<M>,
-        public   adapter        ?: Adapter<M>
-    ) {}
+        adapter                 ?: Adapter<M>
+    ) {
+        if (adapter) this.adapter = adapter
+    }
 
     /**
      * Create the object. 

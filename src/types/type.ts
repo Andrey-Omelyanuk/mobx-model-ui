@@ -14,11 +14,11 @@ export abstract class TypeDescriptor<T> {
     /**
      * Convert value to the string
      */ 
-    abstract toString(value: T): string
+    abstract toString(value: T): string | undefined
     /**
      * Convert string to the value
      */ 
-    abstract fromString(value: string): T
+    abstract fromString(value: string | null | undefined): T | null | undefined
     /**
      * Check if the value is valid
      * If not, throw an error
@@ -29,5 +29,5 @@ export abstract class TypeDescriptor<T> {
             throw new Error('Field is required')
     }
 
-    abstract default(): T
+    abstract default(): T | undefined
 }

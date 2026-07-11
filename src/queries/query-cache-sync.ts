@@ -9,7 +9,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
     constructor(props: QueryProps<M>) {
         super(props)
         // watch the cache for changes, and update items if needed
-        this.disposers.set('cacheSync', observe(props.repository.modelDescriptor.cache.store,
+        this.disposers.set('cacheSync', observe(this.repository.modelDescriptor.cache.store,
             action('MO: Query - update from cache changes',
             (change: any) => {
                 if (change.type == 'add') {
@@ -33,7 +33,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
         ))
 
         // ch all exist objects of model 
-        for(let [id, obj] of props.repository.modelDescriptor.cache.store) {
+        for(let [id, obj] of this.repository.modelDescriptor.cache.store) {
             this.__watch_obj(obj)
         }
     }
@@ -79,7 +79,7 @@ export class QueryCacheSync <M extends Model> extends Query<M> {
 
     __watch_obj(obj: M) {
         const key = `obj:${obj.ID}`
-        if (this.disposers.get(key)) this.disposers.get(key)()
+        this.disposers.get(key)?.()
         this.disposers.set(key, reaction(
             () =>  !this.filter || this.filter.isMatch(obj),
             action('MO: Query - obj was changed',

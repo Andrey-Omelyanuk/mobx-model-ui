@@ -30,5 +30,5 @@ export abstract class Adapter <M extends Model> {
 
     abstract getURLSearchParams(query: Query<M>): URLSearchParams
 
-    delay: number  // delays for simulate real usage, use it only for tests
+    delay!: number  // delays for simulate real usage, use it only for tests
 }

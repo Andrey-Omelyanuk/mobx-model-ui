@@ -17,7 +17,7 @@ export class DateDescriptor extends TypeDescriptor<Date> {
         this.max = props?.max ?? new Date(Date.now() + 100 * 365 * 24 * 60 * 60 * 1000) // + 100 years
         this.defaultDate = props?.defaultDate
     }
-    toString(value: Date): string {
+    toString(value: Date): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         return value.toISOString()

@@ -15,14 +15,15 @@ export function many<M extends Model>(remote_model: any, remote_foreign_id?: str
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`)
 
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`
+        // bind to a const so the value stays narrowed to string inside the closures below
+        const remote_foreign_id_field = remote_foreign_id ?? `${modelName.toLowerCase()}_id`
 
         modelDescription.relations[field_name] = {
             decorator: (obj: M) => {
                 extendObservable(obj, { [field_name]: [] })
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_id } 
+            settings: { remote_model, remote_foreign_id: remote_foreign_id_field }
         }
 
         const remoteModelDescriptor = remote_model.getModelDescriptor()
@@ -39,7 +40,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_id?: str
                         remote_obj = remote_change.newValue
                         remote_obj.disposers.set(disposer_name , reaction(
                             () => {
-                                return modelDescription.cache.get(remote_obj[remote_foreign_id])
+                                return modelDescription.cache.get(remote_obj[remote_foreign_id_field])
                             },
                             action(disposer_name, (_new: any, _old: any) => {
                                 if (_old) {
@@ -62,7 +63,7 @@ export function many<M extends Model>(remote_model: any, remote_foreign_id?: str
                             remote_obj.disposers.get(disposer_name)()
                             remote_obj.disposers.delete(disposer_name)
                         }
-                        let obj = modelDescription.cache.get(remote_obj[remote_foreign_id])
+                        let obj = modelDescription.cache.get(remote_obj[remote_foreign_id_field])
                         if (obj) {
                             const i = obj[field_name].indexOf(remote_obj)
                             if (i > -1)

@@ -15,7 +15,7 @@ export class ObjectInput<M extends Model> extends Variable<ID> {
 
     constructor (type: TypeDescriptor<ID>, args?: ObjectInputConstructorArgs<M>) {
         super(type, args)
-        this.options = args.options
+        this.options = args!.options
         if (this.options) {
             this.__disposers.push(reaction(
                 () => this.options.isReady,

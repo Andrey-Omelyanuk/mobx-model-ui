@@ -13,7 +13,8 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`)
 
-        remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`
+        // bind to a const so the value stays narrowed to string inside the closures below
+        const remote_foreign_id_field = remote_foreign_id ?? `${modelName.toLowerCase()}_id`
 
         const remoteModelDescriptor = remote_model.getModelDescriptor()
         const disposer_name = `MO: One - update - ${modelName}.${field_name}` 
@@ -22,7 +23,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
             decorator: (obj: M) => {
                 let foreignObj = undefined
                 for(let [_, cacheObj] of remoteModelDescriptor.cache.store) {
-                    const ID = cacheObj[remote_foreign_id]
+                    const ID = cacheObj[remote_foreign_id_field]
                     if (obj.ID === ID && ID !== undefined) {
                         foreignObj = cacheObj
                         break
@@ -31,7 +32,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
                 extendObservable(obj, { [field_name]: foreignObj })
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_id } 
+            settings: { remote_model, remote_foreign_id: remote_foreign_id_field }
         }
 
         modelDescription.relations[field_name].disposers.push(
@@ -42,7 +43,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
                         remote_obj = change.newValue
                         remote_obj.disposers.set(disposer_name, reaction(
                             () => {
-                                const foreignID = remote_obj[remote_foreign_id]
+                                const foreignID = remote_obj[remote_foreign_id_field]
                                 return { 
                                     id: foreignID, 
                                     obj: modelDescription.cache.get(foreignID) 
@@ -61,7 +62,7 @@ export function one<M extends Model>(remote_model: any, remote_foreign_id?: stri
                             remote_obj.disposers.get(disposer_name)()
                             remote_obj.disposers.delete(disposer_name)
                         }
-                        const foreignID = remote_obj[remote_foreign_id]
+                        const foreignID = remote_obj[remote_foreign_id_field]
                         let obj = modelDescription.cache.get(foreignID)
                         if (obj) 
                             runInAction(() => { obj[field_name] = undefined })

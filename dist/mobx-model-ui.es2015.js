@@ -306,6 +306,10 @@ class Variable {
     setFromString(value) {
         this.set(this.type.fromString(value));
     }
+    // Return type stays `string` so the class remains assignable to the
+    // built-in Object type (Object.toString(): string); a `string | undefined`
+    // return would break mobx's legacy @observable/@action decorator overloads
+    // that accept `target: Object`. The value may still be undefined at runtime.
     toString() {
         return this.type.toString(this.value);
     }
@@ -610,6 +614,7 @@ class ArrayDescriptor extends TypeDescriptor {
     fromString(value) {
         if (!value)
             return [];
+        // each item can decode to null/undefined; the array itself is always T[]
         return value.split(',').map(item => this.type.fromString(item));
     }
     validate(value) {
@@ -817,8 +822,8 @@ class Query {
     disposers = new Map();
     constructor(props) {
         let { repository, filter, orderBy, offset, limit, relations, fields, omit, autoupdate = true } = props;
-        this.repository = repository;
-        this.filter = filter;
+        this.repository = repository; // required in practice; always set by the Repository factory methods
+        this.filter = filter; // optional at runtime; guarded everywhere it is read
         this.orderBy = orderBy ? orderBy : new Variable(ARRAY(ORDER_BY()));
         this.offset = offset ? offset : new Variable(NUMBER());
         this.limit = limit ? limit : new Variable(NUMBER());
@@ -958,7 +963,7 @@ __decorate([
 ], Query.prototype, "__items", void 0);
 __decorate([
     observable,
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], Query.prototype, "total", void 0);
 __decorate([
     observable,
@@ -970,11 +975,11 @@ __decorate([
 ], Query.prototype, "isNeedToUpdate", void 0);
 __decorate([
     observable,
-    __metadata("design:type", Number)
+    __metadata("design:type", Object)
 ], Query.prototype, "timestamp", void 0);
 __decorate([
     observable,
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], Query.prototype, "error", void 0);
 __decorate([
     action('MO: Query Base - load'),
@@ -998,7 +1003,7 @@ class QueryPage extends Query {
     goToLastPage() { this.setPage(this.total_pages); }
     get is_first_page() { return this.offset.value === 0; }
     // QueryPage uses offset as a numeric page offset (not a cursor), so treat it as a number
-    get is_last_page() { return this.offset.value + this.limit.value >= this.total; }
+    get is_last_page() { return this.total !== undefined && this.offset.value + this.limit.value >= this.total; }
     get current_page() { return this.offset.value / this.limit.value + 1; }
     get total_pages() { return this.total ? Math.ceil(this.total / this.limit.value) : 1; }
     // for compatibility with js code style
@@ -1043,7 +1048,7 @@ class QueryCacheSync extends Query {
     constructor(props) {
         super(props);
         // watch the cache for changes, and update items if needed
-        this.disposers.set('cacheSync', observe(props.repository.modelDescriptor.cache.store, action('MO: Query - update from cache changes', (change) => {
+        this.disposers.set('cacheSync', observe(this.repository.modelDescriptor.cache.store, action('MO: Query - update from cache changes', (change) => {
             if (change.type == 'add') {
                 this.__watch_obj(change.newValue);
             }
@@ -1061,7 +1066,7 @@ class QueryCacheSync extends Query {
             }
         })));
         // ch all exist objects of model 
-        for (let [id, obj] of props.repository.modelDescriptor.cache.store) {
+        for (let [id, obj] of this.repository.modelDescriptor.cache.store) {
             this.__watch_obj(obj);
         }
     }
@@ -1113,8 +1118,7 @@ class QueryCacheSync extends Query {
     }
     __watch_obj(obj) {
         const key = `obj:${obj.ID}`;
-        if (this.disposers.get(key))
-            this.disposers.get(key)();
+        this.disposers.get(key)?.();
         this.disposers.set(key, reaction(() => !this.filter || this.filter.isMatch(obj), action('MO: Query - obj was changed', (should) => {
             let i = this.__items.indexOf(obj);
             // should be in the items and it is not in the items? add it to the items
@@ -1240,10 +1244,14 @@ class QueryDistinct extends Query {
  */
 class Repository {
     modelDescriptor;
+    // adapter is required before any CRUD call, but is usually assigned right
+    // after construction (e.g. by the @local/@constant decorators), so it is
+    // declared with a definite-assignment assertion rather than as optional.
     adapter;
     constructor(modelDescriptor, adapter) {
         this.modelDescriptor = modelDescriptor;
-        this.adapter = adapter;
+        if (adapter)
+            this.adapter = adapter;
     }
     /**
      * Create the object.
@@ -1723,7 +1731,8 @@ function foreign(foreign_model, foreign_id) {
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         // if it is empty then try auto detect it (it works only with single id) 
-        foreign_id = foreign_id ?? `${field_name}_id`;
+        // bind to a const so the value stays narrowed to string inside the closures below
+        const foreign_id_field = foreign_id ?? `${field_name}_id`;
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 // make observable and set default value
@@ -1732,7 +1741,7 @@ function foreign(foreign_model, foreign_id) {
                 obj.disposers.set(`foreign ${field_name}`, reaction(
                 // watch on foreign cache for foreign object
                 () => {
-                    const foreignID = obj[foreign_id];
+                    const foreignID = obj[foreign_id_field];
                     if (foreignID === undefined)
                         return undefined;
                     if (foreignID === '')
@@ -1747,7 +1756,7 @@ function foreign(foreign_model, foreign_id) {
                 action('MO: Foreign - update', (_new, _old) => obj[field_name] = _new), { fireImmediately: true }));
             },
             disposers: [],
-            settings: { foreign_model, foreign_id }
+            settings: { foreign_model, foreign_id: foreign_id_field }
         };
     };
 }
@@ -1760,14 +1769,15 @@ function one(remote_model, remote_foreign_id) {
         const modelDescription = models.get(modelName);
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
-        remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`;
+        // bind to a const so the value stays narrowed to string inside the closures below
+        const remote_foreign_id_field = remote_foreign_id ?? `${modelName.toLowerCase()}_id`;
         const remoteModelDescriptor = remote_model.getModelDescriptor();
         const disposer_name = `MO: One - update - ${modelName}.${field_name}`;
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 let foreignObj = undefined;
                 for (let [_, cacheObj] of remoteModelDescriptor.cache.store) {
-                    const ID = cacheObj[remote_foreign_id];
+                    const ID = cacheObj[remote_foreign_id_field];
                     if (obj.ID === ID && ID !== undefined) {
                         foreignObj = cacheObj;
                         break;
@@ -1776,7 +1786,7 @@ function one(remote_model, remote_foreign_id) {
                 extendObservable(obj, { [field_name]: foreignObj });
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_id }
+            settings: { remote_model, remote_foreign_id: remote_foreign_id_field }
         };
         modelDescription.relations[field_name].disposers.push(observe(remoteModelDescriptor.cache.store, (change) => {
             let remote_obj;
@@ -1784,7 +1794,7 @@ function one(remote_model, remote_foreign_id) {
                 case 'add':
                     remote_obj = change.newValue;
                     remote_obj.disposers.set(disposer_name, reaction(() => {
-                        const foreignID = remote_obj[remote_foreign_id];
+                        const foreignID = remote_obj[remote_foreign_id_field];
                         return {
                             id: foreignID,
                             obj: modelDescription.cache.get(foreignID)
@@ -1802,7 +1812,7 @@ function one(remote_model, remote_foreign_id) {
                         remote_obj.disposers.get(disposer_name)();
                         remote_obj.disposers.delete(disposer_name);
                     }
-                    const foreignID = remote_obj[remote_foreign_id];
+                    const foreignID = remote_obj[remote_foreign_id_field];
                     let obj = modelDescription.cache.get(foreignID);
                     if (obj)
                         runInAction(() => { obj[field_name] = undefined; });
@@ -1824,13 +1834,14 @@ function many(remote_model, remote_foreign_id) {
         if (!modelDescription)
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`);
         // if it is empty then try auto detect it (it works only with single id) 
-        remote_foreign_id = remote_foreign_id ?? `${modelName.toLowerCase()}_id`;
+        // bind to a const so the value stays narrowed to string inside the closures below
+        const remote_foreign_id_field = remote_foreign_id ?? `${modelName.toLowerCase()}_id`;
         modelDescription.relations[field_name] = {
             decorator: (obj) => {
                 extendObservable(obj, { [field_name]: [] });
             },
             disposers: [],
-            settings: { remote_model, remote_foreign_id }
+            settings: { remote_model, remote_foreign_id: remote_foreign_id_field }
         };
         const remoteModelDescriptor = remote_model.getModelDescriptor();
         const disposer_name = `MO: Many - update - ${modelName}.${field_name}`;
@@ -1841,7 +1852,7 @@ function many(remote_model, remote_foreign_id) {
                 case 'add':
                     remote_obj = remote_change.newValue;
                     remote_obj.disposers.set(disposer_name, reaction(() => {
-                        return modelDescription.cache.get(remote_obj[remote_foreign_id]);
+                        return modelDescription.cache.get(remote_obj[remote_foreign_id_field]);
                     }, action(disposer_name, (_new, _old) => {
                         if (_old) {
                             const i = _old[field_name].indexOf(remote_obj);
@@ -1861,7 +1872,7 @@ function many(remote_model, remote_foreign_id) {
                         remote_obj.disposers.get(disposer_name)();
                         remote_obj.disposers.delete(disposer_name);
                     }
-                    let obj = modelDescription.cache.get(remote_obj[remote_foreign_id]);
+                    let obj = modelDescription.cache.get(remote_obj[remote_foreign_id_field]);
                     if (obj) {
                         const i = obj[field_name].indexOf(remote_obj);
                         if (i > -1)

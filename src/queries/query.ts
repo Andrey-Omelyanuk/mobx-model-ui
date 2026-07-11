@@ -82,8 +82,8 @@ export class Query <M extends Model> implements Destroyable {
             autoupdate = true 
         } = props
 
-        this.repository = repository 
-        this.filter    = filter
+        this.repository = repository!  // required in practice; always set by the Repository factory methods
+        this.filter    = filter!       // optional at runtime; guarded everywhere it is read
         this.orderBy   = orderBy    ? orderBy   : new Variable(ARRAY(ORDER_BY()))
         this.offset    = offset     ? offset    : new Variable(NUMBER())
         this.limit     = limit      ? limit     : new Variable(NUMBER())

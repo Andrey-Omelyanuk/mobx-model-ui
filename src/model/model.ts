@@ -26,7 +26,7 @@ export default abstract class Model implements Destroyable {
      * It is used for get the model descriptor from the models map.
      */
     static   modelName: string
-    readonly modelName: string
+    readonly modelName!: string
 
     /**
      * Default repository that used in methods like `load`, `getTotalCount`, etc.
@@ -50,7 +50,7 @@ export default abstract class Model implements Destroyable {
      * @returns {ModelDescriptor} - model descriptor
      */
     get modelDescriptor(): ModelDescriptor<Model> {
-        return models.get(this.modelName)
+        return models.get(this.modelName)!
     }
 
     /**
@@ -65,7 +65,7 @@ export default abstract class Model implements Destroyable {
     /**
      * Save the initial data of the object that was loaded from the server.
      */
-    @observable init_data: Record<string, any>   
+    @observable init_data!: Record<string, any>
     /**
      * disposers for mobx reactions and interceptors, you can add your own disposers
      */

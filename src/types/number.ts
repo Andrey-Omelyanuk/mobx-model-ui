@@ -19,13 +19,13 @@ export class NumberDescriptor extends TypeDescriptor<number> {
         this.max = props?.max ?? Infinity
     }
 
-    toString(value: number): string {
+    toString(value: number): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         return value.toString()
     }
 
-    fromString(value: string): number {
+    fromString(value: string): number | null | undefined {
         if (value === undefined) return undefined
         if (value === 'null') return null
         if (value ===  null) return null
@@ -41,7 +41,7 @@ export class NumberDescriptor extends TypeDescriptor<number> {
         if (this.max !==  Infinity && value > this.max)
             throw new Error('Number should be less than or equal to ' + this.max)
     }
-    default(): number {
+    default(): number | undefined {
         return undefined
     }
 }

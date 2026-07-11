@@ -9,7 +9,7 @@ export interface StringDescriptorProps extends TypeDescriptorProps {
 
 export class StringDescriptor extends TypeDescriptor<string> {
     minLength: number
-    maxLength: number
+    maxLength: number | null
     constructor(props?: StringDescriptorProps) {
         super(props)
         // by default string has no length constraints
@@ -17,13 +17,13 @@ export class StringDescriptor extends TypeDescriptor<string> {
         this.maxLength = props?.maxLength ?? null
     }
 
-    toString(value: string): string {
+    toString(value: string): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         return value
     }
 
-    fromString(value: string): string {
+    fromString(value: string): string | null | undefined {
              if (value === undefined) return undefined
         else if (value === 'null') return null
         else if (value ===  null) return null

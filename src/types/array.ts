@@ -16,14 +16,15 @@ export class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
         this.minItems = props?.minItems ?? 0
         this.maxItems = props?.maxItems ?? Infinity
     }
-    toString(value: T[]): string {
+    toString(value: T[]): string | undefined {
         if (!value) return undefined
         if (!value.length) return undefined
         return value.map(item => this.type.toString(item)).join(',')
     }
     fromString(value: string): T[] {
         if (!value) return []
-        return value.split(',').map(item => this.type.fromString(item))
+        // each item can decode to null/undefined; the array itself is always T[]
+        return value.split(',').map(item => this.type.fromString(item)) as T[]
     }
     validate(value: T[]) {
         super.validate(value)

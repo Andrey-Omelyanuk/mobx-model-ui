@@ -5,11 +5,11 @@ export const ASC = true
 export const DESC = false 
 
 export class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
-    toString(value: [string, boolean]): string {
+    toString(value: [string, boolean]): string | undefined {
         if (!value || !value[0]) return undefined
         return value[1] ? value[0] : '-' + value[0]
     }
-    fromString(value: string): [string, boolean] {
+    fromString(value: string): [string, boolean] | null | undefined {
         if (!value) return undefined
         return value[0] === '-' ? [value.substring(1), false] : [value, true]
     } 

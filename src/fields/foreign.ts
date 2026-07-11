@@ -16,7 +16,8 @@ export function foreign<M extends Model>(foreign_model: any, foreign_id?: string
             throw new Error(`Model ${modelName} is not registered in models. Did you forget to declare any id fields?`)
 
         // if it is empty then try auto detect it (it works only with single id) 
-        foreign_id = foreign_id ?? `${field_name}_id`
+        // bind to a const so the value stays narrowed to string inside the closures below
+        const foreign_id_field = foreign_id ?? `${field_name}_id`
 
         modelDescription.relations[field_name] = {
             decorator: (obj: any) => {
@@ -26,7 +27,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_id?: string
                 obj.disposers.set(`foreign ${field_name}`, reaction(
                     // watch on foreign cache for foreign object
                     () => {
-                        const foreignID = obj[foreign_id] 
+                        const foreignID = obj[foreign_id_field]
                         if (foreignID === undefined) return undefined
                         if (foreignID === '') return undefined
                         if (foreignID === null) return null  // foreign object can be null
@@ -41,7 +42,7 @@ export function foreign<M extends Model>(foreign_model: any, foreign_id?: string
                 ))
             },
             disposers: [],
-            settings: { foreign_model, foreign_id }
+            settings: { foreign_model, foreign_id: foreign_id_field }
         } 
     }
 }

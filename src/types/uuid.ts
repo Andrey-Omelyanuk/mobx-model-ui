@@ -9,13 +9,13 @@ export class UUIDDescriptor extends TypeDescriptor<string> {
         super(props)
     }
 
-    toString(value: string): string {
+    toString(value: string): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         return value
     }
 
-    fromString(value: string): string {
+    fromString(value: string): string | null | undefined {
              if (value === undefined) return undefined
         else if (value === 'null') return null
         else if (value ===  null) return null

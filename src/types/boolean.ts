@@ -7,14 +7,14 @@ export class BooleanDescriptor extends TypeDescriptor<boolean> {
         super(props)
     }
 
-    toString(value: boolean): string {
+    toString(value: boolean): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         if (value === false) return 'false'
         return 'true' 
     }
 
-    fromString(value: string): boolean {
+    fromString(value: string): boolean | null | undefined {
         if (value === 'false' || value === '0') return false
         if (value === 'null' || value === null) return null
         if (value === undefined) return undefined

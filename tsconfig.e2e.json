@@ -2,7 +2,9 @@
     "extends": "./tsconfig.json",
     "compilerOptions": {
         "types": ["jest"],
-        "noImplicitAny": false
+        "noImplicitAny": false,
+        "strictNullChecks": false,
+        "strictPropertyInitialization": false
     },
     "include": ["e2e/**/*.ts"]
 }

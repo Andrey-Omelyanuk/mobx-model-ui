@@ -2,7 +2,7 @@ import { DateDescriptor, DateDescriptorProps } from './date'
 
 
 export class DateTimeDescriptor extends DateDescriptor {
-    toString(value: Date): string {
+    toString(value: Date): string | undefined {
         if (value === undefined) return undefined
         if (value === null) return 'null'
         return value.toISOString()

@@ -21,7 +21,7 @@ export class Variable<T> implements Destroyable {
     @observable          isDebouncing        : boolean          //  
     @observable          isNeedToUpdate      : boolean          //  
     @observable          errors              : string[] = []    // validations or backend errors put here
-                readonly debounce            : number
+                readonly debounce           ?: number
                 readonly syncURL            ?: string
                 readonly syncLocalStorage   ?: string
                 readonly syncCookie         ?: string
@@ -66,11 +66,11 @@ export class Variable<T> implements Destroyable {
 
     // runs validation once the debounce window settles (not a "stop" — it
     // fires the pending validation after `debounce` ms of no changes)
-    private debouncedValidation: () => void
+    private debouncedValidation!: () => void
 
     @action
-    public set (value: T) {
-        this.value = value
+    public set (value: T | undefined) {
+        this.value = value as T
         if (this.debounce) {
             this.isDebouncing = true
             this.debouncedValidation()  // clears isNeedToUpdate and validates after debounce
@@ -102,11 +102,15 @@ export class Variable<T> implements Destroyable {
         }
     }
 
-    setFromString(value: string) {
-        this.set(this.type.fromString(value))
+    setFromString(value: string | null) {
+        this.set(this.type.fromString(value) as T)
     }
-    toString() {
-        return this.type.toString(this.value)
+    // Return type stays `string` so the class remains assignable to the
+    // built-in Object type (Object.toString(): string); a `string | undefined`
+    // return would break mobx's legacy @observable/@action decorator overloads
+    // that accept `target: Object`. The value may still be undefined at runtime.
+    toString(): string {
+        return this.type.toString(this.value) as string
     }
 }
 

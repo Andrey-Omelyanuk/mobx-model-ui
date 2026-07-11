@@ -7,7 +7,7 @@ import Model from './model'
  * ModelFieldDescriptor is a class that contains all the information about the field.
  */
 export class ModelFieldDescriptor<T, F> {
-    decorator   : (obj: T) => void
+    decorator!  : (obj: T) => void
     disposers   : (()=>void)[] = []
     type       ?: TypeDescriptor<F>
     settings   ?: any
@@ -20,12 +20,12 @@ export class ModelDescriptor<T extends Model> {
     /**
      * Model class
      */
-    cls: new (args?: any) => T
+    cls!: new (args?: any) => T
     /**
      * Id fields
      */
-    id: string
-    idFieldDescriptors: ModelFieldDescriptor<T, ID>
+    id!: string
+    idFieldDescriptors!: ModelFieldDescriptor<T, ID>
     /**
      * Fields is a map of all fields in the model that usually use in repository.
      */ 
@@ -45,7 +45,7 @@ export class ModelDescriptor<T extends Model> {
         return obj[this.id]
     }
 
-    updateCachedObject(rawObj: Record<string, any>) : T | undefined {
+    updateCachedObject(rawObj: Record<string, any>) : T {
         const rawObjID = this.getID(rawObj)
         const cachedObj = this.cache.get(rawObjID)
         if (cachedObj) {

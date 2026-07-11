@@ -27,17 +27,17 @@ declare abstract class TypeDescriptor<T> {
     /**
      * Convert value to the string
      */
-    abstract toString(value: T): string;
+    abstract toString(value: T): string | undefined;
     /**
      * Convert string to the value
      */
-    abstract fromString(value: string): T;
+    abstract fromString(value: string | null | undefined): T | null | undefined;
     /**
      * Check if the value is valid
      * If not, throw an error
      */
     validate(value: T): void;
-    abstract default(): T;
+    abstract default(): T | undefined;
 }
 
 interface StringDescriptorProps extends TypeDescriptorProps {
@@ -46,10 +46,10 @@ interface StringDescriptorProps extends TypeDescriptorProps {
 }
 declare class StringDescriptor extends TypeDescriptor<string> {
     minLength: number;
-    maxLength: number;
+    maxLength: number | null;
     constructor(props?: StringDescriptorProps);
-    toString(value: string): string;
-    fromString(value: string): string;
+    toString(value: string): string | undefined;
+    fromString(value: string): string | null | undefined;
     validate(value: string): void;
     default(): string;
 }
@@ -67,10 +67,10 @@ declare class NumberDescriptor extends TypeDescriptor<number> {
     min: number;
     max: number;
     constructor(props?: NumberDescriptorProps);
-    toString(value: number): string;
-    fromString(value: string): number;
+    toString(value: number): string | undefined;
+    fromString(value: string): number | null | undefined;
     validate(value: number): void;
-    default(): number;
+    default(): number | undefined;
 }
 declare function NUMBER(props?: NumberDescriptorProps): NumberDescriptor;
 
@@ -78,8 +78,8 @@ interface BooleanDescriptorProps extends TypeDescriptorProps {
 }
 declare class BooleanDescriptor extends TypeDescriptor<boolean> {
     constructor(props?: BooleanDescriptorProps);
-    toString(value: boolean): string;
-    fromString(value: string): boolean;
+    toString(value: boolean): string | undefined;
+    fromString(value: string): boolean | null | undefined;
     default(): boolean;
 }
 declare function BOOLEAN(props?: BooleanDescriptorProps): BooleanDescriptor;
@@ -94,7 +94,7 @@ declare class DateDescriptor extends TypeDescriptor<Date> {
     max: Date;
     defaultDate?: Date;
     constructor(props?: DateDescriptorProps);
-    toString(value: Date): string;
+    toString(value: Date): string | undefined;
     fromString(value: string): Date | null | undefined;
     validate(value: Date): void;
     default(): Date;
@@ -102,7 +102,7 @@ declare class DateDescriptor extends TypeDescriptor<Date> {
 declare function DATE(props?: DateDescriptorProps): DateDescriptor;
 
 declare class DateTimeDescriptor extends DateDescriptor {
-    toString(value: Date): string;
+    toString(value: Date): string | undefined;
 }
 declare function DATETIME(props?: DateDescriptorProps): DateTimeDescriptor;
 
@@ -115,7 +115,7 @@ declare class ArrayDescriptor<T> extends TypeDescriptor<T[]> {
     minItems: number;
     maxItems: number;
     constructor(type: TypeDescriptor<T>, props?: ArrayDescriptorProps);
-    toString(value: T[]): string;
+    toString(value: T[]): string | undefined;
     fromString(value: string): T[];
     validate(value: T[]): void;
     default(): T[];
@@ -125,8 +125,8 @@ declare function ARRAY<T>(type: TypeDescriptor<T>, props?: ArrayDescriptorProps)
 declare const ASC = true;
 declare const DESC = false;
 declare class OrderByDescriptor extends TypeDescriptor<[string, boolean]> {
-    toString(value: [string, boolean]): string;
-    fromString(value: string): [string, boolean];
+    toString(value: [string, boolean]): string | undefined;
+    fromString(value: string): [string, boolean] | null | undefined;
     validate(value: [string, boolean]): void;
     default(): [string, boolean];
 }
@@ -136,8 +136,8 @@ interface UUIDDescriptorProps extends TypeDescriptorProps {
 }
 declare class UUIDDescriptor extends TypeDescriptor<string> {
     constructor(props?: UUIDDescriptorProps);
-    toString(value: string): string;
-    fromString(value: string): string;
+    toString(value: string): string | undefined;
+    fromString(value: string): string | null | undefined;
     validate(value: string): void;
     default(): string;
 }
@@ -155,10 +155,10 @@ declare class EnumDescriptor<T extends string | number> extends TypeDescriptor<T
     private _values;
     private _labels;
     constructor(props: EnumDescriptorProps<T>);
-    toString(value: T): string;
-    fromString(value: string): T;
+    toString(value: T): string | undefined;
+    fromString(value: string): T | null | undefined;
     validate(value: T): void;
-    default(): T;
+    default(): T | undefined;
     getOptions(): EnumOption<T>[];
     get values(): T[];
 }
@@ -187,7 +187,7 @@ declare class Variable<T> implements Destroyable {
     isDebouncing: boolean;
     isNeedToUpdate: boolean;
     errors: string[];
-    readonly debounce: number;
+    readonly debounce?: number;
     readonly syncURL?: string;
     readonly syncLocalStorage?: string;
     readonly syncCookie?: string;
@@ -195,10 +195,10 @@ declare class Variable<T> implements Destroyable {
     constructor(type: TypeDescriptor<T>, args?: VariableConstructorArgs<any>);
     destroy(): void;
     private debouncedValidation;
-    set(value: T): void;
+    set(value: T | undefined): void;
     get isReady(): boolean;
     validate(): void;
-    setFromString(value: string): void;
+    setFromString(value: string | null): void;
     toString(): string;
 }
 /**
@@ -270,7 +270,7 @@ declare abstract class Adapter<M extends Model> {
  */
 declare class Repository<M extends Model> {
     readonly modelDescriptor: ModelDescriptor<M>;
-    adapter?: Adapter<M>;
+    adapter: Adapter<M>;
     constructor(modelDescriptor: ModelDescriptor<M>, adapter?: Adapter<M>);
     /**
      * Create the object.
@@ -486,7 +486,7 @@ declare class ModelDescriptor<T extends Model> {
      * Return id value from object. Object can have id field with different name.
      */
     getID(obj: Record<string, any>): ID;
-    updateCachedObject(rawObj: Record<string, any>): T | undefined;
+    updateCachedObject(rawObj: Record<string, any>): T;
 }
 
 declare abstract class Model implements Destroyable {
