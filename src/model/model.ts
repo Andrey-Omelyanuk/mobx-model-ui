@@ -90,7 +90,7 @@ export default abstract class Model implements Destroyable {
     }
 
     get model() : any {
-        return (<any>this.constructor).__proto__
+        return Object.getPrototypeOf(this.constructor)
     }
 
     /**
@@ -119,7 +119,7 @@ export default abstract class Model implements Destroyable {
     get only_changed_raw_data() : any {
         const raw_data: any = {}
         for(const field_name in this.modelDescriptor.fields) {
-            if(this[field_name] != this.init_data[field_name]) {
+            if(this[field_name] !== this.init_data[field_name]) {
                 raw_data[field_name] = this[field_name]
             }
         }
@@ -128,7 +128,7 @@ export default abstract class Model implements Destroyable {
 
     get is_changed() : boolean {
         for(const field_name in this.modelDescriptor.fields) {
-            if (this[field_name] != this.init_data[field_name]) {
+            if (this[field_name] !== this.init_data[field_name]) {
                 return true
             }
         }

@@ -67,7 +67,10 @@ export class Query <M extends Model> implements Destroyable {
     @observable timestamp       : number | undefined    // timestamp of the last update, useful to avoid triggering react hooks twice
     @observable error           : string | undefined    // error message
 
-    get items       () { return this.__items }      // the items can be changed after the load (post processing)
+    // NOTE: returns the internal array intentionally so that external code can
+    //       observe mutations via mobx (push/splice on the returned array are
+    //       tracked by @observable). Do not replace the array — mutate in place.
+    get items       () { return this.__items }
 
     protected controller        : AbortController | undefined
     // Named disposers for mobx reactions/observers, unified on the same
