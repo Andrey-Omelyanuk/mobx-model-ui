@@ -18,23 +18,26 @@ help:
 
 build:
 	docker build -t $(PROJECT_NAME) .
+# `-v /app/node_modules` is an anonymous volume that shields the image's baked
+# node_modules from the `-v .:/app` bind mount, so deps come from the image and
+# `yarn install` no longer runs on every command. Rebuild deps with `make build`.
 dev:
-	docker run --rm -it -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn dev"
+	docker run --rm -it -v .:/app -v /app/node_modules $(PROJECT_NAME) yarn dev
 # alias for dev
 run: dev
 
 # chrome://inspect/#devices
 debug:
-	docker run --rm -it -p 9229:9229 -v .:/app $(PROJECT_NAME) \
-		sh -c "yarn install && node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/Form.spec.ts'"
+	docker run --rm -it -p 9229:9229 -v .:/app -v /app/node_modules $(PROJECT_NAME) \
+		node --inspect-brk=0.0.0.0 node_modules/.bin/jest --runInBand --testMatch='**/src/**/Form.spec.ts'
 lint:
-	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint"
+	docker run --rm -v .:/app -v /app/node_modules $(PROJECT_NAME) yarn lint
 lint-fix:
-	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn lint-fix"
+	docker run --rm -v .:/app -v /app/node_modules $(PROJECT_NAME) yarn lint-fix
 test:
-	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn test"
+	docker run --rm -v .:/app -v /app/node_modules $(PROJECT_NAME) yarn test
 test-e2e:
-	docker run --rm -v .:/app $(PROJECT_NAME) sh -c "yarn install && yarn build && yarn e2e"
+	docker run --rm -v .:/app -v /app/node_modules $(PROJECT_NAME) sh -c "yarn build && yarn e2e"
 publish:
 	docker run --rm -it --env-file .env -v .:/app $(PROJECT_NAME) sh -c "\
 		npm config set //registry.npmjs.org/:_authToken=$$NODE_AUTH_TOKEN && \

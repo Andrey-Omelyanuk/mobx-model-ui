@@ -162,6 +162,10 @@ src/
 
 All development runs inside **Docker**. Build the image with `make build` (uses `dockerfile`).
 
+The image installs dependencies at build time (`yarn install` baked into `dockerfile`). `make` targets bind-mount the repo (`-v .:/app`) plus an anonymous volume (`-v /app/node_modules`) that keeps the baked `node_modules` from being shadowed by the bind mount — so `yarn install` no longer runs on every command. After changing `package.json`/`yarn.lock`, run `make build` to refresh deps.
+
+There is **no host `node_modules`** — it is not needed. IDE tooling runs in the container via **Dev Containers** (`.devcontainer/devcontainer.json`): "Reopen in Container" in VSCode so the TypeScript/ESLint language servers read the container's `node_modules`.
+
 Every command is run via **`make`** — see `makefile` for available targets. If something needs to be run frequently, add it to `makefile`. Never run `npm` or `npx` commands directly outside Docker.
 
 ## Verification

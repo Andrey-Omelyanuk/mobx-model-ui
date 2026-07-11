@@ -2,8 +2,6 @@
 .opencode
 /node_modules
 /coverage
-.rpt2_cache
-/undefined
 .env
 npm-debug.log
 debug.log

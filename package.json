@@ -76,6 +76,7 @@
         }
       }
     ],
+    "coverageDirectory": "node_modules/.cache/coverage",
     "moduleFileExtensions": [
       "ts",
       "js",

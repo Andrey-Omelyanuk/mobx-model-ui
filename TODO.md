@@ -39,11 +39,11 @@
 **Проблема**: Все тесты используют `@id(NUMBER())` или `@id()` (числовой по умолчанию).
 **Фикс**: добавить тесты для `@id(STRING())` и `@id(UUID())`.
 
-### 2.12 Dockerfile — только `COPY package.json`
+### 2.12 Dockerfile не кеширует `node_modules` ✅ Done
 
-**Файл**: `dockerfile`
-**Проблема**: Копируется только `package.json`, всё остальное — при запуске. Образ не кеширует `node_modules`.
-**Фикс**: добавить `COPY yarn.lock .` и `RUN yarn install` в образ.
+**Файл**: `dockerfile`, `makefile`
+**Проблема**: `COPY package.json` в образе был мёртвым — все `make`-таргеты монтируют `-v .:/app`, перекрывая содержимое образа, поэтому `yarn install` выполнялся при каждом запуске. Простое добавление `RUN yarn install` в образ не помогло бы: bind-маунт всё равно перекрыл бы вшитый `node_modules`.
+**Сделано**: образ ставит зависимости на этапе сборки (`COPY package.json yarn.lock .` + `RUN yarn install --frozen-lockfile`); добавлен `.dockerignore`. В `makefile` добавлен анонимный volume `-v /app/node_modules`, который прикрывает вшитый `node_modules` от bind-маунта, и `yarn install &&` убран из всех таргетов. Пересобирать зависимости — через `make build`.
 
 ### 2.13 Нестабильный (flaky) тест `timestamp`
 

@@ -1,0 +1,30 @@
+{
+    // Opens the project inside the Docker image so VSCode's language servers
+    // (TypeScript, ESLint) run in the container and read its node_modules.
+    // The host no longer needs a local node_modules.
+    "name": "mobx-model-ui",
+    "build": {
+        "context": "..",
+        "dockerfile": "../dockerfile"
+    },
+    "workspaceFolder": "/app",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,consistency=cached",
+    // Named volume shields the image's baked node_modules from the workspace
+    // bind mount (same trick as `-v /app/node_modules` in the makefile).
+    "mounts": [
+        "source=mobx-model-ui-node_modules,target=/app/node_modules,type=volume"
+    ],
+    // Reconciles the volume with package.json/yarn.lock on (re)create — a no-op
+    // right after `make build`, but resyncs deps after a dependency change.
+    "postCreateCommand": "yarn install --frozen-lockfile",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "dbaeumer.vscode-eslint"
+            ],
+            "settings": {
+                "typescript.tsdk": "node_modules/typescript/lib"
+            }
+        }
+    }
+}

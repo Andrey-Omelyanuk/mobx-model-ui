@@ -38,7 +38,11 @@ export default [
         ],
         plugins   : [
             typescript({
-                tsconfig: 'tsconfig.build.json'
+                tsconfig: 'tsconfig.build.json',
+                // Keep the TS build cache inside node_modules (shielded by the
+                // container's node_modules volume) instead of leaking an
+                // `undefined/` dir into the repo root when find-cache-dir fails.
+                cacheRoot: 'node_modules/.cache/rollup-plugin-typescript2',
             }),
             // terser(),
         ],
