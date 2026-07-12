@@ -23,6 +23,70 @@ describe('LocalAdapter', () => {
         })
     })
 
+    describe('@local decorator', () => {
+        it('accepts no arguments (default to model name)', async () => {
+            @local()
+            @model class DefaultModel extends Model { @id(NUMBER()) id: number }
+            const adapter = DefaultModel.defaultRepository.adapter as unknown as LocalAdapter<DefaultModel>
+            expect(adapter.store_name).toBe('DefaultModel')
+            expect(adapter.delay).toBeUndefined()
+        })
+
+        it('accepts a string argument (store name)', async () => {
+            @local('CustomStore')
+            @model class StringModel extends Model { @id(NUMBER()) id: number }
+            const adapter = StringModel.defaultRepository.adapter as unknown as LocalAdapter<StringModel>
+            expect(adapter.store_name).toBe('CustomStore')
+            expect(adapter.delay).toBeUndefined()
+        })
+
+        it('accepts a config object with storeName', async () => {
+            @local({storeName: 'ConfigStore'})
+            @model class ConfigModel extends Model { @id(NUMBER()) id: number }
+            const adapter = ConfigModel.defaultRepository.adapter as unknown as LocalAdapter<ConfigModel>
+            expect(adapter.store_name).toBe('ConfigStore')
+            expect(adapter.delay).toBeUndefined()
+        })
+
+        it('accepts a config object with delay', async () => {
+            @local({delay: 200})
+            @model class DelayModel extends Model { @id(NUMBER()) id: number }
+            const adapter = DelayModel.defaultRepository.adapter as unknown as LocalAdapter<DelayModel>
+            expect(adapter.store_name).toBe('DelayModel')
+            expect(adapter.delay).toBe(200)
+        })
+
+        it('accepts a config object with storeName and delay', async () => {
+            @local({storeName: 'FullConfig', delay: 150})
+            @model class FullConfigModel extends Model { @id(NUMBER()) id: number }
+            const adapter = FullConfigModel.defaultRepository.adapter as unknown as LocalAdapter<FullConfigModel>
+            expect(adapter.store_name).toBe('FullConfig')
+            expect(adapter.delay).toBe(150)
+        })
+
+        it('uses delay from config in adapter operations', async () => {
+            jest.useFakeTimers()
+            @local({storeName: 'DelayTest', delay: 100})
+            @model class DelayTestModel extends Model { @id(NUMBER()) id: number }
+            const adapter = DelayTestModel.defaultRepository.adapter as unknown as LocalAdapter<DelayTestModel>
+
+            const promise = adapter.create({name: 'test'})
+            // Should not resolve before the delay
+            let resolved = false
+            promise.then(() => { resolved = true })
+
+            await jest.advanceTimersByTimeAsync(50)
+            expect(resolved).toBe(false)
+
+            await jest.advanceTimersByTimeAsync(60)
+            expect(resolved).toBe(true)
+
+            jest.useRealTimers()
+            // cleanup
+            delete local_store['DelayTest']
+        })
+    })
+
     it('create', async ()=> {
         expect(await adapter.create({a: 1})).toStrictEqual({id: 1, a: 1})
         expect(await adapter.create({a: 2})).toStrictEqual({id: 2, a: 2})

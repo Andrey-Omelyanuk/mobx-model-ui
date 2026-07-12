@@ -13,6 +13,14 @@ import { ASC, ID } from '../types'
 export const local_store: Record<string, Record<string, any>> = {}
 
 /**
+ * Configuration for the @local decorator.
+ */
+export type LocalAdapterConfig = {
+    storeName?: string
+    delay?: number
+}
+
+/**
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
  */
@@ -168,8 +176,24 @@ export class LocalAdapter<M extends Model> extends Adapter<M> {
 
 
 // model decorator
-export function local(store_name?: string) {
+export function local(config?: string | LocalAdapterConfig) {
     return (cls: any) => {
-        cls.defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName)
+        let storeName: string
+        let delay: number | undefined
+
+        if (typeof config === 'string') {
+            storeName = config
+        } else if (config) {
+            storeName = config.storeName ?? cls.modelName
+            delay = config.delay
+        } else {
+            storeName = cls.modelName
+        }
+
+        const adapter = new LocalAdapter(storeName)
+        if (delay !== undefined) {
+            adapter.delay = delay
+        }
+        cls.defaultRepository.adapter = adapter
     }
 }
