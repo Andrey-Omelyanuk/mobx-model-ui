@@ -660,6 +660,13 @@ declare abstract class ReadOnlyAdapter<M extends Model> extends Adapter<M> {
  */
 declare const local_store: Record<string, Record<string, any>>;
 /**
+ * Configuration for the @local decorator.
+ */
+type LocalAdapterConfig = {
+    storeName?: string;
+    delay?: number;
+};
+/**
  * LocalAdapter connects to the local storage.
  * You can use this adapter for mock data or for unit test
  */
@@ -680,7 +687,7 @@ declare class LocalAdapter<M extends Model> extends Adapter<M> {
     getDistinct(filter: Filter, field: string): Promise<any[]>;
     getURLSearchParams(_query: Query<M>): URLSearchParams;
 }
-declare function local(store_name?: string): (cls: any) => void;
+declare function local(config?: string | LocalAdapterConfig): (cls: any) => void;
 
 declare class ConstantAdapter<M extends Model> extends Adapter<M> {
     readonly constant: any[];
@@ -817,4 +824,4 @@ declare function waitIsFalse(obj: any, field: string): Promise<boolean>;
 declare function timeout(ms: number): Promise<unknown>;
 
 export { AND, AND_Filter, ARRAY, ASC, ActionForm, ActionObjectForm, Adapter, ArrayDescriptor, BOOLEAN, BooleanDescriptor, Cache, ComboFilter, ConstantAdapter, DATE, DATETIME, DESC, DISPOSER_AUTOUPDATE, DateDescriptor, DateTimeDescriptor, DeleteObjectForm, ENUM, EQ, EQV, EnumDescriptor, Filter, Form, GT, GTE, ILIKE, IN, LIKE, LT, LTE, LocalAdapter, Model, ModelDescriptor, ModelFieldDescriptor, NOT_EQ, NUMBER, NumberDescriptor, ORDER_BY, ObjectForm, ObjectInput, OrderByDescriptor, Query, QueryCacheSync, QueryDistinct, QueryPage, QueryRaw, QueryRawPage, QueryStream, ReadOnlyAdapter, Repository, STRING, SaveObjectForm, SingleFilter, StringDescriptor, TypeDescriptor, UUID, UUIDDescriptor, Variable, autoResetId, clearModels, config, constant, field, foreign, id, local, local_store, many, model, models, one, syncCookieHandler, syncLocalStorageHandler, syncURLHandler, timeout, waitIsFalse, waitIsTrue };
-export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, EnumDescriptorProps, EnumOption, ID, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, ValidationErrors, Validator, VariableConstructorArgs };
+export type { ArrayDescriptorProps, BooleanDescriptorProps, DateDescriptorProps, Destroyable, EnumDescriptorProps, EnumOption, ID, LocalAdapterConfig, NumberDescriptorProps, ObjectInputConstructorArgs, QueryProps, RequestConfig, StringDescriptorProps, TypeDescriptorProps, UUIDDescriptorProps, ValidationErrors, Validator, VariableConstructorArgs };

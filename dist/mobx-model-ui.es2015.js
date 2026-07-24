@@ -2,7 +2,7 @@
   /**
    * @license
    * author: Andrey Omelyanuk
-   * mobx-model-ui.js v0.4.0
+   * mobx-model-ui.js v0.4.1
    * Released under the MIT license.
    */
 
@@ -2277,9 +2277,25 @@ class LocalAdapter extends Adapter {
     }
 }
 // model decorator
-function local(store_name) {
+function local(config) {
     return (cls) => {
-        cls.defaultRepository.adapter = new LocalAdapter(store_name ? store_name : cls.modelName);
+        let storeName;
+        let delay;
+        if (typeof config === 'string') {
+            storeName = config;
+        }
+        else if (config) {
+            storeName = config.storeName ?? cls.modelName;
+            delay = config.delay;
+        }
+        else {
+            storeName = cls.modelName;
+        }
+        const adapter = new LocalAdapter(storeName);
+        if (delay !== undefined) {
+            adapter.delay = delay;
+        }
+        cls.defaultRepository.adapter = adapter;
     };
 }
 

@@ -1,4 +1,4 @@
-import { field, ILIKE, Input, Model, id, NUMBER, model, ORDER_BY, STRING, ARRAY, DESC } from '../dist/mobx-model-ui'
+import { field, ILIKE, Variable, Model, id, NUMBER, model, ORDER_BY, STRING, ARRAY, DESC } from '../dist/mobx-model-ui'
 
 /**
  *  Demonstrates reactive inputs for controlling Query parameters.
@@ -20,11 +20,11 @@ describe('Other tests: Inputs.', () => {
     }
 
     it('...', async ()=> {
-        const input = new Input(STRING(), { syncURL: 'search', debounce: 400 })
+        const input = new Variable(STRING(), { syncURL: 'search', debounce: 400 })
         const filesQuery = File.getQuery({
             filter      : ILIKE('title', input),
-            orderBy     : new Input(ARRAY(ORDER_BY()), {value: [['uploaded_at', DESC]]}),
-            relations   : new Input(ARRAY(STRING())   , {value: ['versions', ]}),
+            orderBy     : new Variable(ARRAY(ORDER_BY()), {value: [['uploaded_at', DESC]]}),
+            relations   : new Variable(ARRAY(STRING())   , {value: ['versions', ]}),
             autoupdate  : false
         })
     })
